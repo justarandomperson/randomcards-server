@@ -5,9 +5,12 @@ import { UsersModule } from './users/users.module';
 import { GamesModule } from './games/games.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AuthModule } from './auth/auth.module';
+import { ConfigService } from '@nestjs/config';
 
 @Module({
-  imports: [UsersModule, GamesModule, MongooseModule.forRoot("placeholder"), AuthModule],
+  imports: [UsersModule, GamesModule, AuthModule, MongooseModule.forRootAsync({ inject: [ConfigService], useFactory: async (configService: ConfigService) => ({
+    uri: configService.get<string>("MONGODB_URI")
+  })})],
   controllers: [AppController],
   providers: [AppService],
 })

@@ -1,18 +1,25 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { UserSchema, User } from './schemas/user.schema';
+import { UserSchema, User, UserDocument } from './schemas/user.schema';
 import { Model } from 'mongoose';
+import { CreateUserDto } from './dto/create-user.dto';
+import { UsersRepository } from './users.repository';
 
 @Injectable()
 export class UsersService {
-    constructor(@InjectModel(User.name) private userModel: Model<User>) {}
+    constructor(private readonly usersRepository: UsersRepository) {}
 
-      async create(createuserDto: CreateUserDto): Promise<User> {
-    const createdCat = new this.userModel(createuserDto);
-    return createdCat.save();
+    async create(createuserDto: CreateUserDto): Promise<UserDocument> {
+      return this.usersRepository.create(createuserDto)
+    }
+
+  async findAll(): Promise<UserDocument[]> {
+    return this.usersRepository.findAll()
   }
 
-  async findAll(): Promise<User[]> {
-    return this.userModel.find().exec();
+  async findOne(username: string): Promise<UserDocument | null>
+  {
+    const user = await this.usersRepository.findOne(username);
+    return user;
   }
 }
