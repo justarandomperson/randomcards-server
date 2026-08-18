@@ -2,21 +2,28 @@ import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateUserDto } from '../users/dto/create-user.dto';
 import { SignInDto } from './dto/signin.dto';
+import { ValidateTokenDto } from './dto/ValidateToken.dto';
 
 @Controller('auth')
 export class AuthController {
     constructor(private readonly authService: AuthService) {}
 
     @Post("signup")
-    signUp(@Body() createUserDto: CreateUserDto)
+    async signUp(@Body() createUserDto: CreateUserDto)
     {
-        return this.authService.signUp(createUserDto)
+        return await this.authService.signUp(createUserDto)
     }
 
     @HttpCode(HttpStatus.OK)
     @Post('login')
-    signIn(@Body() signinDto: SignInDto)
+    async Login(@Body() signinDto: SignInDto)
     {
-        return this.authService.signIn(signinDto)
+        return await this.authService.signIn(signinDto)
     }
+
+
+    @Post("validate")
+    async validateToken(@Body() validateTokenDto : ValidateTokenDto) {
+    return await this.authService.validateToken(validateTokenDto);
+  }
 }
