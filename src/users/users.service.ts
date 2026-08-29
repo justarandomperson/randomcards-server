@@ -10,7 +10,8 @@ export class UsersService {
     constructor(private readonly usersRepository: UsersRepository) {}
 
     async create(createuserDto: CreateUserDto): Promise<UserDocument> {
-      return this.usersRepository.create(createuserDto)
+      const user = await this.usersRepository.create(createuserDto)
+      return user
     }
 
   async findAll(): Promise<UserDocument[]> {

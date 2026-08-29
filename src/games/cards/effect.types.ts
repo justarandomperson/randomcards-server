@@ -1,0 +1,22 @@
+import { Card } from "./card.types";
+import { GameState } from "../games.types";
+import { GameActions } from "./game-actions";
+
+export type EffectTrigger =
+    | "onSummon"
+    | "onTurnStart"
+    | "onTurnEnd"
+
+export type EffectContext = {
+    game: GameState;
+    source: Card;
+    playerId: string;
+    actions: GameActions;
+};
+
+export type Effect = {
+    trigger: EffectTrigger;
+    execute(ctx: EffectContext): void;
+
+    value?: number;
+};

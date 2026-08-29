@@ -18,6 +18,10 @@ export class AuthService {
       async signUp(createUserDto: CreateUserDto): Promise<{access_token: string}>
     {
         const hashedPassword = await bcrypt.hash(createUserDto.password, 10)
+
+        const existingUser = await this.usersService.findOne(createUserDto.username);
+        if (existingUser) throw new NotFoundException("Username is taken")
+
         const user = await this.usersService.create({username: createUserDto.username, password: hashedPassword})
         
         const payload = { sub: user._id.toString(), username: user.username }
