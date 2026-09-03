@@ -1,7 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { WebSocketGateway, WebSocketServer } from "@nestjs/websockets";
 import { Server, Socket } from "socket.io"
-import { CardType } from "../games/games.types";
 
 @WebSocketGateway()
 @Injectable()
@@ -14,7 +13,7 @@ export class MatchMakingService
 
     constructor() {}
 
-    addIntoQueue(socketid: string, deck: CardType[])
+    addIntoQueue(socketid: string, deck: string[])
     {
         if (this.queue.includes(socketid)) return
         this.queue.push(socketid)

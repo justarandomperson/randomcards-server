@@ -1,26 +1,24 @@
-import { CardType, GameState, Player } from "./games.types"
+import { CardInstance } from "./cards/card.types"
+import { CardsService } from "./cards/cards.service"
+import { PlaceUnitDto } from "./dto/place-unit.dto"
+import { GameState, Player, PlayerState } from "./games.types"
+
 
 export class GamesService 
 {
-    constructor() {}
+    constructor(private readonly _cardsService: CardsService) {}
     private Rooms: GameState[] = []
 
     createRoom(players: Player[], gameId: string)
     {
         const [player1, player2] = players
+
+        const player1State = this.initializePlayerState(player1)
+        const player2State = this.initializePlayerState(player2)
+
         const room: GameState = {
-            player1ID: player1.id,
-            player2ID: player2.id,
 
-            player1Deck: this.getPlayerSpells(player1),
-            player2Deck: this.getPlayerSpells(player2),
-
-            player1Hand: [],
-            player2Hand: [],
-
-            player1Bench: this.getPlayerUnits(player1),
-            player2Bench: this.getPlayerUnits(player2),
-
+            players: [player1State, player2State],
             board: [],
             gameId: gameId,
             player1Turn: true
@@ -31,102 +29,84 @@ export class GamesService
         return room
     }
 
-    getRoom(gameId: string)
+    private initializePlayerState(player: Player)
     {
-        return this.Rooms.find(room => room.gameId == gameId)
+        const player1Cards = player.deck.map((cardId) => this._cardsService.createCardFromId(cardId))
+
+        const playerState: PlayerState = 
+        {
+            deck: player1Cards,
+            bench: [],
+            hand: [],
+            id: player.id
+        }
+
+        return playerState
     }
 
-    makeMove(playerID: string, gameId: string,makeMoveData: string)
+    getRoom(gameId: string)
     {
-        const game = this.getRoom(gameId)
+        const game = this.Rooms.find(room => room.gameId == gameId)
+        if (!game) throw new Error("Game doesn't exist")
+        return game
+    }
 
-        if (!game) 
-        {
-            console.log("no games")
-            return game
-        }
-        if (playerID != game.player1ID && playerID != game.player2ID ) return
-
-        const isPlayer1 = playerID == game.player1ID;
-        const isPlayerTurn = isPlayer1 == game.player1Turn;
-
-        const hand = isPlayer1 ? game.player1Hand : game.player2Hand;
-        const bench = isPlayer1 ? game.player1Bench : game.player2Bench;
-
-        if (!isPlayerTurn)
-        {
-            console.log("not your turn")
-            return
-        }
-
-        const source = makeMoveData[0]
-        const origin = Number(makeMoveData[1])
-        const destination = Number(makeMoveData[2])
+    placeUnit(playerID: string, gameId: string, placeUnitData: PlaceUnitDto)
+    {
+        const context = this.getPlayerGame(playerID, gameId)
+        const { isPlayer1, bench, game} = context
+        
+        const { id, boardIndex } = placeUnitData
 
         const translatedDestination = isPlayer1
-        ? destination
-        : game.board.length - 1 - destination;
+        ? boardIndex
+        : game.board.length - 1 - boardIndex;
 
-        if (destination > game.board.length + 1 || destination < 0) 
-        {
-            console.log("out of bounds")
-            return
-        }
-        
-        //unique "player" attack, will return for now
-        if (destination == 0 || destination == game.board.length)
-        {
-            console.log("attack player")
-            return
-        }
+        this.throwIfPlaceUnitInvalid(game, translatedDestination)
 
-        const sources = {
-            b: bench,
-            h: hand,
-            c: game.board,
-        };
+        const card: CardInstance | undefined = bench.find((card) => {card.id == id})
+        if (!card)  throw new Error("card doesn't exist")
 
+        game.board[translatedDestination] = card
 
-
-        const card: CardType = sources[source][origin]
-        if (!card) 
-        {
-            console.log("no card at that place")
-            return
-        }
-
-        //attack logic
-        if (source == "c")
-        {
-
-        } else 
-        {
-            if (game.board[translatedDestination] != null) 
-            {
-                console.log("slot taken")
-                return
-            }
-
-            game.board[translatedDestination] = card
-            console.log("made move")
-
-        }
-
-        game.player1Turn = !game.player1Turn
         return {
             made: true,
-            card: card.cardName,
-            position: destination
+            card: card.name,
+            position: boardIndex
         } 
     }
 
-    getPlayerUnits(player: Player)
+    private throwIfPlaceUnitInvalid(game: GameState, boardIndex: number)
     {
-        return player.deck.filter((card: CardType) => card.isUnit)
+        if (boardIndex > game.board.length || boardIndex < 0) throw new Error("out of bounds")
+        if (game.board[boardIndex] != null)  throw new Error("slot taken")
     }
 
-    getPlayerSpells(player: Player)
+    endTurn(playerID: string, gameID: string)
     {
-        return player.deck.filter((card:CardType) => !card.isUnit)
+        const context = this.getPlayerGame(playerID, gameID)
+        const game = context.game
+
+        game.player1Turn = !game.player1Turn
     }
+
+    getPlayerGame(playerID: string, gameID: string)
+{
+    const game = this.getRoom(gameID)
+
+    if (!game.players.find((player) => {player.id == playerID})) throw new Error("player not in game")
+
+    const isPlayer1 = playerID === game.players[0].id
+    const playerState = isPlayer1 ? game.players[0] : game.players[1]
+    const isPlayerTurn = isPlayer1 === game.player1Turn
+
+    if (!isPlayerTurn) throw new Error("not player's turn")
+
+    return {
+        isPlayer1,
+        hand: playerState.hand,
+        bench: playerState.bench,
+        game
+    }
+}
 }

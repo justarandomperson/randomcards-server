@@ -5,7 +5,8 @@ import { MatchMakingService } from "../matchmaking/matchmaking.service";
 import { Socket } from "socket.io"
 import { JwtService } from "@nestjs/jwt";
 import { GamesService } from "./games.service";
-import { CardType } from "./games.types";
+import { Card } from "./cards/card.types";
+import { PlaceUnitDto } from "./dto/place-unit.dto";
 
 @WebSocketGateway()
 export class GameGateway implements OnModuleInit
@@ -50,7 +51,7 @@ export class GameGateway implements OnModuleInit
 
 
     @SubscribeMessage('queue')
-    onQueue(client: Socket, deck: CardType[])
+    onQueue(client: Socket, deck: string[])
     {
         const match = this._matchMakingService.addIntoQueue(client.id, deck)
         client.data.deck = deck
@@ -87,9 +88,9 @@ export class GameGateway implements OnModuleInit
     }
 
     @SubscribeMessage('make_move')
-    makeMove(client: Socket, makeMoveData: string)
+    placeUnit(client: Socket, placeUnitData: PlaceUnitDto)
     {
-        const move = this._gamesService.makeMove(client.id, client.data.gameId, makeMoveData)
+        const move = this._gamesService.placeUnit(client.id, client.data.gameId,placeUnitData)
         if (!move)
         {
             client.emit("invalid")

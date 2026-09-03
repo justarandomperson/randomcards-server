@@ -1,6 +1,6 @@
-import { Card } from "../card.types";
+import { CardInstance } from "../card.types";
 
-export const cards: Card[] = [
+export const cards: CardInstance[] = [
     {
         name: "Skeleton",
         isUnit: true,
@@ -8,6 +8,7 @@ export const cards: Card[] = [
         hp: 1,
         cost: 1,
         effects: [],
+        id: "1"
     },
 
     {
@@ -17,6 +18,7 @@ export const cards: Card[] = [
         hp: 7,
         cost: 7,
         effects: [],
+        id: "2"
     },
 
     {
@@ -26,5 +28,6 @@ export const cards: Card[] = [
         hp: 3,
         cost: 10,
         effects: [],
+        id: "3"
     },
 ];
