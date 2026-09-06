@@ -4,13 +4,14 @@ export type GameState = {
     players: PlayerState[]
     gameId: string;
 
-    board: CardInstance[];
+    board: (CardInstance | null)[];
 
     player1Turn: boolean
 }
 
 export type PlayerState = {
     id: string,
+    hp: number;
     deck: CardInstance[],
     hand: CardInstance[],
     bench: CardInstance[]

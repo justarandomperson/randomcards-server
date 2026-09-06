@@ -36,6 +36,7 @@ export class GamesService
         const playerState: PlayerState = 
         {
             deck: player1Cards,
+            hp: 20,
             bench: [],
             hand: [],
             id: player.id
