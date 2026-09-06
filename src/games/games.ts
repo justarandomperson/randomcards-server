@@ -79,6 +79,9 @@ export class GameGateway implements OnModuleInit
             });
         
         this._gamesService.createRoom([{id: player1id, deck: player1.data.deck}, {id: player2id, deck: player2.data.deck}], match.gameId)
+
+        this.updatePlayer(player1id, match.gameId)
+        this.updatePlayer(player2id, match.gameId)
     }
 
     @SubscribeMessage('leave_queue')
@@ -101,5 +104,35 @@ export class GameGateway implements OnModuleInit
             cardName: move.card,
             destination: move.position
         })
+    }
+
+    @SubscribeMessage("end_turn")
+    endTurn(client: Socket)
+    {
+        const gameId = client.data.gameId
+
+        const game = this._gamesService.getRoom(gameId)
+
+        game.player1Turn = !game.player1Turn
+
+        //if player1Turn is true, ! will make it negative so it'll be false and when converting to number
+        // it will get the index 0, and vice versa for player2.
+        const playerTurnId = game.players[Number(!game.player1Turn)].id
+        this.startPlayerTurn(playerTurnId, gameId)
+    }
+
+    startPlayerTurn(id: string, gameId: string)
+    {
+        this.server.to(id).emit("start_turn")
+        this.updatePlayer(id, gameId)
+    }
+
+    updatePlayer(id: string, gameId: string)
+    {
+        const updatedHand = this._gamesService.getUpdatedHand(id, gameId)
+        const updatedBench = this._gamesService.getUpdatedBench(id, gameId)
+
+        this.server.to(id).emit("updateHand", updatedHand)
+        this.server.to(id).emit("updateBench", updatedBench)
     }
 }

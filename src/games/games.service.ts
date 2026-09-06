@@ -109,4 +109,16 @@ export class GamesService
         game
     }
 }
+
+    getUpdatedHand(playerID: string, gameID: string)
+    {
+        const context = this.getPlayerGame(playerID, gameID)
+        return context.hand
+    }
+
+    getUpdatedBench(playerID: string, gameID: string)
+    {
+        const context = this.getPlayerGame(playerID, gameID)
+        return context.bench
+    }
 }
