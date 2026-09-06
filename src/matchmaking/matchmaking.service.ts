@@ -40,11 +40,11 @@ export class MatchMakingService
 
         if (!player1 || !player2) return null
 
-        const gameId = crypto.randomUUID()
+        const gameID = crypto.randomUUID()
 
         
         return {
-            gameId: gameId,
+            gameID: gameID,
             players: [player1, player2]            
         }
     }

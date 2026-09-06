@@ -64,24 +64,24 @@ export class GameGateway implements OnModuleInit
 
         if (!player1 || !player2) throw new Error("couldn't get the players to match")
 
-        player1.data.gameId = match.gameId
-        player2.data.gameId = match.gameId
+        player1.data.gameID = match.gameID
+        player2.data.gameID = match.gameID
 
-        player1.join(match.gameId)
-        player2.join(match.gameId)
+        player1.join(match.gameID)
+        player2.join(match.gameID)
 
         this.server
-            .to(match.gameId)
+            .to(match.gameID)
             .emit('match_start', {
                 players: [player1.data.username, player2.data.username],
-                gameId: match.gameId,
+                gameID: match.gameID,
                 firstTurn: player1.id
             });
         
-        this._gamesService.createRoom([{id: player1id, deck: player1.data.deck}, {id: player2id, deck: player2.data.deck}], match.gameId)
+        this._gamesService.createRoom([{id: player1id, deck: player1.data.deck}, {id: player2id, deck: player2.data.deck}], match.gameID)
 
-        this.updatePlayer(player1id, match.gameId)
-        this.updatePlayer(player2id, match.gameId)
+        this.updatePlayer(player1id, match.gameID)
+        this.updatePlayer(player2id, match.gameID)
     }
 
     @SubscribeMessage('leave_queue')
@@ -93,14 +93,14 @@ export class GameGateway implements OnModuleInit
     @SubscribeMessage('make_move')
     placeUnit(client: Socket, placeUnitData: PlaceUnitDto)
     {
-        const move = this._gamesService.placeUnit(client.id, client.data.gameId,placeUnitData)
+        const move = this._gamesService.placeUnit(client.id, client.data.gameID,placeUnitData)
         if (!move)
         {
             client.emit("invalid")
             return
         }
         
-        this.server.to(client.data.gameId).emit("made_move", {
+        this.server.to(client.data.gameID).emit("made_move", {
             cardName: move.card,
             destination: move.position
         })
@@ -109,30 +109,32 @@ export class GameGateway implements OnModuleInit
     @SubscribeMessage("end_turn")
     endTurn(client: Socket)
     {
-        const gameId = client.data.gameId
+        const gameID = client.data.gameID
 
-        const game = this._gamesService.getRoom(gameId)
+        const game = this._gamesService.getRoom(gameID)
 
         game.player1Turn = !game.player1Turn
 
         //if player1Turn is true, ! will make it negative so it'll be false and when converting to number
         // it will get the index 0, and vice versa for player2.
         const playerTurnId = game.players[Number(!game.player1Turn)].id
-        this.startPlayerTurn(playerTurnId, gameId)
+        this.startPlayerTurn(playerTurnId, gameID)
     }
 
-    startPlayerTurn(id: string, gameId: string)
+    startPlayerTurn(id: string, gameID: string)
     {
         this.server.to(id).emit("start_turn")
-        this.updatePlayer(id, gameId)
+        this.updatePlayer(id, gameID)
     }
 
-    updatePlayer(id: string, gameId: string)
+    updatePlayer(id: string, gameID: string)
     {
-        const updatedHand = this._gamesService.getUpdatedHand(id, gameId)
-        const updatedBench = this._gamesService.getUpdatedBench(id, gameId)
+        const updatedHand = this._gamesService.getUpdatedHand(id, gameID)
+        const updatedBench = this._gamesService.getUpdatedBench(id, gameID)
+        const updatedBoard = this._gamesService.getUpdatedBoard(gameID)
 
         this.server.to(id).emit("updateHand", updatedHand)
         this.server.to(id).emit("updateBench", updatedBench)
+        this.server.to(id).emit("updateBoard", updatedBoard)
     }
 }

@@ -121,4 +121,10 @@ export class GamesService
         const context = this.getPlayerGame(playerID, gameID)
         return context.bench
     }
+
+    getUpdatedBoard(gameID: string)
+    {
+        const game = this.getRoom(gameID)
+        return game.board
+    }
 }
