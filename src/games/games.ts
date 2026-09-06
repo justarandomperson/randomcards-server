@@ -5,7 +5,6 @@ import { MatchMakingService } from "../matchmaking/matchmaking.service";
 import { Socket } from "socket.io"
 import { JwtService } from "@nestjs/jwt";
 import { GamesService } from "./games.service";
-import { Card } from "./cards/card.types";
 import { PlaceUnitDto } from "./dto/place-unit.dto";
 
 @WebSocketGateway()
@@ -90,7 +89,7 @@ export class GameGateway implements OnModuleInit
         this._matchMakingService.removeFromQueue(client.id)
     }
 
-    @SubscribeMessage('make_move')
+    @SubscribeMessage('place_unit')
     placeUnit(client: Socket, placeUnitData: PlaceUnitDto)
     {
         const move = this._gamesService.placeUnit(client.id, client.data.gameID,placeUnitData)
@@ -101,7 +100,7 @@ export class GameGateway implements OnModuleInit
         }
         
         this.server.to(client.data.gameID).emit("made_move", {
-            cardName: move.card,
+            card: move.card,
             destination: move.position
         })
     }
@@ -129,6 +128,7 @@ export class GameGateway implements OnModuleInit
 
     updatePlayer(id: string, gameID: string)
     {
+        //will refactor later
         const updatedHand = this._gamesService.getUpdatedHand(id, gameID)
         const updatedBench = this._gamesService.getUpdatedBench(id, gameID)
         const updatedBoard = this._gamesService.getUpdatedBoard(gameID)

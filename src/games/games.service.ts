@@ -71,8 +71,7 @@ export class GamesService
         game.board[translatedDestination] = card
 
         return {
-            made: true,
-            card: card.name,
+            card: card,
             position: boardIndex
         } 
     }
