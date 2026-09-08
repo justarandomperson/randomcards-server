@@ -18,60 +18,44 @@ describe('GamesService', () => {
     expect(service).toBeDefined();
   });
 
-
-describe("GamesService", () => {
-    let service: GamesService
+  describe('GamesService', () => {
+    let service: GamesService;
 
     const player1: Player = {
-        id: "player1",
-        deck: [
-            "1", "2"
-        ]
-    }
+      id: 'player1',
+      deck: ['1', '2'],
+    };
 
     const player2: Player = {
-        id: "player2",
-        deck: [
-            "3"
-        ]
-    }
+      id: 'player2',
+      deck: ['3'],
+    };
 
     beforeEach(async () => {
-        const module = await Test.createTestingModule({
-        providers: [
-            GamesService,
-            CardsService,
-        ],
-    }).compile()
+      const module = await Test.createTestingModule({
+        providers: [GamesService, CardsService],
+      }).compile();
 
-    service = module.get(GamesService)
-    })
+      service = module.get(GamesService);
+    });
 
-    describe("makeMove", () => {
+    describe('makeMove', () => {
+      it('should move a card from the bench onto the board', () => {
+        const game = service.createRoom([player1, player2], 'game1');
 
-        it("should move a card from the bench onto the board", () => {
-            const game = service.createRoom(
-                [player1, player2],
-                "game1"
-            )
+        const result = service.placeUnit('player1', 'game1', {
+          id: '1',
+          boardIndex: 1,
+        });
 
-            const result = service.placeUnit(
-                "player1",
-                "game1",
-                {
-                  "id": "1",
-                  boardIndex: 1
-                }
-            )
+        expect(result).toEqual({
+          made: true,
+          card: 'Skeleton',
+          position: 1,
+        });
 
-            expect(result).toEqual({
-                made: true,
-                card: "Skeleton",
-                position: 1
-            })
-
-            expect(game.board[1]).toEqual(player1.deck[0])
-        })
-    })
-})
+        expect(game.board[1]).toEqual(player1.deck[0]);
+      });
+    });
+  });
 });

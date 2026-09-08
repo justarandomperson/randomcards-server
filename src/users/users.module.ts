@@ -7,9 +7,12 @@ import { UserSchema, User } from './schemas/user.schema';
 import { UsersRepository } from './users.repository';
 
 @Module({
-  imports: [MongooseModule.forFeature([{name: User.name, schema: UserSchema}]), ConfigModule.forRoot({isGlobal: true})],
+  imports: [
+    MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
+    ConfigModule.forRoot({ isGlobal: true }),
+  ],
   providers: [UsersService, UsersRepository],
   controllers: [UsersController],
-  exports: [UsersService]
+  exports: [UsersService],
 })
 export class UsersModule {}

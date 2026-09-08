@@ -1,4 +1,4 @@
 export class PlaceUnitDto {
-    id: string;
-    boardIndex: number;
+  id: string;
+  boardIndex: number;
 }

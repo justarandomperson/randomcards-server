@@ -8,9 +8,17 @@ import { AuthModule } from './auth/auth.module';
 import { ConfigService } from '@nestjs/config';
 
 @Module({
-  imports: [UsersModule, GamesModule, AuthModule, MongooseModule.forRootAsync({ inject: [ConfigService], useFactory: async (configService: ConfigService) => ({
-    uri: configService.get<string>("MONGODB_URI")
-  })})],
+  imports: [
+    UsersModule,
+    GamesModule,
+    AuthModule,
+    MongooseModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: async (configService: ConfigService) => ({
+        uri: configService.get<string>('MONGODB_URI'),
+      }),
+    }),
+  ],
   controllers: [AppController],
   providers: [AppService],
 })

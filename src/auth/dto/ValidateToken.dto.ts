@@ -1,3 +1,3 @@
 export class ValidateTokenDto {
-    token: string;
+  token: string;
 }

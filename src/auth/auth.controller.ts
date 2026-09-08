@@ -6,24 +6,21 @@ import { ValidateTokenDto } from './dto/ValidateToken.dto';
 
 @Controller('auth')
 export class AuthController {
-    constructor(private readonly authService: AuthService) {}
+  constructor(private readonly authService: AuthService) {}
 
-    @Post("signup")
-    async signUp(@Body() createUserDto: CreateUserDto)
-    {
-        return await this.authService.signUp(createUserDto)
-    }
+  @Post('signup')
+  async signUp(@Body() createUserDto: CreateUserDto) {
+    return await this.authService.signUp(createUserDto);
+  }
 
-    @HttpCode(HttpStatus.OK)
-    @Post('login')
-    async Login(@Body() signinDto: SignInDto)
-    {
-        return await this.authService.signIn(signinDto)
-    }
+  @HttpCode(HttpStatus.OK)
+  @Post('login')
+  async Login(@Body() signinDto: SignInDto) {
+    return await this.authService.signIn(signinDto);
+  }
 
-
-    @Post("validate")
-    async validateToken(@Body() validateTokenDto : ValidateTokenDto) {
+  @Post('validate')
+  async validateToken(@Body() validateTokenDto: ValidateTokenDto) {
     return await this.authService.validateToken(validateTokenDto);
   }
 }
