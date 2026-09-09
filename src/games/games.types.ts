@@ -1,10 +1,10 @@
-import { Card, CardInstance } from './cards/card.types';
+import { Card, UnitInstance, SpellInstance } from './cards/card.types';
 
 export type GameState = {
   players: PlayerState[];
   gameId: string;
 
-  board: (CardInstance | null)[];
+  board: (UnitInstance | null)[];
 
   player1Turn: boolean;
 };
@@ -12,9 +12,9 @@ export type GameState = {
 export type PlayerState = {
   id: string;
   hp: number;
-  deck: CardInstance[];
-  hand: CardInstance[];
-  bench: CardInstance[];
+  deck: SpellInstance[];
+  hand: SpellInstance[];
+  bench: UnitInstance[];
 };
 
 export type Player = {

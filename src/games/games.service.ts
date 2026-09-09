@@ -1,4 +1,4 @@
-import { CardInstance } from './cards/card.types';
+import { UnitInstance, SpellInstance } from './cards/card.types';
 import { CardsService } from './cards/cards.service';
 import { PlaceUnitDto } from './dto/place-unit.dto';
 import { GameState, Player, PlayerState } from './games.types';
@@ -59,7 +59,7 @@ export class GamesService {
 
     this.throwIfPlaceUnitInvalid(game, translatedDestination);
 
-    const card: CardInstance | undefined = bench.find((card) => {
+    const card: UnitInstance | undefined = bench.find((card) => {
       card.id == id;
     });
     if (!card) throw new Error("card doesn't exist");

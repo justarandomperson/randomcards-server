@@ -1,5 +1,5 @@
 import { GameState } from '../games.types';
-import { Card, CardInstance } from './card.types';
+import { Card, UnitInstance, SpellInstance } from './card.types';
 import { CardsService } from './cards.service';
 
 export class GameActions {
@@ -9,15 +9,15 @@ export class GameActions {
   ) {}
 
   dealDamageToUnit(targetID: string, amount: number) {
-    let target: CardInstance | null = this.findTarget(targetID);
+    const target: UnitInstance = this.findTarget(targetID);
     target.hp -= amount;
-    if (target.hp <= 0) target = null;
-    this.updateTarget(targetID, target);
+    if (target.hp <= 0) this.updateTarget(targetID, null);
+    else this.updateTarget(targetID, target);
   }
 
   dealDamageToPlayer(playerIndex: number, amount: number) {
-    if (playerIndex < 0 || playerIndex > 1)
-      throw new Error("Player doesn't exist");
+    if (playerIndex < 0 || playerIndex > 1) throw new Error("Player doesn't exist");
+
     this.game.players[playerIndex].hp -= amount;
 
     return this.game.players[playerIndex].hp < 0;
@@ -45,7 +45,7 @@ export class GameActions {
     return target;
   }
 
-  private updateTarget(targetID: string, updatedData: CardInstance | null) {
+  private updateTarget(targetID: string, updatedData: UnitInstance | null) {
     const targetIndex = this.game.board.findIndex((unit) => {
       unit?.id == targetID;
     });
