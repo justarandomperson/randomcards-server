@@ -13,7 +13,11 @@ import { GamesService } from './games.service';
 import { PlaceUnitDto } from './dto/place-unit.dto';
 import { AttackDataDto } from './dto/attack-data.dto';
 
-@WebSocketGateway()
+@WebSocketGateway({  
+    cors: {
+    origin: 'http://localhost:5173',
+    credentials: true,
+  },})
 export class GameGateway implements OnModuleInit {
   constructor(
     private _gamesService: GamesService,
