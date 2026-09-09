@@ -2,7 +2,7 @@ import { Card, UnitInstance, SpellInstance } from './cards/card.types';
 
 export type GameState = {
   players: PlayerState[];
-  gameId: string;
+  gameID: string;
 
   board: (UnitInstance | null)[];
 

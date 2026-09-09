@@ -6,6 +6,7 @@ export type UnitInstance = {
   hp: number;
   cost: number;
   id: string;
+  ownerID?: string;
 
   effects: Effect[];
 };

@@ -1,13 +1,19 @@
 import { UnitInstance, SpellInstance } from './cards/card.types';
 import { CardsService } from './cards/cards.service';
+import { GameActions } from './cards/game-actions';
 import { PlaceUnitDto } from './dto/place-unit.dto';
 import { GameState, Player, PlayerState } from './games.types';
 
 export class GamesService {
-  constructor(private readonly _cardsService: CardsService) {}
   private Rooms: GameState[] = [];
 
-  createRoom(players: Player[], gameId: string) {
+  private readonly actions: GameActions;
+
+  constructor(private readonly _cardsService: CardsService) {
+    this.actions = new GameActions(_cardsService)
+  }
+
+  createRoom(players: Player[], gameID: string) {
     const [player1, player2] = players;
 
     const player1State = this.initializePlayerState(player1);
@@ -16,7 +22,7 @@ export class GamesService {
     const room: GameState = {
       players: [player1State, player2State],
       board: [],
-      gameId: gameId,
+      gameID: gameID,
       player1Turn: true,
     };
 
@@ -27,7 +33,7 @@ export class GamesService {
 
   private initializePlayerState(player: Player) {
     const player1Cards = player.deck.map((cardId) =>
-      this._cardsService.createCardFromId(cardId),
+      this._cardsService.createCardFromId(cardId, player.id),
     );
 
     const playerState: PlayerState = {
@@ -41,14 +47,14 @@ export class GamesService {
     return playerState;
   }
 
-  getRoom(gameId: string) {
-    const game = this.Rooms.find((room) => room.gameId == gameId);
+  getRoom(gameID: string) {
+    const game = this.Rooms.find((room) => room.gameID == gameID);
     if (!game) throw new Error("Game doesn't exist");
     return game;
   }
 
-  placeUnit(playerID: string, gameId: string, placeUnitData: PlaceUnitDto) {
-    const context = this.getPlayerGame(playerID, gameId);
+  placeUnit(playerID: string, gameID: string, placeUnitData: PlaceUnitDto) {
+    const context = this.getPlayerGame(playerID, gameID);
     const { isPlayer1, bench, game } = context;
 
     const { id, boardIndex } = placeUnitData;
@@ -70,6 +76,20 @@ export class GamesService {
       card: card,
       position: boardIndex,
     };
+  }
+
+  attack(playerID: string, gameID: string, attackerID: string, targetID: string)
+  {
+    const context = this.getPlayerGame(playerID, gameID)
+    const { game } = context
+
+    const attackerInstance = this.actions.findUnitInstance(game, attackerID)
+    const targetInstance = this.actions.findUnitInstance(game, targetID)
+
+    if (attackerInstance.ownerID != playerID || targetInstance.ownerID == playerID) throw new Error("Invalid targets")
+
+    this.actions.dealDamageToUnitInstance(game, targetInstance, attackerInstance.atk)
+    this.actions.dealDamageToUnitInstance(game, attackerInstance, targetInstance.atk)
   }
 
   private throwIfPlaceUnitInvalid(game: GameState, boardIndex: number) {

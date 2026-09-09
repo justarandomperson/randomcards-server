@@ -11,6 +11,7 @@ import { Socket } from 'socket.io';
 import { JwtService } from '@nestjs/jwt';
 import { GamesService } from './games.service';
 import { PlaceUnitDto } from './dto/place-unit.dto';
+import { AttackDataDto } from './dto/attack-data.dto';
 
 @WebSocketGateway()
 export class GameGateway implements OnModuleInit {
@@ -106,6 +107,18 @@ export class GameGateway implements OnModuleInit {
       card: move.card,
       destination: move.position,
     });
+  }
+
+  @SubscribeMessage('attack')
+  attack(client: Socket, attackData: AttackDataDto)
+  {
+    const gameID = client.data.gameID;
+
+    this._gamesService.attack(client.id, gameID, attackData.attackerID, attackData.targetID)
+    
+    const updatedBoard = this._gamesService.getUpdatedBoard(gameID)
+
+    this.server.to(gameID).emit('updateBoard', updatedBoard);
   }
 
   @SubscribeMessage('end_turn')
