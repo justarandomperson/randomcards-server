@@ -15,7 +15,7 @@ import { AttackDataDto } from './dto/attack-data.dto';
 
 @WebSocketGateway({  
     cors: {
-    origin: 'http://localhost:5173',
+    origin: 'http://localhost:3001',
     credentials: true,
   },})
 export class GameGateway implements OnModuleInit {
