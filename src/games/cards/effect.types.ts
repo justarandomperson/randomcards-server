@@ -12,7 +12,7 @@ export type EffectContext = {
 };
 
 export type Effect = {
-  trigger: EffectTrigger;
+  trigger: EffectTrigger[];
   execute(ctx: EffectContext): void;
 
   value?: number;

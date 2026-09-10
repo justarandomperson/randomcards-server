@@ -1,12 +1,12 @@
 import { Card, UnitInstance, SpellInstance } from './cards/card.types';
 
 export type GameState = {
-  players: PlayerState[];
+  players: Map<string, PlayerState>
   gameID: string;
 
   board: (UnitInstance | null)[];
 
-  player1Turn: boolean;
+  playerTurnID: string;
 };
 
 export type PlayerState = {

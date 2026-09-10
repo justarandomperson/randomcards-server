@@ -18,17 +18,17 @@ export class GameActions {
     else this.updateUnitInstance(game, target.id, target);
   }
 
-  dealDamageToPlayer(game: GameState, playerIndex: number, amount: number) {
-    if (playerIndex < 0 || playerIndex > 1) throw new Error("Player doesn't exist");
+  dealDamageToPlayer(game: GameState, playerID: string, amount: number) {
+    if (!game.players.has(playerID)) throw new Error("Player doesn't exist");
 
-    game.players[playerIndex].hp -= amount;
+    game.players[playerID].hp -= amount;
 
-    return game.players[playerIndex].hp < 0;
+    return game.players[playerID].hp < 0;
   }
 
-  addCardToPlayerHand(game: GameState, cardID: string, playerIndex: number, playerID: string) {
+  addCardToPlayerHand(game: GameState, cardID: string, playerID: string) {
     const card = this._cardsService.createCardFromId(cardID, playerID);
-    game.players[playerIndex].hand.push(card);
+    game.players[playerID].hand.push(card);
   }
 
   summonUnit(game: GameState, cardID: string, playerIndex: number, playerID: string) {

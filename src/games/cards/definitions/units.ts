@@ -100,4 +100,20 @@ export const unitCards: UnitInstance[] = [
         effects: [],
         id: "10"
     },
+
+        {
+        name: "sans the skeleton",
+        atk: 1,
+        hp: 1,
+        cost: 6,
+        effects: [
+            {
+                trigger: ["onSummon", "onTurnStart"],
+                execute: (ctx) => {
+                    ctx.actions.addCardToPlayerHand(ctx.game, "666", ctx.playerId)
+                }
+            }
+        ],
+        id: "11"
+    },
 ];

@@ -131,16 +131,13 @@ export class GameGateway implements OnModuleInit {
 
     const game = this._gamesService.getRoom(gameID);
 
-    game.player1Turn = !game.player1Turn;
-
-    //if player1Turn is true, ! will make it negative so it'll be false and when converting to number
-    // it will get the index 0, and vice versa for player2.
-    const playerTurnId = game.players[Number(!game.player1Turn)].id;
-    this.startPlayerTurn(playerTurnId, gameID);
+    this._gamesService.endTurn(client.id, gameID)
+    this.startPlayerTurn(game.playerTurnID, gameID);
   }
 
   startPlayerTurn(id: string, gameID: string) {
     this.server.to(id).emit('start_turn');
+    this._gamesService.startTurn(id, gameID)
     this.updatePlayer(id, gameID);
   }
 

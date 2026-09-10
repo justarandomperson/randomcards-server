@@ -1,5 +1,6 @@
 import { UnitInstance, SpellInstance } from './cards/card.types';
 import { CardsService } from './cards/cards.service';
+import { EffectTrigger } from './cards/effect.types';
 import { GameActions } from './cards/game-actions';
 import { PlaceUnitDto } from './dto/place-unit.dto';
 import { GameState, Player, PlayerState } from './games.types';
@@ -20,10 +21,13 @@ export class GamesService {
     const player2State = this.initializePlayerState(player2);
 
     const room: GameState = {
-      players: [player1State, player2State],
+      players: new Map([
+        [player1.id, player1State],
+        [player2.id, player2State]
+      ]),
       board: [],
       gameID: gameID,
-      player1Turn: true,
+      playerTurnID: player1.id,
     };
 
     this.Rooms.push(room);
@@ -98,26 +102,38 @@ export class GamesService {
     if (game.board[boardIndex] != null) throw new Error('slot taken');
   }
 
+  startTurn(playerID: string, gameID: string)
+  {
+    const context = this.getPlayerGame(playerID, gameID)
+    const game = context.game
+
+    this.triggerUnits(game, playerID, "onTurnStart")
+  }
+
   endTurn(playerID: string, gameID: string) {
     const context = this.getPlayerGame(playerID, gameID);
     const game = context.game;
 
-    game.player1Turn = !game.player1Turn;
+    const playerIds = game.players.keys()
+    const playerIndex = Array.from(playerIds).indexOf(playerID)
+    const nextIndex = (playerIndex + 1) % game.players.size
+    const nextID = playerIds[nextIndex]
+
+    game.playerTurnID = nextID
+    this.triggerUnits(game, playerID, "onTurnEnd")
   }
 
   getPlayerGame(playerID: string, gameID: string) {
     const game = this.getRoom(gameID);
 
     if (
-      !game.players.find((player) => {
-        player.id == playerID;
-      })
+      !game.players.has(playerID)
     )
       throw new Error('player not in game');
 
-    const isPlayer1 = playerID === game.players[0].id;
-    const playerState = isPlayer1 ? game.players[0] : game.players[1];
-    const isPlayerTurn = isPlayer1 === game.player1Turn;
+    const isPlayer1 = playerID === game.players.entries().next().value?.[1].id
+    const playerState = game.players[playerID]
+    const isPlayerTurn = game.playerTurnID == playerID
 
     if (!isPlayerTurn) throw new Error("not player's turn");
 
@@ -142,5 +158,20 @@ export class GamesService {
   getUpdatedBoard(gameID: string) {
     const game = this.getRoom(gameID);
     return game.board;
+  }
+
+  private triggerUnits(game: GameState, playerID: string, trigger: EffectTrigger)
+  {
+      const summonedUnits = game.board.filter(
+    (unit): unit is UnitInstance => unit?.ownerID === playerID
+    );
+    summonedUnits.map((unit) => {
+      unit.effects.map((effect) => {
+        if (effect.trigger.includes(trigger))
+        {
+          effect.execute({game: game, playerId: playerID, actions: this.actions, source: unit})
+        }
+      })
+    })
   }
 }
