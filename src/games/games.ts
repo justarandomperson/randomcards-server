@@ -56,6 +56,8 @@ export class GameGateway implements OnModuleInit {
   onQueue(client: Socket, deck: string[]) {
     const match = this._matchMakingService.addIntoQueue(client.id, deck);
     client.data.deck = deck;
+
+    console.log("player connected to queue: ", client.id, client.data.deck)
     if (!match) return;
 
     const [player1id, player2id] = match.players;
