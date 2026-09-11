@@ -1,3 +1,4 @@
+import { Injectable } from '@nestjs/common';
 import { UnitInstance, SpellInstance } from './cards/card.types';
 import { CardsService } from './cards/cards.service';
 import { EffectTrigger } from './cards/effect.types';
@@ -5,6 +6,7 @@ import { GameActions } from './cards/game-actions';
 import { PlaceUnitDto } from './dto/place-unit.dto';
 import { GameState, Player, PlayerState } from './games.types';
 
+@Injectable()
 export class GamesService {
   private Rooms: GameState[] = [];
 
@@ -132,10 +134,7 @@ export class GamesService {
       throw new Error('player not in game');
 
     const isPlayer1 = playerID === game.players.entries().next().value?.[1].id
-    const playerState = game.players[playerID]
-    const isPlayerTurn = game.playerTurnID == playerID
-
-    if (!isPlayerTurn) throw new Error("not player's turn");
+    const playerState = game.players.get(playerID) as PlayerState
 
     return {
       isPlayer1,
