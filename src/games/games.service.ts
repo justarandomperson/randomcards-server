@@ -36,14 +36,14 @@ export class GamesService {
   }
 
   private initializePlayerState(player: Player) {
-    const player1Cards = player.deck.map((cardId) =>
+    const playerCards = player.deck.map((cardId) =>
       this._cardsService.createCardFromId(cardId, player.id),
     );
 
     const playerState: PlayerState = {
-      deck: player1Cards,
+      deck: [],
       hp: 20,
-      bench: [],
+      bench: playerCards,
       hand: [],
       id: player.id,
     };
