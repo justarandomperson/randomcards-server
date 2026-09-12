@@ -3,6 +3,7 @@ import { GamesService } from './games.service';
 import { CardsService } from './cards/cards.service';
 import { Player } from './games.types';
 
+
 describe('GamesService', () => {
   let service: GamesService;
 
@@ -43,7 +44,7 @@ describe('GamesService', () => {
       it('should move a card from the bench onto the board', () => {
         const game = service.createRoom([player1, player2], 'game1');
 
-        const result = service.placeUnit('player1', 'game1', {
+        const result = service.playUnit('player1', 'game1', {
           id: '1',
           boardIndex: 1,
         });

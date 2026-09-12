@@ -1,4 +1,4 @@
-export class PlaceUnitDto {
+export class PlayUnitDto {
   id: string;
   boardIndex: number;
 }

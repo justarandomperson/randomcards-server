@@ -1,6 +1,8 @@
-import { Card, UnitInstance, SpellInstance } from './cards/card.types';
+import { UnitInstance, SpellInstance } from './cards/card.types';
+
 
 export type GameState = {
+  //? do we maybe need to keep track of gamePhase? do calculate who starts their shop phase first?
   players: Map<string, PlayerState>
   gameID: string;
 
@@ -12,7 +14,8 @@ export type GameState = {
 export type PlayerState = {
   id: string;
   hp: number;
-  deck: SpellInstance[];
+  money: number;
+  drawpile: SpellInstance[];
   hand: SpellInstance[];
   bench: UnitInstance[];
 };

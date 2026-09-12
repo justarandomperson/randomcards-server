@@ -1,35 +1,36 @@
 import { OnModuleInit } from '@nestjs/common';
-import {
-  MessageBody,
-  SubscribeMessage,
-  WebSocketGateway,
-  WebSocketServer,
-} from '@nestjs/websockets';
+import { SubscribeMessage, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { Server } from 'socket.io';
 import { MatchMakingService } from '../matchmaking/matchmaking.service';
 import { Socket } from 'socket.io';
 import { JwtService } from '@nestjs/jwt';
 import { GamesService } from './games.service';
-import { PlaceUnitDto } from './dto/place-unit.dto';
 import { AttackDataDto } from './dto/attack-data.dto';
+import { PlayUnitDto } from './dto/play-unit.dto';
+
 
 @WebSocketGateway({  
     cors: {
     origin: 'http://localhost:3001',
     credentials: true,
-  },})
+  }
+})
+
+
 export class GameGateway implements OnModuleInit {
   constructor(
     private _gamesService: GamesService,
     private _matchMakingService: MatchMakingService,
     private _jwtService: JwtService,
   ) {}
+
   @WebSocketServer()
   server: Server;
 
   onModuleInit() {
     this.server.on('connection', (socket) => {
-      socket.on('disconnect', (reason) => {
+      socket.on('disconnect', (reason) => { 
+        console.log(`Socket ${socket.id} disconnected: ${reason}`); //* debug message
         this._matchMakingService.removeFromQueue(socket.id);
       });
     });
@@ -54,10 +55,12 @@ export class GameGateway implements OnModuleInit {
 
   @SubscribeMessage('queue')
   onQueue(client: Socket, deck: string[]) {
-    const match = this._matchMakingService.addIntoQueue(client.id, deck);
+    const match = this._matchMakingService.addIntoQueue(client.id);
+    console.log(client);
     client.data.deck = deck;
 
     if (!match) return;
+    console.log(`Match ${match.gameID} starting...`); //* debug message
 
     const [player1id, player2id] = match.players;
 
@@ -96,34 +99,24 @@ export class GameGateway implements OnModuleInit {
     this._matchMakingService.removeFromQueue(client.id);
   }
 
-  @SubscribeMessage('place_unit')
-  placeUnit(client: Socket, placeUnitData: PlaceUnitDto) {
-    const move = this._gamesService.placeUnit(
+  @SubscribeMessage('play_unit')
+  playUnit(client: Socket, playUnitData: PlayUnitDto) {
+    const move = this._gamesService.playUnit(
       client.id,
       client.data.gameID,
-      placeUnitData,
+      playUnitData,
     );
+
     if (!move) {
       client.emit('invalid');
       return;
     }
 
+    //? maybe change how this works to an 'update_card' event?
     this.server.to(client.data.gameID).emit('made_move', {
       card: move.card,
       destination: move.position,
     });
-  }
-
-  @SubscribeMessage('attack')
-  attack(client: Socket, attackData: AttackDataDto)
-  {
-    const gameID = client.data.gameID;
-
-    this._gamesService.attack(client.id, gameID, attackData.attackerID, attackData.targetID)
-    
-    const updatedBoard = this._gamesService.getUpdatedBoard(gameID)
-
-    this.server.to(gameID).emit('updateBoard', updatedBoard);
   }
 
   @SubscribeMessage('end_turn')
@@ -143,13 +136,30 @@ export class GameGateway implements OnModuleInit {
   }
 
   updatePlayer(id: string, gameID: string) {
-    //will refactor later
-    const updatedHand = this._gamesService.getUpdatedHand(id, gameID);
-    const updatedBench = this._gamesService.getUpdatedBench(id, gameID);
-    const updatedBoard = this._gamesService.getUpdatedBoard(gameID);
+    // TODO: refactor later
+    try {
+        const updatedHand = this._gamesService.getUpdatedHand(id, gameID);
+        const updatedBench = this._gamesService.getUpdatedBench(id, gameID);
+        const updatedBoard = this._gamesService.getUpdatedBoard(gameID);
 
-    this.server.to(id).emit('updateHand', updatedHand);
-    this.server.to(id).emit('updateBench', updatedBench);
-    this.server.to(id).emit('updateBoard', updatedBoard);
+        this.server.to(id).emit('update_hand', updatedHand);
+        this.server.to(id).emit('update_bench', updatedBench);
+        this.server.to(id).emit('update_board', updatedBoard);
+    } catch (err) {
+        console.error('updatePlayer failed:', err);
+    }
+  }
+
+  // TODO: make combat system later
+  @SubscribeMessage('attack')
+  attack(client: Socket, attackData: AttackDataDto)
+  {
+    const gameID = client.data.gameID;
+
+    this._gamesService.attack(client.id, gameID, attackData.attackerID, attackData.targetID)
+    
+    const updatedBoard = this._gamesService.getUpdatedBoard(gameID)
+
+    this.server.to(gameID).emit('updateBoard', updatedBoard);
   }
 }

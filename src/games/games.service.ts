@@ -1,10 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { UnitInstance, SpellInstance } from './cards/card.types';
+import { UnitInstance } from './cards/card.types';
 import { CardsService } from './cards/cards.service';
 import { EffectTrigger } from './cards/effect.types';
 import { GameActions } from './cards/game-actions';
-import { PlaceUnitDto } from './dto/place-unit.dto';
 import { GameState, Player, PlayerState } from './games.types';
+import { PlayUnitDto } from './dto/play-unit.dto';
+
 
 @Injectable()
 export class GamesService {
@@ -43,8 +44,9 @@ export class GamesService {
     );
 
     const playerState: PlayerState = {
-      deck: [],
-      hp: 20,
+      drawpile: [],
+      hp: 20, //? maybe make this a constant
+      money: 0, //? maybe make this a constant
       bench: playerCards,
       hand: [],
       id: player.id,
@@ -59,17 +61,17 @@ export class GamesService {
     return game;
   }
 
-  placeUnit(playerID: string, gameID: string, placeUnitData: PlaceUnitDto) {
+  playUnit(playerID: string, gameID: string, playUnitData: PlayUnitDto) {
     const context = this.getPlayerGame(playerID, gameID);
     const { isPlayer1, bench, game } = context;
 
-    const { id, boardIndex } = placeUnitData;
+    const { id, boardIndex } = playUnitData;
 
     const translatedDestination = isPlayer1
       ? boardIndex
       : game.board.length - 1 - boardIndex;
 
-    this.throwIfPlaceUnitInvalid(game, translatedDestination);
+    this.throwIfPlayUnitInvalid(game, translatedDestination);
 
     const card: UnitInstance | undefined = bench.find((card) => {
       card.id == id;
@@ -84,22 +86,8 @@ export class GamesService {
     };
   }
 
-  attack(playerID: string, gameID: string, attackerID: string, targetID: string)
-  {
-    const context = this.getPlayerGame(playerID, gameID)
-    const { game } = context
-
-    const attackerInstance = this.actions.findUnitInstance(game, attackerID)
-    const targetInstance = this.actions.findUnitInstance(game, targetID)
-
-    if (attackerInstance.ownerID != playerID || targetInstance.ownerID == playerID) throw new Error("Invalid targets")
-
-    this.actions.dealDamageToUnitInstance(game, targetInstance, attackerInstance.atk)
-    this.actions.dealDamageToUnitInstance(game, attackerInstance, targetInstance.atk)
-  }
-
-  private throwIfPlaceUnitInvalid(game: GameState, boardIndex: number) {
-    if (boardIndex > game.board.length || boardIndex < 0)
+  private throwIfPlayUnitInvalid(game: GameState, boardIndex: number) {
+    if (boardIndex > game.board.length || boardIndex < 0) 
       throw new Error('out of bounds');
     if (game.board[boardIndex] != null) throw new Error('slot taken');
   }
@@ -128,9 +116,7 @@ export class GamesService {
   getPlayerGame(playerID: string, gameID: string) {
     const game = this.getRoom(gameID);
 
-    if (
-      !game.players.has(playerID)
-    )
+    if (!game.players.has(playerID))
       throw new Error('player not in game');
 
     const isPlayer1 = playerID === game.players.entries().next().value?.[1].id
@@ -172,5 +158,20 @@ export class GamesService {
         }
       })
     })
+  }
+
+  // TODO: make combat system later
+  attack(playerID: string, gameID: string, attackerID: string, targetID: string)
+  {
+    const context = this.getPlayerGame(playerID, gameID)
+    const { game } = context
+
+    const attackerInstance = this.actions.findUnitInstance(game, attackerID)
+    const targetInstance = this.actions.findUnitInstance(game, targetID)
+
+    if (attackerInstance.ownerID != playerID || targetInstance.ownerID == playerID) throw new Error("Invalid targets")
+
+    this.actions.dealDamageToUnitInstance(game, targetInstance, attackerInstance.atk)
+    this.actions.dealDamageToUnitInstance(game, attackerInstance, targetInstance.atk)
   }
 }
