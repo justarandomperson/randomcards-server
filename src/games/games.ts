@@ -94,8 +94,8 @@ export class GameGateway implements OnModuleInit {
     this.updatePlayer(player2id, match.gameID);
   }
 
-  @SubscribeMessage('leave_queue')
-  onLeaveQueue(client: Socket) {
+  @SubscribeMessage('dequeue')
+  onDequeue(client: Socket) {
     this._matchMakingService.removeFromQueue(client.id);
   }
 
