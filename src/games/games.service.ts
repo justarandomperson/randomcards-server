@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { UnitInstance } from './cards/card.types';
-import { CardsService } from './cards/cards.service';
+import { CardsService } from './cards/card.service';
 import { EffectTrigger } from './cards/effect.types';
 import { GameActions } from './cards/game-actions';
 import { GameState, Player, PlayerState } from './games.types';

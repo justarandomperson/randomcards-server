@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { GamesService } from './games.service';
-import { CardsService } from './cards/cards.service';
+import { CardsService } from './cards/card.service';
 import { Player } from './games.types';
 
 

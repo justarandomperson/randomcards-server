@@ -7,6 +7,7 @@ import { JwtService } from '@nestjs/jwt';
 import { GamesService } from './games.service';
 import { AttackDataDto } from './dto/attack-data.dto';
 import { PlayUnitDto } from './dto/play-unit.dto';
+import { type DeckIds, SOCKET_EVENT_NAMES } from './games.types';
 
 
 @WebSocketGateway({  
@@ -53,13 +54,16 @@ export class GameGateway implements OnModuleInit {
     });
   }
 
-  @SubscribeMessage('queue')
-  onQueue(client: Socket, deck: string[]) {
-    const match = this._matchMakingService.addIntoQueue(client.id);
-    console.log(client);
-    client.data.deck = deck;
 
-    if (!match) return;
+  // listeners
+  @SubscribeMessage(SOCKET_EVENT_NAMES.QUEUE)
+  onQueue(client: Socket, deck: DeckIds) { //? maybe change deck: DeckIds to a Dto structure?
+    const match = this._matchMakingService.addIntoQueue(client.id);
+    client.data.deck = deck; //? whats this
+
+    if (!match) {
+      return;
+    }
     console.log(`Match ${match.gameID} starting...`); //* debug message
 
     const [player1id, player2id] = match.players;
@@ -76,10 +80,11 @@ export class GameGateway implements OnModuleInit {
     player1.join(match.gameID);
     player2.join(match.gameID);
 
-    this.server.to(match.gameID).emit('match_start', {
+    // TODO: fix emit to send each player their own data and the opponents data differed
+    this.server.to(match.gameID).emit(SOCKET_EVENT_NAMES.MATCH_START, {
       players: [player1.data.username, player2.data.username],
-      gameID: match.gameID,
-      firstTurn: player1.id,
+      firstTurn: player1.id
+      // gameID: match.gameID, // no reason for that now we will add it later prolly
     });
 
     this._gamesService.createRoom(
@@ -90,65 +95,97 @@ export class GameGateway implements OnModuleInit {
       match.gameID,
     );
 
-    this.updatePlayer(player1id, match.gameID);
-    this.updatePlayer(player2id, match.gameID);
+    // TODO: send each player all of their cards
   }
 
-  @SubscribeMessage('dequeue')
+  @SubscribeMessage(SOCKET_EVENT_NAMES.DEQUEUE)
   onDequeue(client: Socket) {
     this._matchMakingService.removeFromQueue(client.id);
   }
 
-  @SubscribeMessage('play_unit')
-  playUnit(client: Socket, playUnitData: PlayUnitDto) {
+  @SubscribeMessage(SOCKET_EVENT_NAMES.PLAY_UNIT)
+  onPlayUnit(client: Socket, playUnitDto: PlayUnitDto) {
     const move = this._gamesService.playUnit(
       client.id,
       client.data.gameID,
-      playUnitData,
+      playUnitDto
     );
 
     if (!move) {
-      client.emit('invalid');
+      client.emit('invalid'); // TODO: add a "rejected" event to client or something. handle this
       return;
     }
 
-    //? maybe change how this works to an 'update_card' event?
-    this.server.to(client.data.gameID).emit('made_move', {
-      card: move.card,
-      destination: move.position,
-    });
+    // TODO: run update_card event for the opponent
   }
 
-  @SubscribeMessage('end_turn')
-  endTurn(client: Socket) {
+  @SubscribeMessage(SOCKET_EVENT_NAMES.PLAY_SPELL)
+  onPlaySpell() {
+    // TODO: this
+  }
+
+  @SubscribeMessage(SOCKET_EVENT_NAMES.BUY_ARTIFACT)
+  onBuyArtifact() {
+    // TODO: this
+  }
+
+  @SubscribeMessage(SOCKET_EVENT_NAMES.END_TURN)
+  onEndTurn(client: Socket) {
     const gameID = client.data.gameID;
 
     const game = this._gamesService.getRoom(gameID);
 
     this._gamesService.endTurn(client.id, gameID)
-    this.startPlayerTurn(game.playerTurnID, gameID);
+    this.startTurn(game.playerTurnID, gameID);
   }
 
-  startPlayerTurn(id: string, gameID: string) {
-    this.server.to(id).emit('start_turn');
-    this._gamesService.startTurn(id, gameID)
-    this.updatePlayer(id, gameID);
+  
+  // emitters
+  startTurn(id: string, gameID: string) {
+    // TODO: this
+    // emit START_TURN
   }
 
-  updatePlayer(id: string, gameID: string) {
-    // TODO: refactor later
-    try {
-        const updatedHand = this._gamesService.getUpdatedHand(id, gameID);
-        const updatedBench = this._gamesService.getUpdatedBench(id, gameID);
-        const updatedBoard = this._gamesService.getUpdatedBoard(gameID);
-
-        this.server.to(id).emit('update_hand', updatedHand);
-        this.server.to(id).emit('update_bench', updatedBench);
-        this.server.to(id).emit('update_board', updatedBoard);
-    } catch (err) {
-        console.error('updatePlayer failed:', err);
-    }
+  updateGamePhase() {
+    // TODO: this
   }
+
+  updateMoney() {
+    // TODO: this
+  }
+
+  updateHealth() {
+    // TODO: this
+  }
+
+  updateDrawpileCount() {
+    // TODO: this
+  }
+
+  updateCard() {
+    // TODO: this
+  }
+
+  updateArtifact() {
+    // TODO: this
+  }
+
+  updateHand() {
+
+  }
+
+  updateBench() {
+
+  }
+
+  updateBoard() {
+
+  }
+
+  updateShop() {
+    
+  }
+
 
   // TODO: make combat system later
   @SubscribeMessage('attack')

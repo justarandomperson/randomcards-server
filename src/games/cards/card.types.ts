@@ -1,23 +1,54 @@
 import { Effect } from './effect.types';
 
-export type UnitInstance = {
-  name: string;
-  atk: number;
-  hp: number;
-  cost: number;
-  id: string;
-  ownerID?: string;
 
-  effects: Effect[];
+export enum CardType {
+  UNIT = 'unit',
+  SPELL = 'spell'
+}
+
+
+export type UnitInstance = {
+  instanceId?: string
+  id: string
+  name: string
+  ownerID?: string
+  type: CardType.UNIT
+  effectDesc: string
+  effects: Effect[]
+  cost: number
+  atk: number
+  hp: number
 };
+
+export type UnitData = {
+  instanceId?: string
+  id: string
+  name: string
+  type: CardType.UNIT
+  effectDesc: string
+  cost: number
+  hp: number
+  atk: number
+}
+
 
 export type SpellInstance = {
-  name: string;
-  cost: number;
-  id: string;
-
+  instanceId?: string
+  id: string
+  name: string
+  ownerID?: string
+  type: CardType.SPELL
+  effectDesc: string
+  effects: Effect[]
+  cost: number
 };
 
-export type Card = {
-  id: string;
-};
+
+export type SpellData = {
+  instanceId?: string
+  id: string
+  name: string
+  type: CardType.SPELL
+  effectDesc: string
+  cost: number
+}

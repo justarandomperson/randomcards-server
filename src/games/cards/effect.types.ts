@@ -1,12 +1,12 @@
-import { Card } from './card.types';
 import { GameState } from '../games.types';
 import { GameActions } from './game-actions';
+
 
 export type EffectTrigger = 'onSummon' | 'onTurnStart' | 'onTurnEnd';
 
 export type EffectContext = {
   game: GameState;
-  source: Card;
+  source: string;
   playerId: string;
   actions: GameActions;
 };
