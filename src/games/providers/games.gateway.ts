@@ -11,6 +11,7 @@ import { BasicPlayerData, Match } from '../../matchmaking/matchmaking.types';
 import { GamesEmitter } from './games.emitter';
 import PlayUnitDto from '../dto/play-unit.dto';
 import { deckIdsToDeck } from '../logic/typeConverters';
+import PlaySpellDto from '../dto/play-spell.dto';
 
 
 @UsePipes(new ValidationPipe({
@@ -139,8 +140,11 @@ export class GamesGateway implements OnGatewayInit, OnGatewayDisconnect {
 	}
 
 	@SubscribeMessage(SOCKET_EVENT_NAMES.PLAY_SPELL)
-	onPlaySpell() {
-		// TODO: this
+	onPlaySpell(client: Socket, playSpellDto: PlaySpellDto) {
+		this._gamesService.playSpell(this.getClientGameId(client), client.id, playSpellDto);
+
+		// TODO: run update_card event for the opponent
+		this._gamesEmitter.updateCard()
 	}
 
 	@SubscribeMessage(SOCKET_EVENT_NAMES.BUY_ARTIFACT)
@@ -150,15 +154,26 @@ export class GamesGateway implements OnGatewayInit, OnGatewayDisconnect {
 
 	@SubscribeMessage(SOCKET_EVENT_NAMES.END_TURN)
 	onEndTurn(client: Socket) {
-		const gameId = client.data.gameId;
+		const gameId = this.getClientGameId(client);
 		this._gamesService.endTurn(gameId, client.id);
 
 		// start opponents turn
 		const opponent = this._gamesService.getOpponentState(gameId, client.id);
 		const opponentSocket = this.getSocket(opponent.socketId);
-		this._gamesEmitter.allTurnStartEvents(opponentSocket, opponent.drawpile.length);
+		this.startTurn(opponentSocket, gameId);
 	}
 
+	private startTurn(client: Socket, gameId: string) {
+		this._gamesEmitter.startTurn(client);
+
+		const { newSpell, newMoney, newDrawpileCount } = this._gamesService.startTurn(gameId, client.id);
+		if (newSpell) {
+			this._gamesEmitter.updateCard() // TODO: this
+			this._gamesEmitter.updateDrawpileCount(this.server, gameId, client.id, newDrawpileCount);
+		}
+		
+		this._gamesEmitter.updateMoney(this.server, gameId, client.id, newMoney);
+	}
 
 
 	// TODO: make combat system later

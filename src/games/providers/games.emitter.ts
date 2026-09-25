@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
-import { GameState, MatchStartPayload, PlayerState, SOCKET_EVENT_NAMES, UpdateCardPayload, UpdateDrawpileCountPayload, UpdateHealthPayload, UpdateMoneyPayload } from '../shared/games.types';
-import { artifactInstanceToClient, cardInstanceToClient, InstanceToClient, playerStateToClient, spellInstanceToClient, unitInstanceToClient } from '../logic/typeConverters';
-import { CardLocation, CardType, SpellInstance, UnitInstance } from '../../cards/cards.types';
+import { GameState, MatchStartPayload, PlayerState, SOCKET_EVENT_NAMES, UpdateDrawpileCountPayload, UpdateHealthPayload, UpdateMoneyPayload } from '../shared/games.types';
+import { artifactInstanceToClient, playerStateToClient, spellInstanceToClient, unitInstanceToClient } from '../logic/typeConverters';
+import { SpellInstance, UnitInstance } from '../../cards/cards.types';
 import { ArtifactInstance } from '../../artifacts/artifacts.types';
 import { WsException } from '@nestjs/websockets';
 
@@ -53,31 +53,31 @@ export class GamesEmitter {
         server.to(gameId).emit(SOCKET_EVENT_NAMES.UPDATE_GAME_PHASE);
     }
 
-    updateMoney(client: Socket, playerId: string, money: number) {
+    updateMoney(server: Server, gameId: string, playerId: string, money: number) {
         const payload: UpdateMoneyPayload = {
             playerId,
             newMoney: money
         };
 
-        client.emit(SOCKET_EVENT_NAMES.UPDATE_HEALTH, payload);
+        server.to(gameId).emit(SOCKET_EVENT_NAMES.UPDATE_HEALTH, payload);
     }
 
-    updateHealth(client: Socket, playerId: string, health: number) {
+    updateHealth(server: Server, gameId: string, playerId: string, health: number) {
         const payload: UpdateHealthPayload = {
             playerId,
             newHealth: health
         };
 
-        client.emit(SOCKET_EVENT_NAMES.UPDATE_HEALTH, payload);
+        server.to(gameId).emit(SOCKET_EVENT_NAMES.UPDATE_HEALTH, payload);
     }
 
-    updateDrawpileCount(client: Socket, playerId: string, drawpileCount: number) {
+    updateDrawpileCount(server: Server, gameId: string, playerId: string, drawpileCount: number) {
         const payload: UpdateDrawpileCountPayload = {
             playerId,
             newDrawpileCount: drawpileCount
         };
 
-        client.emit(SOCKET_EVENT_NAMES.UPDATE_DRAWPILE_COUNT, payload);
+        server.to(gameId).emit(SOCKET_EVENT_NAMES.UPDATE_DRAWPILE_COUNT, payload);
     }
 
     updateCard() {

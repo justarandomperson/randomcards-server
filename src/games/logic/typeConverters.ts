@@ -1,5 +1,5 @@
 import { ArtifactInstance, ClientArtifactData } from "../../artifacts/artifacts.types";
-import { CardType, ClientSpellData, ClientUnitData, SpellInstance, UnitInstance } from "../../cards/cards.types";
+import { ClientSpellData, ClientUnitData, SpellInstance, UnitInstance } from "../../cards/cards.types";
 import { DeckIds } from "../../matchmaking/matchmaking.types";
 import { ClientPlayerData, Deck, PlayerState } from "../shared/games.types";
 
