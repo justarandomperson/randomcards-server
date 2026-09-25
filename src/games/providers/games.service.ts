@@ -1,0 +1,259 @@
+    import { Injectable } from '@nestjs/common';
+    import { SpellInstance, UnitInstance } from '../../cards/cards.types';
+    import { CardsService } from '../../cards/cards.service';
+    import { EffectTrigger } from '../../effects/effect.types';
+    import { GameActions } from '../../cards/game-actions';
+    import { Deck, GamePhase, GameState, PlayerState } from '../shared/games.types';
+    import { Match } from '../../matchmaking/matchmaking.types';
+    import { fillShop, initPlayerState } from '../logic/gameSetup';
+    import { MAX_CARD_IN_BOARD } from '../shared/games.constants';
+    import { WsException } from '@nestjs/websockets';
+    import PlayUnitDto from '../dto/play-unit.dto';
+    import { CheckPlayUnitValid } from '../logic/serviceHelpers';
+import PlaySpellDto from '../dto/play-spell.dto';
+
+
+    @Injectable()
+    export class GamesService {
+    private readonly _gameStates: Map<string, GameState> = new Map();
+    private readonly actions: GameActions;
+
+    constructor(private readonly _cardsService: CardsService) {
+        this.actions = new GameActions(_cardsService)
+    }
+
+
+    // initializers, getters and setters etc
+    createGameState(match: Match): GameState {
+        const [player1, player2] = match.players;
+
+        const player1State = initPlayerState(player1);
+        const player2State = initPlayerState(player2);
+
+        const game: GameState = {
+            gameId: match.gameId,
+            players: new Map([
+                [player1.socketId, player1State],
+                [player2.socketId, player2State]
+            ]),
+            board: Array(MAX_CARD_IN_BOARD).fill(null),
+            shop: fillShop(), 
+            gamePhase: GamePhase.PLAY,
+            playerTurnId: player1.socketId //* player1 starts first. this is solid
+        };
+
+        this._gameStates.set(game.gameId, game);
+
+        return game;
+    }
+
+    getGameState(gameId: string): GameState {
+        const game = this._gameStates.get(gameId);
+        if (!game) {
+            throw new WsException("Game doesn't exist");
+        }
+
+        return game;
+    }
+
+    removeGameState(gameId: string) {
+        // TODO: implement this
+    }
+
+    getPlayerState(gameId: string, socketId: string): PlayerState {
+        const player = this.getGameState(gameId).players.get(socketId);
+        if (!player) {
+            throw new WsException("Player not in game");
+        }
+
+        return player;
+    }
+
+    getOpponentState(gameId: string, playerSocketId: string): PlayerState {
+        const game = this.getGameState(gameId);
+
+        for (const [socketId, state] of game.players) {
+            if (socketId !== playerSocketId) {
+                return state;
+            }
+        }
+
+        throw new WsException("Opponent not in game");
+    }
+
+    isPlayer1(gameId: string, socketId: string): Boolean {
+        return (this.getGameState(gameId).players.keys()[0] === socketId);
+    }
+
+    private findCardInstance<T extends UnitInstance | SpellInstance>(
+        instanceId: string, cardList: (T | null)[]): { cardInstance: T; index: number } | null {
+        const index = cardList.findIndex(
+            (card) => card?.instanceId === instanceId
+        );
+
+        if (index === -1) {
+            return null;
+        }
+
+        return { cardInstance: cardList[index]!, index };
+    }
+
+
+
+    // services
+    playUnit(gameId: string, socketId: string, playUnitDto: PlayUnitDto) {
+        const game = this.getGameState(gameId);
+        if (socketId !== game.playerTurnId) {
+            throw new WsException("Not players turn");
+        }
+
+        const player = this.getPlayerState(gameId, socketId);
+        const { instanceId, boardIndex } = playUnitDto;
+        const cardInstanceResult = this.findCardInstance(instanceId, player.bench);
+        if (!cardInstanceResult) {
+            throw new WsException('card not found');
+        }
+
+        // TODO: check if player has sufficient cost
+
+        const { cardInstance, index: benchIndex } = cardInstanceResult;
+        const isPlayer1 = this.isPlayer1(gameId, socketId);
+        const translatedDestination = (isPlayer1 ? boardIndex : game.board.length - 1 - boardIndex);
+
+        const message = CheckPlayUnitValid(game, translatedDestination);
+        if (message) {
+            throw new WsException(message);
+        }
+
+        // make the move
+        //? is this by reference or value? does this actually change it or just a copy
+        game.board[translatedDestination] = cardInstance;
+        player.bench[benchIndex] = null;
+
+        // TODO: ill probably need to return it or somethin for update_card to be run later
+    }
+
+    playSpell(gameId: string, socketId: string, playSpellDto: PlaySpellDto) {
+        const game = this.getGameState(gameId);
+        if (socketId !== game.playerTurnId) {
+            throw new WsException("Not players turn");
+        }
+
+        const player = this.getPlayerState(gameId, socketId);
+        const instanceId = playSpellDto;
+        const cardInstanceResult = this.findCardInstance(instanceId, player.bench);
+        if (!cardInstanceResult) {
+            throw new WsException('card not found');
+        }
+
+        // TODO: check if player has sufficient cost
+
+        const { cardInstance, index: benchIndex } = cardInstanceResult;
+        const isPlayer1 = this.isPlayer1(gameId, socketId);
+
+        // make the move
+        //? is this by reference or value? does this actually change it or just a copy
+        game.board[translatedDestination] = cardInstance;
+        player.bench[benchIndex] = null;
+
+        // TODO: ill probably need to return it or somethin for update_card to be run later
+    }
+
+
+
+    startTurn(playerID: string, gameID: string)
+    {
+        // TODO: this later...
+        const context = this.getPlayerGame(playerID, gameID)
+        const game = context.game
+
+        this.triggerUnits(game, playerID, "onTurnStart")
+    }
+
+    endTurn(gameId: string, playerSocketId: string) {
+        const game = this.getGameState(gameId);
+        if (game.playerTurnId !== playerSocketId) {
+        throw new WsException("player doesnt match the playerTurnId");
+        }
+
+        const opponent = this.getOpponentState(gameId, playerSocketId);
+
+        game.playerTurnId = opponent.socketId;
+        this.triggerUnits(game, opponent.socketId, "onTurnEnd"); // TODO: effect system later
+    }
+
+    drawSpell(gameId: string, playerSocketId: string) {
+        // TODO: draw spell from drawpile, remove it from drawpile and add it to hand.
+        //! only if the hand isnt full already. otherwise it just return
+    }
+
+
+
+
+
+
+
+
+
+    getPlayerGame(playerID: string, gameID: string) {
+        const game = this.getRoom(gameID);
+
+        if (!game.players.has(playerID))
+        throw new Error('player not in game');
+
+        const isPlayer1 = playerID === game.players.entries().next().value?.[1].id
+        const playerState = game.players.get(playerID) as PlayerState
+
+        return {
+        isPlayer1,
+        hand: playerState.hand,
+        bench: playerState.bench,
+        game,
+        };
+    }
+
+    getUpdatedHand(playerID: string, gameID: string) {
+        const context = this.getPlayerGame(playerID, gameID);
+        return context.hand;
+    }
+
+    getUpdatedBench(playerID: string, gameID: string) {
+        const context = this.getPlayerGame(playerID, gameID);
+        return context.bench;
+    }
+
+    getUpdatedBoard(gameID: string) {
+        const game = this.getRoom(gameID);
+        return game.board;
+    }
+
+    private triggerUnits(game: GameState, playerID: string, trigger: EffectTrigger)
+    {
+        const summonedUnits = game.board.filter(
+        (unit): unit is UnitInstance => unit?.ownerID === playerID
+        );
+        summonedUnits.map((unit) => {
+        unit.effects.map((effect) => {
+            if (effect.trigger.includes(trigger))
+            {
+            effect.execute({game: game, playerId: playerID, actions: this.actions, source: unit})
+            }
+        })
+        })
+    }
+
+    // TODO: make combat system later
+    attack(playerID: string, gameID: string, attackerID: string, targetID: string)
+    {
+        const context = this.getPlayerGame(playerID, gameID)
+        const { game } = context
+
+        const attackerInstance = this.actions.findUnitInstance(game, attackerID)
+        const targetInstance = this.actions.findUnitInstance(game, targetID)
+
+        if (attackerInstance.ownerID != playerID || targetInstance.ownerID == playerID) throw new Error("Invalid targets")
+
+        this.actions.dealDamageToUnitInstance(game, targetInstance, attackerInstance.atk)
+        this.actions.dealDamageToUnitInstance(game, attackerInstance, targetInstance.atk)
+    }
+    }

@@ -1,6 +1,6 @@
-import { GameState } from '../games.types';
-import { UnitInstance, SpellInstance } from './card.types';
-import { CardsService } from './card.service';
+import { GameState } from '../games/shared/games.types';
+import { UnitInstance, SpellInstance } from './cards.types';
+import { CardsService } from './cards.service';
 
 export class GameActions {
   constructor(

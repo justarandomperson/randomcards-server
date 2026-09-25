@@ -1,4 +1,4 @@
-import { CardType, UnitInstance } from '../card.types';
+import { CardType, UnitInstance } from '../cards.types';
 
 
 export const unitCards: UnitInstance[] = [

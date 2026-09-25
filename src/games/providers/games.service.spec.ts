@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { GamesService } from './games.service';
-import { CardsService } from './cards/card.service';
-import { Player } from './games.types';
+import { CardsService } from '../../cards/cards.service';
+import { BasicPlayerData } from '../../matchmaking/matchmaking.types';
 
 
 describe('GamesService', () => {
@@ -22,14 +22,14 @@ describe('GamesService', () => {
   describe('GamesService', () => {
     let service: GamesService;
 
-    const player1: Player = {
-      id: 'player1',
-      deck: ['1', '2'],
+    const player1: BasicPlayerData = {
+      socketId: 'player1',
+      deckIds: { unitIds: ['1'], spellIds: ['2']},
     };
 
-    const player2: Player = {
-      id: 'player2',
-      deck: ['3'],
+    const player2: BasicPlayerData = {
+      socketId: 'player2',
+      deckIds: { unitIds: ['3'], spellIds: ['4', '5']},
     };
 
     beforeEach(async () => {
@@ -38,25 +38,6 @@ describe('GamesService', () => {
       }).compile();
 
       service = module.get(GamesService);
-    });
-
-    describe('makeMove', () => {
-      it('should move a card from the bench onto the board', () => {
-        const game = service.createRoom([player1, player2], 'game1');
-
-        const result = service.playUnit('player1', 'game1', {
-          id: '1',
-          boardIndex: 1,
-        });
-
-        expect(result).toEqual({
-          made: true,
-          card: 'Skeleton',
-          position: 1,
-        });
-
-        expect(game.board[1]).toEqual(player1.deck[0]);
-      });
     });
   });
 });

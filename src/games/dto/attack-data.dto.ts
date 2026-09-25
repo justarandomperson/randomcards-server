@@ -1,4 +1,4 @@
-export class AttackDataDto {
+export default class AttackDataDto {
   attackerID: string;
   targetID: string
 }

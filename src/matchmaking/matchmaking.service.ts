@@ -1,45 +1,48 @@
 import { Injectable } from '@nestjs/common';
-import { WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
-import { Server } from 'socket.io';
+import { BasicPlayerData, type Match } from './matchmaking.types';
+import { PLAYERS_IN_MATCH } from './matchmaking.constants';
+import { randomUUID } from 'crypto';
 
 
-@WebSocketGateway()
 @Injectable()
 export class MatchMakingService {
-  @WebSocketServer()
-  server: Server;
+  private queue: BasicPlayerData[] = [];
 
-  private queue: string[] = [];
 
-  constructor() {}
-
-  addIntoQueue(socketid: string) {
-    if (this.queue.includes(socketid)) return;
-    this.queue.push(socketid);
-
-    if (this.queue.length == 2) {
-      return this.startMatch();
+  addIntoQueue(player: BasicPlayerData): Match | null {
+    const isPlayerInQueue = this.queue.some((p) => p.socketId === player.socketId);
+    if (isPlayerInQueue) {
+      return null; // TODO: probably should throw an expection but then the games.gateway needs to handle it
     }
+
+    this.queue.push(player);
+
+    if (this.queue.length >= PLAYERS_IN_MATCH) {
+      return this.createMatch();
+    }
+
+    return null;
   }
 
-  removeFromQueue(socketid: string) {
-    if (!this.queue.includes(socketid)) return;
-    const index = this.queue.indexOf(socketid);
-    this.queue.splice(index, 1);
+  removeFromQueue(clientId: string) {
+    this.queue = this.queue.filter((player) => player.socketId !== clientId);
   }
 
-  startMatch() {
-    if (this.queue.length < 2) return null;
+  private createMatch(): Match | null {
+    if (this.queue.length < PLAYERS_IN_MATCH) {
+      return null;
+    } 
 
     const player1 = this.queue.shift();
     const player2 = this.queue.shift();
+    if (!player1 || !player2) {
+      return null;
+    }
 
-    if (!player1 || !player2) return null;
-
-    const gameID = crypto.randomUUID();
+    const gameId = randomUUID();
 
     return {
-      gameID: gameID,
+      gameId: gameId,
       players: [player1, player2],
     };
   }

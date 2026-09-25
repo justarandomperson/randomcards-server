@@ -1,4 +1,4 @@
-import { CardType, SpellInstance } from "../card.types";
+import { CardType, SpellInstance } from "../cards.types";
 
 export const spellCards: SpellInstance[] = [
     {

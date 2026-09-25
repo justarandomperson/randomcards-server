@@ -1,4 +1,4 @@
-import { UnitInstance, SpellInstance } from './card.types';
+import { UnitInstance, SpellInstance } from './cards.types';
 import { unitCards } from './definitions/units';
 
 

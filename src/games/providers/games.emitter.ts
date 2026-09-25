@@ -1,0 +1,122 @@
+import { Injectable } from '@nestjs/common';
+import { Server, Socket } from 'socket.io';
+import { GameState, MatchStartPayload, PlayerState, SOCKET_EVENT_NAMES, UpdateCardPayload, UpdateDrawpileCountPayload, UpdateHealthPayload, UpdateMoneyPayload } from '../shared/games.types';
+import { artifactInstanceToClient, cardInstanceToClient, InstanceToClient, playerStateToClient, spellInstanceToClient, unitInstanceToClient } from '../logic/typeConverters';
+import { CardLocation, CardType, SpellInstance, UnitInstance } from '../../cards/cards.types';
+import { ArtifactInstance } from '../../artifacts/artifacts.types';
+import { WsException } from '@nestjs/websockets';
+
+
+@Injectable()
+export class GamesEmitter {
+
+
+    allMatchStartEvents(player1Socket: Socket, player2Socket: Socket, gameState: GameState) {
+        const player1State = gameState.players.get(player1Socket.id);
+        const player2State = gameState.players.get(player2Socket.id);
+        if (!player1State || !player2State) {
+            //! if this throws then the client dont get match_start but the GameState is created
+            //! so we need to delete the GameState before or whatever, deal with this later
+            throw new WsException("couldn't find the player states");
+        }
+
+        const isPlayer1First = gameState.playerTurnId === player1Socket.id;
+
+        this.matchStart(player1Socket, player1State, player2State, isPlayer1First);
+        this.matchStart(player2Socket, player2State, player1State, !isPlayer1First);
+
+        this.allCardEvents(player1Socket, player1State, gameState.board);
+        this.allCardEvents(player2Socket, player2State, gameState.board);
+
+        this.updateShop(player1Socket, gameState.shop);
+        this.updateShop(player2Socket, gameState.shop);
+    }
+
+    private matchStart(client: Socket, playerState: PlayerState, opponentState: PlayerState, isFirstTurn: boolean) {
+        const playerData = playerStateToClient(playerState);
+        const opponentData = playerStateToClient(opponentState);
+
+        const payload: MatchStartPayload = {
+            playerData: playerData,
+            opponentData: opponentData,
+            isFirstTurn
+        };
+
+        client.emit(SOCKET_EVENT_NAMES.MATCH_START, payload);
+    }
+
+    startTurn(client: Socket) {
+        client.emit(SOCKET_EVENT_NAMES.START_TURN);
+    }
+
+    updateGamePhase(server: Server, gameId: string) {
+        server.to(gameId).emit(SOCKET_EVENT_NAMES.UPDATE_GAME_PHASE);
+    }
+
+    updateMoney(client: Socket, playerId: string, money: number) {
+        const payload: UpdateMoneyPayload = {
+            playerId,
+            newMoney: money
+        };
+
+        client.emit(SOCKET_EVENT_NAMES.UPDATE_HEALTH, payload);
+    }
+
+    updateHealth(client: Socket, playerId: string, health: number) {
+        const payload: UpdateHealthPayload = {
+            playerId,
+            newHealth: health
+        };
+
+        client.emit(SOCKET_EVENT_NAMES.UPDATE_HEALTH, payload);
+    }
+
+    updateDrawpileCount(client: Socket, playerId: string, drawpileCount: number) {
+        const payload: UpdateDrawpileCountPayload = {
+            playerId,
+            newDrawpileCount: drawpileCount
+        };
+
+        client.emit(SOCKET_EVENT_NAMES.UPDATE_DRAWPILE_COUNT, payload);
+    }
+
+    updateCard() {
+
+    }
+    
+    updateArtifact() {
+
+    }
+
+    updateShop(client: Socket, shop: (ArtifactInstance | null)[]) {
+        const payload = shop.map((artifact) => artifact ? artifactInstanceToClient(artifact) : artifact);
+
+        client.emit(SOCKET_EVENT_NAMES.UPDATE_SHOP, payload);
+    }
+
+    // Note: the functions below currently only activate from allStartEvents() and thats why theyre private
+
+    private allCardEvents(client: Socket, player: PlayerState, board: (UnitInstance | null)[]) {
+        this.updateHand(client, player.hand);
+        this.updateBench(client, player.bench);
+        this.updateBoard(client, board);
+    }
+
+    private updateHand(client: Socket, hand: SpellInstance[]) {
+        const payload = hand.map((spell) => spellInstanceToClient(spell));
+
+        client.emit(SOCKET_EVENT_NAMES.UPDATE_HAND, payload);
+    }
+
+    private updateBench(client: Socket, bench: (UnitInstance | null)[]) {
+        const payload = bench.map((unit) => unit ? unitInstanceToClient(unit) : unit);
+
+        client.emit(SOCKET_EVENT_NAMES.UPDATE_BENCH, payload);
+    }
+
+    private updateBoard(client: Socket, board: (UnitInstance | null)[]) {
+        const payload = board.map((unit) => unit ? unitInstanceToClient(unit) : unit);
+
+        client.emit(SOCKET_EVENT_NAMES.UPDATE_BOARD, payload);
+    }
+}
