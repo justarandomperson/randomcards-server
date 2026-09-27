@@ -1,5 +1,5 @@
     import { Injectable } from '@nestjs/common';
-    import { SpellInstance, UnitInstance } from '../../cards/cards.types';
+    import { CardZone, SpellInstance, UnitInstance } from '../../cards/cards.types';
     import { CardsService } from '../../cards/cards.service';
     import { EffectTrigger } from '../../effects/effect.types';
     import { GameActions } from '../../cards/game-actions';
@@ -9,8 +9,10 @@
     import { MAX_CARD_IN_BOARD, MAX_HAND_SIZE } from '../shared/games.constants';
     import { WsException } from '@nestjs/websockets';
     import PlayUnitDto from '../dto/play-unit.dto';
-    import { calculateTurnStartMoney, CheckPlayUnitValid, findCardInstance } from '../logic/serviceHelpers';
+    import { calculateTurnStartMoney, CheckPlayUnitValid, findArtifactInstance, findCardInstance } from '../logic/serviceHelpers';
 import PlaySpellDto from '../dto/play-spell.dto';
+import BuyArtifactDto from '../dto/buy-artifact.dto';
+import { ArtifactInstance } from '../../artifacts/artifacts.types';
 
 
     @Injectable()
@@ -86,8 +88,9 @@ import PlaySpellDto from '../dto/play-spell.dto';
     }
 
 
+
     // services
-    playUnit(gameId: string, socketId: string, playUnitDto: PlayUnitDto) {
+    playUnit(gameId: string, socketId: string, playUnitDto: PlayUnitDto): UnitInstance {
         const game = this.getGameState(gameId);
         if (socketId !== game.playerTurnId) {
             throw new WsException("Not players turn");
@@ -116,11 +119,12 @@ import PlaySpellDto from '../dto/play-spell.dto';
         // make the move
         game.board[translatedDestination] = cardInstance;
         player.bench[benchIndex] = null;
+        player.money -= cardInstance.cost;
 
-        // TODO: ill probably need to return it or somethin for update_card to be run later
+        return cardInstance;
     }
 
-    playSpell(gameId: string, socketId: string, playSpellDto: PlaySpellDto) {
+    playSpell(gameId: string, socketId: string, playSpellDto: PlaySpellDto): { card: SpellInstance; index: number } {
         const game = this.getGameState(gameId);
         if (socketId !== game.playerTurnId) {
             throw new WsException("Not players turn");
@@ -140,8 +144,38 @@ import PlaySpellDto from '../dto/play-spell.dto';
 
         // discard spell
         player.bench.splice(handIndex, 1);
+        player.money -= cardInstance.cost;
 
-        // TODO: ill probably need to return it or somethin for update_card to be run later
+        return {card: cardInstance, index: handIndex};    
+    }
+
+    buyArtifact(gameId: string, socketId: string, buyArtifactDto: BuyArtifactDto): { artifact: ArtifactInstance, index: number } {
+        const game = this.getGameState(gameId);
+        if (socketId !== game.playerTurnId) {
+            throw new WsException("Not players turn");
+        } 
+
+        const player = this.getPlayerState(gameId, socketId);
+        const { instanceId } = buyArtifactDto;
+        const artifactInstanceResult = findArtifactInstance(instanceId, game.shop);
+        if (!artifactInstanceResult) {
+            throw new WsException('artifact not found');
+        }
+
+        const { artifactInstance, index: shopIndex } = artifactInstanceResult;
+        if (player.money < artifactInstance.cost) {
+            throw new WsException('insufficient money');
+        }
+
+        // buy artifact
+        game.shop[shopIndex] = null;
+        player.artifacts.push(artifactInstance);
+        player.money -= artifactInstance.cost;
+
+        return { 
+            artifact: artifactInstance,
+            index: player.artifacts.length
+        };
     }
 
     endTurn(gameId: string, playerSocketId: string) {

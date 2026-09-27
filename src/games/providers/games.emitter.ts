@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
-import { GameState, MatchStartPayload, PlayerState, SOCKET_EVENT_NAMES, UpdateDrawpileCountPayload, UpdateHealthPayload, UpdateMoneyPayload } from '../shared/games.types';
+import { GameState, MatchStartPayload, PlayerState, SOCKET_EVENT_NAMES, UpdateArtifactPayload, UpdateCardPayload, UpdateDrawpileCountPayload, UpdateHealthPayload, UpdateMoneyPayload } from '../shared/games.types';
 import { artifactInstanceToClient, playerStateToClient, spellInstanceToClient, unitInstanceToClient } from '../logic/typeConverters';
-import { CardLocation, CardType, CardZone, SpellInstance, UnitInstance } from '../../cards/cards.types';
-import { ArtifactInstance } from '../../artifacts/artifacts.types';
+import { CardLocation, CardType, SpellInstance, UnitInstance } from '../../cards/cards.types';
+import { ArtifactInstance, ArtifactLocation } from '../../artifacts/artifacts.types';
 import { WsException } from '@nestjs/websockets';
 
 
@@ -80,19 +80,28 @@ export class GamesEmitter {
         server.to(gameId).emit(SOCKET_EVENT_NAMES.UPDATE_DRAWPILE_COUNT, payload);
     }
 
-    updateCard(server: Server, gameId: string, updatedCard: UnitInstance | SpellInstance, cardLocation: CardLocation) {
-        const clientDataCard = updatedCard.type == CardType.UNIT ? unitInstanceToClient(updatedCard) : spellInstanceToClient(updatedCard)
+    updateCard(client: Socket, card: UnitInstance | SpellInstance, cardLocation: CardLocation) {
+        const clientCardData = (card.type == CardType.UNIT) 
+            ? unitInstanceToClient(card) : spellInstanceToClient(card);
 
-        const payload = {
-            card: clientDataCard,
+        const payload: UpdateCardPayload = {
+            card: clientCardData,
             location: cardLocation
-        }
+        };
 
-        server.to(gameId).emit(SOCKET_EVENT_NAMES.UPDATE_CARD, payload);
+       client.emit(SOCKET_EVENT_NAMES.UPDATE_CARD, payload);
     }
     
-    updateArtifact() {
+    updateArtifact(client: Socket, artifact: ArtifactInstance, artifactLocation: ArtifactLocation, playerId?: string) {
+        const clientArtifactData = artifactInstanceToClient(artifact);
 
+        const payload: UpdateArtifactPayload = {
+            artifact: clientArtifactData,
+            location: artifactLocation,
+            playerId
+        };
+
+        client.emit(SOCKET_EVENT_NAMES.UPDATE_ARTIFACT, payload);
     }
 
     updateShop(client: Socket, shop: (ArtifactInstance | null)[]) {

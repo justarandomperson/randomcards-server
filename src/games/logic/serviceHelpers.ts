@@ -1,12 +1,13 @@
+import { ArtifactInstance } from "../../artifacts/artifacts.types";
 import { SpellInstance, UnitInstance } from "../../cards/cards.types";
-import { Deck, GameState } from "../shared/games.types";
+import { GameState } from "../shared/games.types";
 
 
 export const CheckPlayUnitValid = (game: GameState, boardIndex: number): string | null => {
     if (boardIndex > game.board.length || boardIndex < 0) {
         return 'out of bounds';
     } 
-    if (game.board[boardIndex] != null) {
+    if (game.board[boardIndex] != null) { //? maybe should just return
         return 'slot taken';
     }
 
@@ -26,6 +27,20 @@ export const findCardInstance = <T extends UnitInstance | SpellInstance>(
 
     return { cardInstance: cardList[index]!, index };
 };
+
+export const findArtifactInstance = (
+    instanceId: string, artifactList: (ArtifactInstance | null)[]
+): { artifactInstance: ArtifactInstance; index: number } | null => {
+    const index = artifactList.findIndex(
+        (artifact) => artifact?.instanceId === instanceId
+    );
+
+    if (index === -1) {
+        return null;
+    }
+
+    return { artifactInstance: artifactList[index]!, index };
+}
 
 export const calculateTurnStartMoney = (currentMoney: number, turn: number): number => {
     return currentMoney + (turn * 2);

@@ -1,5 +1,5 @@
-import { ArtifactInstance, ClientArtifactData } from "../../artifacts/artifacts.types";
-import { UnitInstance, SpellInstance, ClientUnitData, ClientSpellData, CardZone } from "../../cards/cards.types"; 
+import { ArtifactInstance, ArtifactLocation, ArtifactZone, ClientArtifactData } from "../../artifacts/artifacts.types";
+import { UnitInstance, SpellInstance, ClientUnitData, ClientSpellData, CardZone, CardLocation } from "../../cards/cards.types"; 
 
 
 export type GameState = {
@@ -98,6 +98,13 @@ export type UpdateDrawpileCountPayload = {
   newDrawpileCount: number
 }
 
-export type UpdateCardPayload = 
-  | { card: ClientUnitData;  insideOf: CardZone.BENCH | CardZone.BOARD; index: number }
-  | { card: ClientSpellData; insideOf: CardZone.HAND;                   index: number };
+export type UpdateCardPayload = {
+  card: ClientUnitData | ClientSpellData,
+  location: CardLocation
+}
+
+export type UpdateArtifactPayload = { 
+  artifact: ClientArtifactData,
+  location: ArtifactLocation,
+  playerId?: string 
+}

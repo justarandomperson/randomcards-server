@@ -12,6 +12,9 @@ import { GamesEmitter } from './games.emitter';
 import PlayUnitDto from '../dto/play-unit.dto';
 import { deckIdsToDeck } from '../logic/typeConverters';
 import PlaySpellDto from '../dto/play-spell.dto';
+import { CardLocation, CardZone } from '../../cards/cards.types';
+import BuyArtifactDto from '../dto/buy-artifact.dto';
+import { ArtifactLocation, ArtifactZone } from '../../artifacts/artifacts.types';
 
 
 @UsePipes(new ValidationPipe({
@@ -133,23 +136,35 @@ export class GamesGateway implements OnGatewayInit, OnGatewayDisconnect {
 
 	@SubscribeMessage(SOCKET_EVENT_NAMES.PLAY_UNIT)
 	onPlayUnit(client: Socket, playUnitDto: PlayUnitDto) {
-		this._gamesService.playUnit(this.getClientGameId(client), client.id, playUnitDto);
+		const card = this._gamesService.playUnit(this.getClientGameId(client), client.id, playUnitDto);
 
-		// TODO: run update_card event for the opponent
-		this._gamesEmitter.updateCard()
+		const opponent = this._gamesService.getOpponentState(this.getClientGameId(client), client.id);
+		const opponentSocket = this.getSocket(opponent.socketId);
+		const location: CardLocation = { insideOf: CardZone.BOARD, index: playUnitDto.boardIndex };
+
+		this._gamesEmitter.updateCard(opponentSocket, card, location);
 	}
 
 	@SubscribeMessage(SOCKET_EVENT_NAMES.PLAY_SPELL)
 	onPlaySpell(client: Socket, playSpellDto: PlaySpellDto) {
-		this._gamesService.playSpell(this.getClientGameId(client), client.id, playSpellDto);
+		const { card, index } = this._gamesService.playSpell(this.getClientGameId(client), client.id, playSpellDto);
 
-		// TODO: run update_card event for the opponent
-		this._gamesEmitter.updateCard()
+		const opponent = this._gamesService.getOpponentState(this.getClientGameId(client), client.id);
+		const opponentSocket = this.getSocket(opponent.socketId);
+		const location: CardLocation = { insideOf: CardZone.HAND, index: index}
+
+		this._gamesEmitter.updateCard(opponentSocket, card, location);
 	}
 
 	@SubscribeMessage(SOCKET_EVENT_NAMES.BUY_ARTIFACT)
-	onBuyArtifact() {
-		// TODO: this
+	onBuyArtifact(client: Socket, buyArtifactDto: BuyArtifactDto) {
+		const { artifact, index } = this._gamesService.buyArtifact(this.getClientGameId(client), client.id, buyArtifactDto);
+
+		const opponent = this._gamesService.getOpponentState(this.getClientGameId(client), client.id);
+		const opponentSocket = this.getSocket(opponent.socketId);
+		const location: ArtifactLocation = { insideOf: ArtifactZone.PLAYER, index: index };
+
+		this._gamesEmitter.updateArtifact(opponentSocket, artifact, location, client.id);
 	}
 
 	@SubscribeMessage(SOCKET_EVENT_NAMES.END_TURN)
@@ -168,7 +183,10 @@ export class GamesGateway implements OnGatewayInit, OnGatewayDisconnect {
 
 		const { newSpell, newMoney, newDrawpileCount } = this._gamesService.startTurn(gameId, client.id);
 		if (newSpell) {
-			this._gamesEmitter.updateCard() // TODO: this
+			const player = this._gamesService.getPlayerState(gameId, client.id);
+			const location: CardLocation = { insideOf: CardZone.HAND, index: player.hand.length};
+
+			this._gamesEmitter.updateCard(client, newSpell, location);
 			this._gamesEmitter.updateDrawpileCount(this.server, gameId, client.id, newDrawpileCount);
 		}
 		
