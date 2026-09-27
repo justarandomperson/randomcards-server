@@ -1,6 +1,6 @@
 export type ArtifactInstance = {
-    instanceId: string
     id: string
+    instanceId: string
     name: string
     ownerId?: string
     effectDesc: string

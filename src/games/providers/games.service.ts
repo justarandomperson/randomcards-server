@@ -39,7 +39,7 @@ import { ArtifactInstance } from '../../artifacts/artifacts.types';
                 [player2.socketId, player2State]
             ]),
             board: Array(MAX_CARD_IN_BOARD).fill(null),
-            shop: fillShop(), 
+            shop: fillShop([]), 
             gamePhase: GamePhase.PLAY,
             playerTurnId: player1.socketId //* player1 starts first. this is solid
         };

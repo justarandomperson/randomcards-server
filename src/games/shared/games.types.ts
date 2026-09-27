@@ -30,8 +30,8 @@ export enum GamePhase {
 }
 
 export type Deck = {
-  unitIds: UnitInstance[]
-  spellIds: SpellInstance[]
+  units: UnitInstance[]
+  spells: SpellInstance[]
 }
 
 
