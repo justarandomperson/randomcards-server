@@ -26,11 +26,11 @@ import { ArtifactInstance } from '../../artifacts/artifacts.types';
 
 
     // initializers, getters and setters etc
-    createGameState(match: Match): GameState {
+    createGameState(match: Match, player1Deck: Deck, player2Deck: Deck): GameState {
         const [player1, player2] = match.players;
 
-        const player1State = initPlayerState(player1);
-        const player2State = initPlayerState(player2);
+        const player1State = initPlayerState(player1, player1Deck);
+        const player2State = initPlayerState(player2, player2Deck);
 
         const game: GameState = {
             gameId: match.gameId,

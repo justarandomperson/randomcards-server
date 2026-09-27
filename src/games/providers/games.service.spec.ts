@@ -24,11 +24,13 @@ describe('GamesService', () => {
 
     const player1: BasicPlayerData = {
       socketId: 'player1',
+      name: 'meow',
       deckIds: { unitIds: ['1'], spellIds: ['2']},
     };
 
     const player2: BasicPlayerData = {
       socketId: 'player2',
+      name: 'meow',
       deckIds: { unitIds: ['3'], spellIds: ['4', '5']},
     };
 

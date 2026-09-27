@@ -5,6 +5,7 @@ export type Match = {
 
 export type BasicPlayerData = {
     socketId: string
+    name: string
     deckIds: DeckIds
 }
 

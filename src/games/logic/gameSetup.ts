@@ -20,16 +20,10 @@ export const fillShop = (currentShop: (ArtifactInstance | null)[]): ArtifactInst
 }
 
 
-export const initPlayerState = (client: Socket): PlayerState => {
-    const username: string = client.data.username;
-    const deck: Deck = client.data.deck;
-    if (!username || !deck) {
-        throw new WsException('client not ready for game');
-    }
-
+export const initPlayerState = (player: BasicPlayerData, deck: Deck): PlayerState => {
     const playerState: PlayerState = {
-        socketId: client.id,
-        name: username,
+        socketId: player.socketId,
+        name: player.name,
         health: STARTING_HEALTH,
         money: STARTING_MONEY,
         turn: STARTING_TURN,

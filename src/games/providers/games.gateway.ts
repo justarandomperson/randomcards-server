@@ -96,7 +96,11 @@ export class GamesGateway implements OnGatewayInit, OnGatewayDisconnect {
 		const deck = deckIdsToDeck(dto);
 		client.data.deck = deck; 
 
-		const player: BasicPlayerData = { socketId: client.id, deckIds: dto };
+		if (!client.data.name) {
+			throw new WsException('client doesnt have name');
+		}
+
+		const player: BasicPlayerData = { socketId: client.id, name: client.data.name, deckIds: dto };
 		const match = this._matchMakingService.addIntoQueue(player);
 		if (match) {
 			this.handleMatchStart(match);
@@ -119,7 +123,13 @@ export class GamesGateway implements OnGatewayInit, OnGatewayDisconnect {
 		}
 
 		// create game
-		const game = this._gamesService.createGameState(match);
+		const player1Deck = player1Socket.data.deck;
+		const player2Deck = player2Socket.data.deck;
+		if (!player1Deck || player2Deck) {
+			throw new WsException('deck not created');
+		}
+
+		const game = this._gamesService.createGameState(match, player1Deck, player2Deck);
 
 		// emit startup events
 		this._gamesEmitter.allMatchStartEvents(player1Socket, player2Socket, game);
