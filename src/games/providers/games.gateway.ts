@@ -71,7 +71,6 @@ export class GamesGateway implements OnGatewayInit, OnGatewayDisconnect {
 
 		try {
 			const payload = this._jwtService.verify(token);
-
 			socket.data.userId = payload.sub;
 			socket.data.name = payload.username;
 
@@ -95,7 +94,7 @@ export class GamesGateway implements OnGatewayInit, OnGatewayDisconnect {
 	onQueue(@ConnectedSocket() client: Socket, @MessageBody() dto: QueueDto) {
 		const deck = deckIdsToDeck(dto);
 		client.data.deck = deck; 
-
+		console.log(client.data)
 		if (!client.data.name) {
 			throw new WsException('client doesnt have name');
 		}
@@ -186,6 +185,7 @@ export class GamesGateway implements OnGatewayInit, OnGatewayDisconnect {
 		const opponent = this._gamesService.getOpponentState(gameId, client.id);
 		const opponentSocket = this.getSocket(opponent.socketId);
 		this.startTurn(opponentSocket, gameId);
+
 		this._gamesEmitter.startTurn(opponentSocket);
 	}
 

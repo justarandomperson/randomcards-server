@@ -46,8 +46,12 @@ export const generateUnitInstance = (unitId: string): UnitInstance | null => {
         return null;
     }
 
-    unit.instanceId = randomUUID();
-    return unit;
+    const unitInstance = {
+        ...unit,
+        instanceId: randomUUID()
+    }
+
+    return unitInstance;
 }
 
 export const generateSpellInstance = (spellId: string): SpellInstance | null => {
@@ -56,6 +60,10 @@ export const generateSpellInstance = (spellId: string): SpellInstance | null => 
             return null;
         }
 
-    spell.instanceId = randomUUID();
-    return spell ?? null;
+    const spellInstance = {
+        ...spell,
+        instanceId: randomUUID()
+    }
+
+    return spellInstance ;
 }

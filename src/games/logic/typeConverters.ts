@@ -28,7 +28,7 @@ export const deckIdsToDeck = (deckIds: DeckIds): Deck => {
     const units = deckIds.unitIds.map(
         (id) => {
             const unit = generateUnitInstance(id);
-
+    
             if (!unit) {
                 throw new WsException(`Unit with Id ${id} does not exist`);
             }
