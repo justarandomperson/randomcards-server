@@ -6,9 +6,7 @@ export class CardsService {
   constructor() {}
 
   createCardFromId(id: string, ownerID: string) {
-    const card = unitCards.find((card: UnitInstance) => { 
-      return card.id == id; 
-    });
+    const card = unitCards.get(id);
 
     if (!card) {
       throw new Error(`Card with id ${id} doesn't exist`);

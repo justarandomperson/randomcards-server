@@ -3,7 +3,7 @@ import { CardType, UnitInstance } from '../cards.types';
 
 const unitList: UnitInstance[] = [
     {
-        id: "1",
+        id: "U_1",
         name: "dog",
         type: CardType.UNIT,
         effectDesc: "im dog",
@@ -13,7 +13,7 @@ const unitList: UnitInstance[] = [
         atk: 2,
     },
     {
-        id: "11",
+        id: "U_11",
         name: "sans the skeleton",
         type: CardType.UNIT,
         effectDesc: "sans attacks",
