@@ -1,7 +1,7 @@
 import { CardType, UnitInstance } from '../cards.types';
 
 
-export const unitCards: UnitInstance[] = [
+const unitList: UnitInstance[] = [
     {
         id: "1",
         name: "dog",
@@ -11,21 +11,26 @@ export const unitCards: UnitInstance[] = [
         cost: 3,
         hp: 1,
         atk: 2,
-    }
-/*
+    },
+    {
+        id: "11",
         name: "sans the skeleton",
-        atk: 1,
-        hp: 1,
-        cost: 6,
-        effects: [
+        type: CardType.UNIT,
+        effectDesc: "sans attacks",
+        effects: [/*
             {
                 trigger: ["onSummon", "onTurnStart"],
                 execute: (ctx) => {
                     ctx.actions.addCardToPlayerHand(ctx.game, "666", ctx.playerId)
                 }
             }
-        ],
-        id: "11"
-    },
-*/
+        */],
+        cost: 6,
+        hp: 1,
+        atk: 1
+    }
 ];
+
+export const unitCards = new Map<string, UnitInstance>(
+    unitList.map((spell) => [spell.id, spell])
+);

@@ -1,20 +1,25 @@
 import { CardType, SpellInstance } from "../cards.types";
 
-export const spellCards: SpellInstance[] = [
+
+const spellList: SpellInstance[] = [
     {
-        id: "2",
+        id: "S_0",
         name: "cat",
         type: CardType.SPELL,
         effectDesc: "although i may look like it, im not dog. have a wonderful rest of your day!",
         effects: [],
-        cost: 3
+        cost: 3,
     },
     {
-        "id": "666",
-        "name": "Gaster Blaster",
+        id: "S_666",
+        name: "Gaster Blaster",
         type: CardType.SPELL,
-        effectDesc: "although i may look like it, im not dog. have a wonderful rest of your day!",
+        effectDesc: "i will blast your glast",
         effects: [],
-        "cost": 4
-    }
-]
+        cost: 4,
+    },
+];
+
+export const spellCards = new Map<string, SpellInstance>(
+    spellList.map((spell) => [spell.id, spell])
+);

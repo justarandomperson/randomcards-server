@@ -5,7 +5,7 @@ import { MatchMakingService } from '../../matchmaking/matchmaking.service';
 import { Socket } from 'socket.io';
 import { JwtService } from '@nestjs/jwt';
 import { GamesService } from './games.service';
-import { PlayerState, SOCKET_EVENT_NAMES } from '../shared/games.types';
+import { GamePhase, PlayerState, SOCKET_EVENT_NAMES } from '../shared/games.types';
 import QueueDto from '../dto/queue.dto';
 import { BasicPlayerData, Match } from '../../matchmaking/matchmaking.types';
 import { GamesEmitter } from './games.emitter';
@@ -73,7 +73,7 @@ export class GamesGateway implements OnGatewayInit, OnGatewayDisconnect {
 			const payload = this._jwtService.verify(token);
 
 			socket.data.userId = payload.sub;
-			socket.data.username = payload.username;
+			socket.data.name = payload.name;
 
 			next();
 		} catch {
@@ -125,7 +125,7 @@ export class GamesGateway implements OnGatewayInit, OnGatewayDisconnect {
 		// create game
 		const player1Deck = player1Socket.data.deck;
 		const player2Deck = player2Socket.data.deck;
-		if (!player1Deck || player2Deck) {
+		if (!player1Deck || !player2Deck) {
 			throw new WsException('deck not created');
 		}
 
@@ -189,18 +189,25 @@ export class GamesGateway implements OnGatewayInit, OnGatewayDisconnect {
 	}
 
 	private startTurn(client: Socket, gameId: string) {
-		this._gamesEmitter.startTurn(client);
+		const newTurnData = this._gamesService.startTurn(gameId, client.id);
+		if (newTurnData.phaseChanged) {
+			this._gamesEmitter.updateGamePhase(this.server, gameId);
+		}
 
-		const { newSpell, newMoney, newDrawpileCount } = this._gamesService.startTurn(gameId, client.id);
-		if (newSpell) {
-			const player = this._gamesService.getPlayerState(gameId, client.id);
-			const location: CardLocation = { insideOf: CardZone.HAND, index: player.hand.length};
+		if (newTurnData.phase === GamePhase.PLAY && newTurnData.data) {
+			const { newSpell, newMoney, newDrawpileCount } = newTurnData.data;
 
-			this._gamesEmitter.updateCard(client, newSpell, location);
-			this._gamesEmitter.updateDrawpileCount(this.server, gameId, client.id, newDrawpileCount);
+			if (newSpell) {
+				const player = this._gamesService.getPlayerState(gameId, client.id);
+				const location: CardLocation = { insideOf: CardZone.HAND, index: player.hand.length};
+
+				this._gamesEmitter.updateCard(client, newSpell, location);
+				this._gamesEmitter.updateDrawpileCount(this.server, gameId, client.id, newDrawpileCount);
+			}
+
+			this._gamesEmitter.updateMoney(this.server, gameId, client.id, newMoney);
 		}
 		
-		this._gamesEmitter.updateMoney(this.server, gameId, client.id, newMoney);
 	}
 
 

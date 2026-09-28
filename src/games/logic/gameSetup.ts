@@ -2,11 +2,14 @@ import { randomUUID } from "crypto";
 import { ArtifactInstance } from "../../artifacts/artifacts.types";
 import { BasicPlayerData } from "../../matchmaking/matchmaking.types";
 import { Deck, PlayerState } from "../shared/games.types";
-import { Socket } from "socket.io";
 import { STARTING_HEALTH, STARTING_MONEY, STARTING_TURN } from "../shared/games.constants";
-import { WsException } from "@nestjs/websockets";
+import { SpellInstance, UnitInstance } from "../../cards/cards.types";
+import { unitCards } from "../../cards/definitions/units";
+import { spellCards } from "../../cards/definitions/spells";
+
 
 export const fillShop = (currentShop: (ArtifactInstance | null)[]): ArtifactInstance[] => {
+    // TODO: make this actually fill the null spaces of a shop with new random artifacts.
     const placeholderArtifact: ArtifactInstance = {
         id: '0',
         instanceId: randomUUID(),
@@ -14,11 +17,12 @@ export const fillShop = (currentShop: (ArtifactInstance | null)[]): ArtifactInst
         effectDesc: 'yeah, you should',
         effects: [],
         cost: 3
-    }
+    };
 
-    return [placeholderArtifact, placeholderArtifact, placeholderArtifact, placeholderArtifact, placeholderArtifact];
+    const newShop = currentShop.map((artifact) => artifact ?? placeholderArtifact);
+
+    return newShop;
 }
-
 
 export const initPlayerState = (player: BasicPlayerData, deck: Deck): PlayerState => {
     const playerState: PlayerState = {
@@ -34,4 +38,16 @@ export const initPlayerState = (player: BasicPlayerData, deck: Deck): PlayerStat
     }
 
     return playerState;
+}
+
+export const generateUnitInstance = (unitId: string): UnitInstance | null => {
+    const unit = unitCards.get(unitId);
+
+    return unit ?? null;
+}
+
+export const generateSpellInstance = (spellId: string): SpellInstance | null => {
+    const spell = spellCards.get(spellId);
+
+    return spell ?? null;
 }

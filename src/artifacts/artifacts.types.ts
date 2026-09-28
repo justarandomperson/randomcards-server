@@ -14,6 +14,7 @@ export type ArtifactInstance = {
 
 export type ClientArtifactData = {
     instanceId: string
+    id: string
     name: string
     effectDesc: string
     cost: number

@@ -1,22 +1,22 @@
-    import { Injectable } from '@nestjs/common';
-    import { CardZone, SpellInstance, UnitInstance } from '../../cards/cards.types';
-    import { CardsService } from '../../cards/cards.service';
-    import { EffectTrigger } from '../../effects/effect.types';
-    import { GameActions } from '../../cards/game-actions';
-    import { Deck, GamePhase, GameState, PlayerState } from '../shared/games.types';
-    import { Match } from '../../matchmaking/matchmaking.types';
-    import { fillShop, initPlayerState } from '../logic/gameSetup';
-    import { MAX_CARD_IN_BOARD, MAX_HAND_SIZE } from '../shared/games.constants';
-    import { WsException } from '@nestjs/websockets';
-    import PlayUnitDto from '../dto/play-unit.dto';
-    import { calculateTurnStartMoney, CheckPlayUnitValid, findArtifactInstance, findCardInstance } from '../logic/serviceHelpers';
+import { Injectable } from '@nestjs/common';
+import { CardZone, SpellInstance, UnitInstance } from '../../cards/cards.types';
+import { CardsService } from '../../cards/cards.service';
+import { EffectTrigger } from '../../effects/effect.types';
+import { GameActions } from '../../cards/game-actions';
+import { Deck, GamePhase, GameState, PlayerState } from '../shared/games.types';
+import { Match } from '../../matchmaking/matchmaking.types';
+import { fillShop, initPlayerState } from '../logic/gameSetup';
+import { MAX_ARTIFACTS_IN_SHOP, MAX_CARD_IN_BOARD, MAX_HAND_SIZE } from '../shared/games.constants';
+import { WsException } from '@nestjs/websockets';
+import PlayUnitDto from '../dto/play-unit.dto';
+import { calculateTurnStartMoney, changeGamePhase, CheckPlayUnitValid, findArtifactInstance, findCardInstance, shouldSwitchPhase } from '../logic/serviceHelpers';
 import PlaySpellDto from '../dto/play-spell.dto';
 import BuyArtifactDto from '../dto/buy-artifact.dto';
 import { ArtifactInstance } from '../../artifacts/artifacts.types';
 
 
-    @Injectable()
-    export class GamesService {
+@Injectable()
+export class GamesService {
     private readonly _gameStates: Map<string, GameState> = new Map();
     private readonly actions: GameActions;
 
@@ -59,7 +59,11 @@ import { ArtifactInstance } from '../../artifacts/artifacts.types';
     }
 
     removeGameState(gameId: string) {
-        // TODO: implement this
+        if (!this._gameStates.has(gameId)) {
+            throw new WsException("Game doesn't exist");
+        }
+
+        this._gameStates.delete(gameId);
     }
 
     getPlayerState(gameId: string, socketId: string): PlayerState {
@@ -84,7 +88,11 @@ import { ArtifactInstance } from '../../artifacts/artifacts.types';
     }
 
     isPlayer1(gameId: string, socketId: string): Boolean {
-        return (this.getGameState(gameId).players.keys()[0] === socketId);
+        return [...this.getGameState(gameId).players.keys()][0] === socketId;
+    }
+
+    getPlayersTurns(gameId: string) {
+        const game = this.getGameState(gameId);
     }
 
 
@@ -143,7 +151,7 @@ import { ArtifactInstance } from '../../artifacts/artifacts.types';
         }
 
         // discard spell
-        player.bench.splice(handIndex, 1);
+        player.hand.splice(handIndex, 1);
         player.money -= cardInstance.cost;
 
         return {card: cardInstance, index: handIndex};    
@@ -191,14 +199,51 @@ import { ArtifactInstance } from '../../artifacts/artifacts.types';
     }
 
     startTurn(gameId: string, playerSocketId: string) {
+        const game = this.getGameState(gameId);
         const player = this.getPlayerState(gameId, playerSocketId);
+        const opponent = this.getOpponentState(gameId, playerSocketId);
+
+        const phaseChanged = shouldSwitchPhase(game.gamePhase, player.turn, opponent.turn);
+        if (phaseChanged) {
+            game.gamePhase = changeGamePhase(game.gamePhase);
+        }
 
         player.turn++;
 
+        switch (game.gamePhase) {
+            case GamePhase.PLAY:
+                return { 
+                    phase: GamePhase.PLAY,
+                    data: this.handleStartTurnPlay(gameId, player), 
+                    phaseChanged: phaseChanged 
+                };
+
+            case GamePhase.SHOP:
+                this.handleStartTurnShop(gameId);
+
+                return { 
+                    phase: GamePhase.SHOP,
+                    phaseChanged: phaseChanged 
+                };
+        }
+    }
+
+    private handleStartTurnPlay(gameId: string, player: PlayerState) {
         const newSpell = this.drawSpell(gameId, player);
         const newMoney = this.giveTurnStartMoney(gameId, player);
 
-        return { newSpell, newMoney, newDrawpileCount: player.hand.length };
+        return { 
+            newSpell, 
+            newMoney, 
+            newDrawpileCount: player.hand.length 
+        };
+    }
+
+    private handleStartTurnShop(gameId: string) {
+        const game = this.getGameState(gameId);
+        if (game.shop.length !== MAX_ARTIFACTS_IN_SHOP) {
+            game.shop = fillShop(game.shop);
+        }
     }
 
     private drawSpell(gameId: string, player: PlayerState): SpellInstance | null {
