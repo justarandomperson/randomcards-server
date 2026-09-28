@@ -59,7 +59,7 @@ export class GamesEmitter {
             newMoney: money
         };
 
-        server.to(gameId).emit(SOCKET_EVENT_NAMES.UPDATE_HEALTH, payload);
+        server.to(gameId).emit(SOCKET_EVENT_NAMES.UPDATE_MONEY, payload);
     }
 
     updateHealth(server: Server, gameId: string, playerId: string, health: number) {

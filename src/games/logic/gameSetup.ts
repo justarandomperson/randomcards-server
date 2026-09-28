@@ -42,12 +42,20 @@ export const initPlayerState = (player: BasicPlayerData, deck: Deck): PlayerStat
 
 export const generateUnitInstance = (unitId: string): UnitInstance | null => {
     const unit = unitCards.get(unitId);
+    if (!unit){
+        return null;
+    }
 
-    return unit ?? null;
+    unit.instanceId = randomUUID();
+    return unit;
 }
 
 export const generateSpellInstance = (spellId: string): SpellInstance | null => {
     const spell = spellCards.get(spellId);
+    if (!spell){
+            return null;
+        }
 
+    spell.instanceId = randomUUID();
     return spell ?? null;
 }

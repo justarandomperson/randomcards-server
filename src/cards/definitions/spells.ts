@@ -3,7 +3,7 @@ import { CardType, SpellInstance } from "../cards.types";
 
 const spellList: SpellInstance[] = [
     {
-        id: "S_0",
+        id: "S_1",
         name: "cat",
         type: CardType.SPELL,
         effectDesc: "although i may look like it, im not dog. have a wonderful rest of your day!",

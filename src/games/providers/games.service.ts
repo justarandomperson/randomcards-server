@@ -229,7 +229,7 @@ export class GamesService {
     }
 
     private handleStartTurnPlay(gameId: string, player: PlayerState) {
-        const newSpell = this.drawSpell(gameId, player);
+        const newSpell = this.drawSpell(player);
         const newMoney = this.giveTurnStartMoney(gameId, player);
 
         return { 
@@ -246,7 +246,7 @@ export class GamesService {
         }
     }
 
-    private drawSpell(gameId: string, player: PlayerState): SpellInstance | null {
+    private drawSpell(player: PlayerState): SpellInstance | null {
         if (player.hand.length === MAX_HAND_SIZE) {
             return null;
         }

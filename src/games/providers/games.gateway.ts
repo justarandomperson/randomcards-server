@@ -73,7 +73,7 @@ export class GamesGateway implements OnGatewayInit, OnGatewayDisconnect {
 			const payload = this._jwtService.verify(token);
 
 			socket.data.userId = payload.sub;
-			socket.data.name = payload.name;
+			socket.data.name = payload.username;
 
 			next();
 		} catch {
@@ -186,6 +186,7 @@ export class GamesGateway implements OnGatewayInit, OnGatewayDisconnect {
 		const opponent = this._gamesService.getOpponentState(gameId, client.id);
 		const opponentSocket = this.getSocket(opponent.socketId);
 		this.startTurn(opponentSocket, gameId);
+		this._gamesEmitter.startTurn(opponentSocket);
 	}
 
 	private startTurn(client: Socket, gameId: string) {
@@ -207,7 +208,6 @@ export class GamesGateway implements OnGatewayInit, OnGatewayDisconnect {
 
 			this._gamesEmitter.updateMoney(this.server, gameId, client.id, newMoney);
 		}
-		
 	}
 
 
