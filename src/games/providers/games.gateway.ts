@@ -15,6 +15,7 @@ import PlaySpellDto from '../dto/play-spell.dto';
 import { CardLocation, CardZone } from '../../cards/cards.types';
 import BuyArtifactDto from '../dto/buy-artifact.dto';
 import { ArtifactLocation, ArtifactZone } from '../../artifacts/artifacts.types';
+import { translateBoardIndex } from '../logic/serviceHelpers';
 
 
 @UsePipes(new ValidationPipe({
@@ -94,7 +95,6 @@ export class GamesGateway implements OnGatewayInit, OnGatewayDisconnect {
 	onQueue(@ConnectedSocket() client: Socket, @MessageBody() dto: QueueDto) {
 		const deck = deckIdsToDeck(dto);
 		client.data.deck = deck; 
-		console.log(client.data)
 		if (!client.data.name) {
 			throw new WsException('client doesnt have name');
 		}
@@ -145,11 +145,14 @@ export class GamesGateway implements OnGatewayInit, OnGatewayDisconnect {
 
 	@SubscribeMessage(SOCKET_EVENT_NAMES.PLAY_UNIT)
 	onPlayUnit(client: Socket, playUnitDto: PlayUnitDto) {
-		const card = this._gamesService.playUnit(this.getClientGameId(client), client.id, playUnitDto);
+		const gameId = this.getClientGameId(client)
+		const card = this._gamesService.playUnit(gameId, client.id, playUnitDto);
 
 		const opponent = this._gamesService.getOpponentState(this.getClientGameId(client), client.id);
 		const opponentSocket = this.getSocket(opponent.socketId);
-		const location: CardLocation = { insideOf: CardZone.BOARD, index: playUnitDto.boardIndex };
+
+		const isOpponentPlayer1 = this._gamesService.isPlayer1(gameId, opponentSocket.id)
+		const location: CardLocation = { insideOf: CardZone.BOARD, index: translateBoardIndex(playUnitDto.boardIndex, isOpponentPlayer1) };
 
 		this._gamesEmitter.updateCard(opponentSocket, card, location);
 	}

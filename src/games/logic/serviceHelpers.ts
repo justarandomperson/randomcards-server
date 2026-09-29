@@ -47,6 +47,12 @@ export const calculateTurnStartMoney = (currentMoney: number, turn: number): num
     return currentMoney + (turn * 2);
 }
 
+export const translateBoardIndex = (index: number, isPlayer1: boolean) =>
+{
+    if (isPlayer1) return index
+    else return index + 4
+}
+
 export const changeGamePhase = (phase: GamePhase) => {
     return (phase === GamePhase.PLAY ? GamePhase.SHOP : GamePhase.PLAY);
 }

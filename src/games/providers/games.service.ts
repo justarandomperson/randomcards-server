@@ -87,7 +87,7 @@ export class GamesService {
         throw new WsException("Opponent not in game");
     }
 
-    isPlayer1(gameId: string, socketId: string): Boolean {
+    isPlayer1(gameId: string, socketId: string): boolean {
         return [...this.getGameState(gameId).players.keys()][0] === socketId;
     }
 
