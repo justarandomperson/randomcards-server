@@ -96,7 +96,6 @@ export class GamesGateway implements OnGatewayInit, OnGatewayDisconnect {
 	onQueue(@ConnectedSocket() client: Socket, @MessageBody() dto: QueueDto) {
 		const deck = deckIdsToDeck(dto);
 		client.data.deck = deck; 
-		console.log(client.data)
 		if (!client.data.name) {
 			throw new WsException('client doesnt have name');
 		}
