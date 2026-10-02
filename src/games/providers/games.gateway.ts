@@ -15,6 +15,8 @@ import PlaySpellDto from '../dto/play-spell.dto';
 import { CardLocation, CardZone } from '../../cards/cards.types';
 import BuyArtifactDto from '../dto/buy-artifact.dto';
 import { ArtifactLocation, ArtifactZone } from '../../artifacts/artifacts.types';
+import AttackPlayerDto from '../dto/attack-player.dto';
+import AttackUnitDto from '../dto/attack-unit.dto';
 
 
 @UsePipes(new ValidationPipe({
@@ -128,14 +130,14 @@ export class GamesGateway implements OnGatewayInit, OnGatewayDisconnect {
 			throw new WsException('deck not created');
 		}
 
-		const game = this._gamesService.createGameState(match, player1Deck, player2Deck);
+		const game = this._gamesService.createGame(match, player1Deck, player2Deck);
 
 		// emit startup events
-		this._gamesEmitter.allMatchStartEvents(player1Socket, player2Socket, game);
+		this._gamesEmitter.allMatchStartEvents(player1Socket, player2Socket, game.state);
 	}
 
 	@SubscribeMessage(SOCKET_EVENT_NAMES.DEQUEUE)
-	onDequeue(client: Socket) {
+	onDequeue(@ConnectedSocket() client: Socket) {
 		if (client.data.gameId) {
 			return;
 		}
@@ -144,52 +146,55 @@ export class GamesGateway implements OnGatewayInit, OnGatewayDisconnect {
 	}
 
 	@SubscribeMessage(SOCKET_EVENT_NAMES.PLAY_UNIT)
-	onPlayUnit(client: Socket, playUnitDto: PlayUnitDto) {
-		const card = this._gamesService.playUnit(this.getClientGameId(client), client.id, playUnitDto);
+	onPlayUnit(@ConnectedSocket() client: Socket, @MessageBody() playUnitDto: PlayUnitDto) {
+		const gameId = this.getClientGameId(client);
 
-		const opponent = this._gamesService.getOpponentState(this.getClientGameId(client), client.id);
+		const { unit, location } = this._gamesService.playUnit(gameId, client.id, playUnitDto);
+
+		const opponent = this._gamesService.getOpponentState(gameId, client.id);
 		const opponentSocket = this.getSocket(opponent.socketId);
-		const location: CardLocation = { insideOf: CardZone.BOARD, index: playUnitDto.boardIndex };
 
-		this._gamesEmitter.updateCard(opponentSocket, card, location);
+		this._gamesEmitter.updateCard(opponentSocket, unit, location);
 	}
 
 	@SubscribeMessage(SOCKET_EVENT_NAMES.PLAY_SPELL)
-	onPlaySpell(client: Socket, playSpellDto: PlaySpellDto) {
-		const { card, index } = this._gamesService.playSpell(this.getClientGameId(client), client.id, playSpellDto);
+	onPlaySpell(@ConnectedSocket() client: Socket, @MessageBody() playSpellDto: PlaySpellDto) {
+		const gameId = this.getClientGameId(client);
 
-		const opponent = this._gamesService.getOpponentState(this.getClientGameId(client), client.id);
+		const { spell, location } = this._gamesService.playSpell(gameId, client.id, playSpellDto);
+
+		const opponent = this._gamesService.getOpponentState(gameId, client.id);
 		const opponentSocket = this.getSocket(opponent.socketId);
-		const location: CardLocation = { insideOf: CardZone.HAND, index: index}
 
-		this._gamesEmitter.updateCard(opponentSocket, card, location);
+		this._gamesEmitter.updateCard(opponentSocket, spell, location);
 	}
 
 	@SubscribeMessage(SOCKET_EVENT_NAMES.BUY_ARTIFACT)
-	onBuyArtifact(client: Socket, buyArtifactDto: BuyArtifactDto) {
-		const { artifact, index } = this._gamesService.buyArtifact(this.getClientGameId(client), client.id, buyArtifactDto);
+	onBuyArtifact(@ConnectedSocket() client: Socket, @MessageBody() buyArtifactDto: BuyArtifactDto) {
+		const gameId = this.getClientGameId(client);
 
-		const opponent = this._gamesService.getOpponentState(this.getClientGameId(client), client.id);
+		const { artifact, location } = this._gamesService.buyArtifact(gameId, client.id, buyArtifactDto);
+
+		const opponent = this._gamesService.getOpponentState(gameId, client.id);
 		const opponentSocket = this.getSocket(opponent.socketId);
-		const location: ArtifactLocation = { insideOf: ArtifactZone.PLAYER, index: index };
 
 		this._gamesEmitter.updateArtifact(opponentSocket, artifact, location, client.id);
 	}
 
 	@SubscribeMessage(SOCKET_EVENT_NAMES.END_TURN)
-	onEndTurn(client: Socket) {
+	onEndTurn(@ConnectedSocket() client: Socket) {
 		const gameId = this.getClientGameId(client);
 		this._gamesService.endTurn(gameId, client.id);
 
 		// start opponents turn
 		const opponent = this._gamesService.getOpponentState(gameId, client.id);
 		const opponentSocket = this.getSocket(opponent.socketId);
-		this.startTurn(opponentSocket, gameId);
+		this.handleStartTurn(opponentSocket, gameId);
 
 		this._gamesEmitter.startTurn(opponentSocket);
 	}
 
-	private startTurn(client: Socket, gameId: string) {
+	private handleStartTurn(client: Socket, gameId: string) {
 		const newTurnData = this._gamesService.startTurn(gameId, client.id);
 		if (newTurnData.phaseChanged) {
 			this._gamesEmitter.updateGamePhase(this.server, gameId);
@@ -200,7 +205,7 @@ export class GamesGateway implements OnGatewayInit, OnGatewayDisconnect {
 
 			if (newSpell) {
 				const player = this._gamesService.getPlayerState(gameId, client.id);
-				const location: CardLocation = { insideOf: CardZone.HAND, index: player.hand.length};
+				const location: CardLocation = { insideOf: CardZone.HAND, index: player.hand.length - 1};
 
 				this._gamesEmitter.updateCard(client, newSpell, location);
 				this._gamesEmitter.updateDrawpileCount(this.server, gameId, client.id, newDrawpileCount);
@@ -210,19 +215,32 @@ export class GamesGateway implements OnGatewayInit, OnGatewayDisconnect {
 		}
 	}
 
+	@SubscribeMessage(SOCKET_EVENT_NAMES.ATTACK_UNIT)
+	attackUnit(@ConnectedSocket() client: Socket, @MessageBody() attackUnitDto: AttackUnitDto) {
+		const gameId = this.getClientGameId(client);
 
-	// TODO: make combat system later
-	/*
-	@SubscribeMessage('attack')
-	attack(client: Socket, attackData: AttackDataDto)
-	{
-		const gameID = client.data.gameID;
+		const { attackerData, targetData } = this._gamesService.attackUnit(gameId, client.id, attackUnitDto);
 
-		this._gamesService.attack(client.id, gameID, attackData.attackerID, attackData.targetID)
-		
-		const updatedBoard = this._gamesService.getUpdatedBoard(gameID)
+		const opponent = this._gamesService.getOpponentState(gameId, client.id);
+		const opponentSocket = this.getSocket(opponent.socketId);
 
-		this.server.to(gameID).emit('updateBoard', updatedBoard);
+		this._gamesEmitter.updateCard(client, targetData.unit, targetData.location);
+		this._gamesEmitter.updateCard(client, attackerData.unit, attackerData.location);
+
+		this._gamesEmitter.updateCard(opponentSocket, targetData.unit, targetData.location);
+		this._gamesEmitter.updateCard(opponentSocket, attackerData.unit, attackerData.location);
 	}
-	*/
+
+	@SubscribeMessage(SOCKET_EVENT_NAMES.ATTACK_PLAYER)
+	attackPlayer(@ConnectedSocket() client: Socket, @MessageBody() attackPlayerDto: AttackPlayerDto) {
+		const gameId = this.getClientGameId(client);
+
+		const { targetId, health, attackerId } = this._gamesService.attackPlayer(gameId, client.id, attackPlayerDto);
+
+		this._gamesEmitter.updateHealth(this.server, gameId, targetId, health);
+
+		if (health <= 0) {
+			this._gamesEmitter.gameEnd(this.server, gameId, attackerId);
+		}
+	}
 }

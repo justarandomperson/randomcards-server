@@ -30,3 +30,8 @@ export type ArtifactLocation = {
     insideOf: ArtifactZone
     index: number
 };
+
+export type ArtifactAndLocation = {
+    artifact: ArtifactInstance
+    location: ArtifactLocation
+}

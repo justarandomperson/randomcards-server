@@ -1,3 +1,4 @@
+import { WsException } from '@nestjs/websockets';
 import { UnitInstance, SpellInstance } from './cards.types';
 import { unitCards } from './definitions/units';
 
@@ -21,5 +22,13 @@ export class CardsService {
     }
     
     return cardInstance;
+  }
+
+  getCardOwnerId(card: UnitInstance | SpellInstance): string {
+    if (!card.ownerId) {
+      throw new WsException('card has no ownerId');
+    }
+
+    return card.ownerId;
   }
 }

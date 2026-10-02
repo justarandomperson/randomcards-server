@@ -4,7 +4,6 @@ import { ClientSpellData, ClientUnitData, SpellInstance, UnitInstance } from "..
 import { DeckIds } from "../../matchmaking/matchmaking.types";
 import { ClientPlayerData, Deck, PlayerState } from "../shared/games.types";
 import { generateSpellInstance, generateUnitInstance } from "./gameSetup";
-import { generate } from "rxjs";
 
 
 export const playerStateToClient = (player: PlayerState): ClientPlayerData => {

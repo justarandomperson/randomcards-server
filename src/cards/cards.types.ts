@@ -4,13 +4,24 @@ import { Effect } from '../effects/effect.types';
 export enum CardZone {
   HAND = 'hand',
   BENCH = 'bench',
-  BOARD = 'board'
+  BOARD = 'board',
+  NONE = 'none'
 }
 
-export type CardLocation = {
-  insideOf: CardZone
-  index: number
-};
+export type CardLocation = 
+  | { insideOf: CardZone.BENCH | CardZone.BOARD | CardZone.HAND, index: number }
+  | { insideOf: CardZone.NONE }
+
+
+export type UnitAndLocation = {
+  unit: UnitInstance
+  location: CardLocation
+}
+
+export type SpellAndLocation = {
+  spell: SpellInstance
+  location: CardLocation
+}
 
 
 export enum CardType {
@@ -29,6 +40,7 @@ export type UnitInstance = {
   cost: number
   atk: number
   hp: number
+  cooldown?: number
 };
 
 export type SpellInstance = {

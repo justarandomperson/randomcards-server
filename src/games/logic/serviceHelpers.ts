@@ -1,3 +1,4 @@
+import { WsException } from "@nestjs/websockets";
 import { ArtifactInstance } from "../../artifacts/artifacts.types";
 import { SpellInstance, UnitInstance } from "../../cards/cards.types";
 import { PLAY_TURNS_PER_CYCLE, TURNS_PER_CYCLE } from "../shared/games.constants";
@@ -15,18 +16,20 @@ export const CheckPlayUnitValid = (game: GameState, boardIndex: number): string 
     return null;
 }
 
-export const findCardInstance = <T extends UnitInstance | SpellInstance>(
-    instanceId: string, cardList: (T | null)[]
-): { cardInstance: T; index: number } | null => {
+export const findCardInstance = <T extends UnitInstance | SpellInstance>
+(instanceId: string, cardList: (T | null)[]): { card: T; index: number }=> {
     const index = cardList.findIndex(
         (card) => card?.instanceId === instanceId
     );
 
     if (index === -1) {
-        return null;
+        throw new WsException('target not found');
     }
 
-    return { cardInstance: cardList[index]!, index };
+    return { 
+        card: cardList[index]!,
+        index 
+    };
 };
 
 export const findArtifactInstance = (
@@ -43,8 +46,8 @@ export const findArtifactInstance = (
     return { artifactInstance: artifactList[index]!, index };
 }
 
-export const calculateTurnStartMoney = (currentMoney: number, turn: number): number => {
-    return currentMoney + (turn * 2);
+export const calculateTurnStartMoney = (turn: number): number => {
+    return (turn * 2);
 }
 
 export const changeGamePhase = (phase: GamePhase) => {
@@ -56,4 +59,14 @@ export const shouldSwitchPhase = (currentPhase: GamePhase, player1Turn: number, 
     const nextTurnPhase = totalTurns % TURNS_PER_CYCLE < PLAY_TURNS_PER_CYCLE ? GamePhase.PLAY : GamePhase.SHOP;
 
     return nextTurnPhase !== currentPhase;
+}
+
+export const getEmptySlot = (cardList: (UnitInstance | SpellInstance | null)[]): number => {
+    for (let i = 0; i < cardList.length; i++) {
+        if (!cardList[i]) {
+            return i; 
+        }
+    }
+
+    throw new WsException('bench is full');
 }

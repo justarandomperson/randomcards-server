@@ -1,5 +1,6 @@
 import { ArtifactInstance, ArtifactLocation, ArtifactZone, ClientArtifactData } from "../../artifacts/artifacts.types";
 import { UnitInstance, SpellInstance, ClientUnitData, ClientSpellData, CardZone, CardLocation } from "../../cards/cards.types"; 
+import { GameActions } from "../logic/gameActions";
 
 
 export type GameState = {
@@ -34,6 +35,7 @@ export type Deck = {
   spells: SpellInstance[]
 }
 
+export type Game = { state: GameState; actions: GameActions };
 
 // Note: these are types sent to the client, used only for that
 // they contain only what the client should get
@@ -60,6 +62,8 @@ export const SOCKET_EVENT_NAMES = { // this is used both on 'emit' and on 'on'
   PLAY_SPELL: 'play_spell',
   BUY_ARTIFACT: 'buy_artifact',
   END_TURN: 'end_turn',
+  ATTACK_UNIT: 'attack_unit',
+  ATTACK_PLAYER: 'attack_player',
 
   MATCH_START: 'match_start',
   START_TURN: 'start_turn',
@@ -73,7 +77,8 @@ export const SOCKET_EVENT_NAMES = { // this is used both on 'emit' and on 'on'
   UPDATE_BENCH: 'update_bench',
   UPDATE_BOARD: 'update_board',
   UPDATE_SHOP: 'update_shop',
-} as const
+  GAME_END: 'game_end'
+} as const;
 
 
 // from server to client

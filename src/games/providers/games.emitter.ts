@@ -9,8 +9,6 @@ import { WsException } from '@nestjs/websockets';
 
 @Injectable()
 export class GamesEmitter {
-
-
     allMatchStartEvents(player1Socket: Socket, player2Socket: Socket, gameState: GameState) {
         const player1State = gameState.players.get(player1Socket.id);
         const player2State = gameState.players.get(player2Socket.id);
@@ -134,5 +132,11 @@ export class GamesEmitter {
         const payload = board.map((unit) => unit ? unitInstanceToClient(unit) : unit);
 
         client.emit(SOCKET_EVENT_NAMES.UPDATE_BOARD, payload);
+    }
+
+    gameEnd(server: Server, gameId: string, winnerId: string) {
+        const payload = { winnerId };
+
+        server.to(gameId).emit(SOCKET_EVENT_NAMES.GAME_END, payload);
     }
 }

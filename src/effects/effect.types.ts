@@ -1,5 +1,5 @@
 import { GameState } from '../games/shared/games.types';
-import { GameActions } from '../cards/game-actions';
+import { GameActions } from '../games/logic/gameActions';
 
 
 export type EffectTrigger = 'onSummon' | 'onTurnStart' | 'onTurnEnd';

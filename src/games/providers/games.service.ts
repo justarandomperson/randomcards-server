@@ -1,38 +1,36 @@
 import { Injectable } from '@nestjs/common';
-import { CardZone, SpellInstance, UnitInstance } from '../../cards/cards.types';
+import { CardLocation, CardZone, SpellAndLocation, SpellInstance, UnitAndLocation, UnitInstance } from '../../cards/cards.types';
 import { CardsService } from '../../cards/cards.service';
-import { EffectTrigger } from '../../effects/effect.types';
-import { GameActions } from '../../cards/game-actions';
-import { Deck, GamePhase, GameState, PlayerState } from '../shared/games.types';
+import { GameActions } from '../logic/gameActions';
+import { Deck, Game, GamePhase, GameState } from '../shared/games.types';
 import { Match } from '../../matchmaking/matchmaking.types';
 import { fillShop, initPlayerState } from '../logic/gameSetup';
-import { MAX_ARTIFACTS_IN_SHOP, MAX_CARD_IN_BOARD, MAX_HAND_SIZE } from '../shared/games.constants';
+import { MAX_CARD_IN_BOARD, MAX_HAND_SIZE } from '../shared/games.constants';
 import { WsException } from '@nestjs/websockets';
 import PlayUnitDto from '../dto/play-unit.dto';
-import { calculateTurnStartMoney, changeGamePhase, CheckPlayUnitValid, findArtifactInstance, findCardInstance, shouldSwitchPhase } from '../logic/serviceHelpers';
+import { calculateTurnStartMoney, changeGamePhase, CheckPlayUnitValid, findArtifactInstance, findCardInstance, getEmptySlot, shouldSwitchPhase } from '../logic/serviceHelpers';
 import PlaySpellDto from '../dto/play-spell.dto';
 import BuyArtifactDto from '../dto/buy-artifact.dto';
-import { ArtifactInstance } from '../../artifacts/artifacts.types';
+import { ArtifactAndLocation, ArtifactZone } from '../../artifacts/artifacts.types';
+import AttackPlayerDto from '../dto/attack-player.dto';
+import AttackUnitDto from '../dto/attack-unit.dto';
 
 
 @Injectable()
 export class GamesService {
-    private readonly _gameStates: Map<string, GameState> = new Map();
-    private readonly actions: GameActions;
+    private readonly _games: Map<string, Game> = new Map();
 
-    constructor(private readonly _cardsService: CardsService) {
-        this.actions = new GameActions(_cardsService)
-    }
+    constructor(private readonly _cardsService: CardsService) {}
 
 
     // initializers, getters and setters etc
-    createGameState(match: Match, player1Deck: Deck, player2Deck: Deck): GameState {
+    createGame(match: Match, player1Deck: Deck, player2Deck: Deck): Game {
         const [player1, player2] = match.players;
 
         const player1State = initPlayerState(player1, player1Deck);
         const player2State = initPlayerState(player2, player2Deck);
 
-        const game: GameState = {
+        const state: GameState = {
             gameId: match.gameId,
             players: new Map([
                 [player1.socketId, player1State],
@@ -44,13 +42,18 @@ export class GamesService {
             playerTurnId: player1.socketId //* player1 starts first. this is solid
         };
 
-        this._gameStates.set(game.gameId, game);
+        const game: Game = {
+            state,
+            actions: new GameActions(state, this._cardsService)
+        }
+
+        this._games.set(state.gameId, game);
 
         return game;
     }
 
-    getGameState(gameId: string): GameState {
-        const game = this._gameStates.get(gameId);
+    getGame(gameId: string): Game {
+        const game = this._games.get(gameId);
         if (!game) {
             throw new WsException("Game doesn't exist");
         }
@@ -58,114 +61,100 @@ export class GamesService {
         return game;
     }
 
-    removeGameState(gameId: string) {
-        if (!this._gameStates.has(gameId)) {
+    removeGame(gameId: string) {
+        if (!this._games.has(gameId)) {
             throw new WsException("Game doesn't exist");
         }
 
-        this._gameStates.delete(gameId);
+        this._games.delete(gameId);
     }
 
-    getPlayerState(gameId: string, socketId: string): PlayerState {
-        const player = this.getGameState(gameId).players.get(socketId);
-        if (!player) {
-            throw new WsException("Player not in game");
-        }
-
-        return player;
+    getPlayerState(gameId: string, playerId: string) {
+        return this.getGame(gameId).actions.getPlayerState(playerId);
     }
 
-    getOpponentState(gameId: string, playerSocketId: string): PlayerState {
-        const game = this.getGameState(gameId);
-
-        for (const [socketId, state] of game.players) {
-            if (socketId !== playerSocketId) {
-                return state;
-            }
-        }
-
-        throw new WsException("Opponent not in game");
+    getOpponentState(gameId: string, playerId: string) {
+        return this.getGame(gameId).actions.getOpponentState(playerId);
     }
-
-    isPlayer1(gameId: string, socketId: string): Boolean {
-        return [...this.getGameState(gameId).players.keys()][0] === socketId;
-    }
-
-    getPlayersTurns(gameId: string) {
-        const game = this.getGameState(gameId);
-    }
-
 
 
     // services
-    playUnit(gameId: string, socketId: string, playUnitDto: PlayUnitDto): UnitInstance {
-        const game = this.getGameState(gameId);
-        if (socketId !== game.playerTurnId) {
+    playUnit(gameId: string, playerId: string, playUnitDto: PlayUnitDto): UnitAndLocation {
+        const game = this.getGame(gameId);
+        const player = game.actions.getPlayerState(playerId);
+
+        if (playerId !== game.state.playerTurnId) {
             throw new WsException("Not players turn");
         }
 
-        const player = this.getPlayerState(gameId, socketId);
         const { instanceId, boardIndex } = playUnitDto;
         const cardInstanceResult = findCardInstance(instanceId, player.bench);
         if (!cardInstanceResult) {
             throw new WsException('card not found');
         }
 
-        const { cardInstance, index: benchIndex } = cardInstanceResult;
-        if (player.money < cardInstance.cost) {
+        const { card, index: benchIndex } = cardInstanceResult;
+        if (player.money < card.cost) {
             throw new WsException('insufficient money');
         }
 
-        const isPlayer1 = this.isPlayer1(gameId, socketId);
-        const translatedDestination = (isPlayer1 ? boardIndex : game.board.length - 1 - boardIndex);
+        const isPlayer1 = game.actions.isPlayer1(playerId);
+        const translatedDestination = (isPlayer1 ? boardIndex : game.state.board.length - 1 - boardIndex);
 
-        const message = CheckPlayUnitValid(game, translatedDestination);
+        const message = CheckPlayUnitValid(game.state, translatedDestination);
         if (message) {
             throw new WsException(message);
         }
 
         // make the move
-        game.board[translatedDestination] = cardInstance;
-        player.bench[benchIndex] = null;
-        player.money -= cardInstance.cost;
+        game.actions.moveUnitToBoard(playerId, card, translatedDestination, benchIndex);
+        game.actions.removeMoney(playerId, card.cost);
 
-        return cardInstance;
+        return {
+            unit: card,
+            location: { insideOf: CardZone.BOARD, index: boardIndex }
+        };
     }
 
-    playSpell(gameId: string, socketId: string, playSpellDto: PlaySpellDto): { card: SpellInstance; index: number } {
-        const game = this.getGameState(gameId);
-        if (socketId !== game.playerTurnId) {
+    playSpell(gameId: string, playerId: string, playSpellDto: PlaySpellDto): SpellAndLocation {
+        const game = this.getGame(gameId);
+        const player = game.actions.getPlayerState(playerId);
+
+        if (playerId !== game.state.playerTurnId) {
             throw new WsException("Not players turn");
         }
 
-        const player = this.getPlayerState(gameId, socketId);
         const { instanceId } = playSpellDto;
         const cardInstanceResult = findCardInstance(instanceId, player.hand);
         if (!cardInstanceResult) {
             throw new WsException('card not found');
         }
 
-        const { cardInstance, index: handIndex } = cardInstanceResult;
-        if (player.money < cardInstance.cost) {
+        const { card, index: handIndex } = cardInstanceResult;
+        if (player.money < card.cost) {
             throw new WsException('insufficient money');
         }
 
         // discard spell
-        player.hand.splice(handIndex, 1);
-        player.money -= cardInstance.cost;
+        game.actions.moveSpellToDrawpile(playerId, card, handIndex);
+        game.actions.removeMoney(playerId, card.cost);
 
-        return {card: cardInstance, index: handIndex};    
+        return { 
+            spell: card, 
+            location: { insideOf: CardZone.NONE }
+        };    
     }
 
-    buyArtifact(gameId: string, socketId: string, buyArtifactDto: BuyArtifactDto): { artifact: ArtifactInstance, index: number } {
-        const game = this.getGameState(gameId);
-        if (socketId !== game.playerTurnId) {
+    buyArtifact(gameId: string, playerId: string, buyArtifactDto: BuyArtifactDto): ArtifactAndLocation {
+        const game = this.getGame(gameId);
+        const player = game.actions.getPlayerState(playerId);
+
+        if (playerId !== game.state.playerTurnId) {
             throw new WsException("Not players turn");
         } 
 
-        const player = this.getPlayerState(gameId, socketId);
         const { instanceId } = buyArtifactDto;
-        const artifactInstanceResult = findArtifactInstance(instanceId, game.shop);
+        const artifactInstanceResult = findArtifactInstance(instanceId, game.state.shop);
         if (!artifactInstanceResult) {
             throw new WsException('artifact not found');
         }
@@ -176,45 +165,45 @@ export class GamesService {
         }
 
         // buy artifact
-        game.shop[shopIndex] = null;
-        player.artifacts.push(artifactInstance);
-        player.money -= artifactInstance.cost;
+        game.actions.moveArtifactToInventory(playerId, artifactInstance, shopIndex);
+        game.actions.removeMoney(playerId, artifactInstance.cost);
 
         return { 
             artifact: artifactInstance,
-            index: player.artifacts.length
+            location: { insideOf: ArtifactZone.PLAYER, index: player.artifacts.length - 1 }
         };
     }
 
-    endTurn(gameId: string, playerSocketId: string) {
-        const game = this.getGameState(gameId);
-        if (game.playerTurnId !== playerSocketId) {
+    endTurn(gameId: string, playerId: string) {
+        const game = this.getGame(gameId);
+        const opponent = game.actions.getOpponentState(playerId);
+
+        if (playerId !== game.state.playerTurnId) {
         throw new WsException("player doesnt match the playerTurnId");
         }
 
-        const opponent = this.getOpponentState(gameId, playerSocketId);
 
-        game.playerTurnId = opponent.socketId;
+        game.state.playerTurnId = opponent.socketId;
         /* this.triggerUnits(game, opponent.socketId, "onTurnEnd"); */ // TODO: effect system later
     }
 
-    startTurn(gameId: string, playerSocketId: string) {
-        const game = this.getGameState(gameId);
-        const player = this.getPlayerState(gameId, playerSocketId);
-        const opponent = this.getOpponentState(gameId, playerSocketId);
+    startTurn(gameId: string, playerId: string) {
+        const game = this.getGame(gameId);
+        const player = game.actions.getPlayerState(playerId);
+        const opponent = game.actions.getOpponentState(playerId);
 
-        const phaseChanged = shouldSwitchPhase(game.gamePhase, player.turn, opponent.turn);
+        const phaseChanged = shouldSwitchPhase(game.state.gamePhase, player.turn, opponent.turn);
         if (phaseChanged) {
-            game.gamePhase = changeGamePhase(game.gamePhase);
+            game.state.gamePhase = changeGamePhase(game.state.gamePhase);
         }
 
         player.turn++;
 
-        switch (game.gamePhase) {
+        switch (game.state.gamePhase) {
             case GamePhase.PLAY:
                 return { 
                     phase: GamePhase.PLAY,
-                    data: this.handleStartTurnPlay(gameId, player), 
+                    data: this.handleStartTurnPlay(gameId, playerId), 
                     phaseChanged: phaseChanged 
                 };
 
@@ -228,9 +217,12 @@ export class GamesService {
         }
     }
 
-    private handleStartTurnPlay(gameId: string, player: PlayerState) {
-        const newSpell = this.drawSpell(player);
-        const newMoney = this.giveTurnStartMoney(gameId, player);
+    private handleStartTurnPlay(gameId: string, playerId: string) {
+        const game = this.getGame(gameId);
+        const player = game.actions.getPlayerState(playerId);
+
+        const newSpell = this.drawSpell(gameId, playerId);
+        const newMoney = this.giveTurnStartMoney(gameId, playerId);
 
         return { 
             newSpell, 
@@ -240,69 +232,97 @@ export class GamesService {
     }
 
     private handleStartTurnShop(gameId: string) {
-        const game = this.getGameState(gameId);
-        if (game.shop.length !== MAX_ARTIFACTS_IN_SHOP) {
-            game.shop = fillShop(game.shop);
-        }
+        const game = this.getGame(gameId);
+
+        game.actions.refillShop();
     }
 
-    private drawSpell(player: PlayerState): SpellInstance | null {
+    private drawSpell(gameId: string, playerId: string): SpellInstance | null {
+        const game = this.getGame(gameId);
+        const player = game.actions.getPlayerState(playerId);
+
         if (player.hand.length === MAX_HAND_SIZE) {
             return null;
         }
 
-        const spellInstance = player.drawpile.pop(); // TODO: add logic to drawing a card (randomly) later
-        if (!spellInstance) {
-            return null;
+        const spellInstance = game.actions.removeSpellFromDrawpile(playerId);
+        if (spellInstance) {
+            game.actions.addSpellToHand(playerId, spellInstance);
         }
 
-        player.hand.push(spellInstance);
         return spellInstance;
     }
 
-    private giveTurnStartMoney(gameId: string, player: PlayerState): number {
-        const newMoney = calculateTurnStartMoney(player.money, player.turn);
+    private giveTurnStartMoney(gameId: string, playerId: string): number {
+        const game = this.getGame(gameId);
+        const player = game.actions.getPlayerState(playerId);
 
-        player.money = newMoney;
+        const newMoney = calculateTurnStartMoney(player.turn);
+
+        game.actions.addMoney(playerId, newMoney);
 
         return newMoney;
     }
 
+    attackUnit(gameId: string, playerId: string, attackUnitDto: AttackUnitDto
+    ): { attackerData: UnitAndLocation, targetData: UnitAndLocation } {
+        const game = this.getGame(gameId);
 
-    // TODO: get around to checking these
-    getPlayerGame(playerID: string, gameID: string) {
-        const game = this.getGameState(gameID);
+        const { card: attacker, index: attackerIndex } = findCardInstance(attackUnitDto.attackerId, game.state.board);
+        if (attacker.ownerId != playerId) {
+            throw new WsException("Invalid attacker");
+        }
 
-        if (!game.players.has(playerID))
-        throw new Error('player not in game');
+        const { card: target, index: targetIndex } = findCardInstance(attackUnitDto.targetId, game.state.board);
 
-        const isPlayer1 = playerID === game.players.entries().next().value?.[1].socketId
-        const playerState = game.players.get(playerID) as PlayerState
 
         return {
-            isPlayer1,
-            hand: playerState.hand,
-            bench: playerState.bench,
-            game,
+            targetData: this.handleAttackUnit(gameId, target, attacker.atk, targetIndex),
+            attackerData: this.handleAttackUnit(gameId, attacker, target.atk, attackerIndex)
         };
     }
 
-    getUpdatedHand(playerID: string, gameID: string) {
-        const context = this.getPlayerGame(playerID, gameID);
-        return context.hand;
+    private handleAttackUnit(gameId, target: UnitInstance, damage: number, targetIndex): UnitAndLocation {
+        const game = this.getGame(gameId);
+
+        const isDead = game.actions.damageUnit(target, damage);
+
+        let location: CardLocation = { insideOf: CardZone.BOARD, index: targetIndex };
+
+        if (isDead) {
+            const targetBench = this.getPlayerState(gameId, this._cardsService.getCardOwnerId(target)).bench;
+            location = game.actions.moveUnitToBench(
+                this._cardsService.getCardOwnerId(target), 
+                target, 
+                getEmptySlot(targetBench), 
+                targetIndex
+            );
+        }
+
+        return {
+            unit: target,
+            location
+        };
     }
 
-    getUpdatedBench(playerID: string, gameID: string) {
-        const context = this.getPlayerGame(playerID, gameID);
-        return context.bench;
+    attackPlayer(gameId: string, playerId: string, attackPlayerDto: AttackPlayerDto
+    ): { targetId: string, attackerId: string, health: number } {
+        const game = this.getGame(gameId);
+
+        const targetId = attackPlayerDto.isAttackOpponent ? this.getOpponentState(gameId, playerId).socketId : playerId;
+        const { card: attacker } = findCardInstance(attackPlayerDto.attackerId, game.state.board);
+
+        const health = game.actions.damagePlayer(targetId, attacker.atk);
+
+        return {
+            targetId,
+            attackerId: this._cardsService.getCardOwnerId(attacker),
+            health
+        };
     }
 
-    getUpdatedBoard(gameID: string) {
-        const game = this.getGameState(gameID);
-        return game.board;
-    }
 
-    // TODO: make combat system later
+    // TODO: make this
     /*
     private triggerUnits(game: GameState, playerID: string, trigger: EffectTrigger)
     {
@@ -317,20 +337,6 @@ export class GamesService {
             }
         })
         })
-    }
-
-    attack(playerID: string, gameID: string, attackerID: string, targetID: string)
-    {
-        const context = this.getPlayerGame(playerID, gameID)
-        const { game } = context
-
-        const attackerInstance = this.actions.findUnitInstance(game, attackerID)
-        const targetInstance = this.actions.findUnitInstance(game, targetID)
-
-        if (attackerInstance.ownerID != playerID || targetInstance.ownerID == playerID) throw new Error("Invalid targets")
-
-        this.actions.dealDamageToUnitInstance(game, targetInstance, attackerInstance.atk)
-        this.actions.dealDamageToUnitInstance(game, attackerInstance, targetInstance.atk)
     }
     */
 }
