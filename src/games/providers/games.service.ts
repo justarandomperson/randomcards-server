@@ -309,7 +309,7 @@ export class GamesService {
 
         return {
             unit: target,
-            location
+            location,
         };
     }
 

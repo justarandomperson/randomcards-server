@@ -225,11 +225,14 @@ export class GamesGateway implements OnGatewayInit, OnGatewayDisconnect {
 		const opponent = this.gamesService.getOpponentState(gameId, client.id);
 		const opponentSocket = this.getSocket(opponent.socketId);
 
-		this.gamesEmitter.updateCard(client, targetData.unit, targetData.location);
+		const attackerDead = attackerData.unit.hp < 0
+		const targetDead = targetData.unit.hp < 0
+
+		this.gamesEmitter.updateCard(client, targetData.unit, targetDead ? { insideOf: CardZone.NONE } : targetData.location);
 		this.gamesEmitter.updateCard(client, attackerData.unit, attackerData.location);
 
 		this.gamesEmitter.updateCard(opponentSocket, targetData.unit, targetData.location);
-		this.gamesEmitter.updateCard(opponentSocket, attackerData.unit, attackerData.location);
+		this.gamesEmitter.updateCard(opponentSocket, attackerData.unit, attackerDead ? { insideOf: CardZone.NONE } : attackerData.location);
 	}
 
 	@SubscribeMessage(SOCKET_EVENT_NAMES.ATTACK_PLAYER)
