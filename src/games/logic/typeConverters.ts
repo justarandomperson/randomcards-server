@@ -1,9 +1,6 @@
-import { WsException } from "@nestjs/websockets";
 import { ArtifactInstance, ClientArtifactData } from "../../artifacts/artifacts.types";
 import { ClientSpellData, ClientUnitData, SpellInstance, UnitInstance } from "../../cards/cards.types";
-import { DeckIds } from "../../matchmaking/matchmaking.types";
-import { ClientPlayerData, Deck, PlayerState } from "../shared/games.types";
-import { generateSpellInstance, generateUnitInstance } from "./gameSetup";
+import { ClientPlayerData, PlayerState } from "../shared/games.types";
 
 
 export const playerStateToClient = (player: PlayerState): ClientPlayerData => {
@@ -21,39 +18,6 @@ export const playerStateToClient = (player: PlayerState): ClientPlayerData => {
     };
 
     return clientPlayerData;
-}
-
-export const deckIdsToDeck = (deckIds: DeckIds): Deck => {
-    const units = deckIds.unitIds.map(
-        (id) => {
-            const unit = generateUnitInstance(id);
-    
-            if (!unit) {
-                throw new WsException(`Unit with Id ${id} does not exist`);
-            }
-
-            return unit;
-        }
-    );
-
-    const spells = deckIds.spellIds.map(
-        (id) => {
-            const spell = generateSpellInstance(id);
-
-            if (!spell) {
-                throw new WsException(`Spell with id ${id} does not exist`);
-            }
-
-            return spell;
-        }
-    )
-
-    const deck: Deck = {
-        units: units,
-        spells: spells
-    };
-
-    return deck;
 }
 
 export const unitInstanceToClient = (unit: UnitInstance): ClientUnitData => {

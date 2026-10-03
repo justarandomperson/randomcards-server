@@ -1,3 +1,4 @@
+// artifacts
 export type ArtifactInstance = {
     id: string
     instanceId: string
@@ -9,18 +10,7 @@ export type ArtifactInstance = {
 }
 
 
-// Note: these are types sent to the client, used only for that
-// they contain only what the client should get
-
-export type ClientArtifactData = {
-    instanceId: string
-    id: string
-    name: string
-    effectDesc: string
-    cost: number
-};
-
-
+// locations
 export enum ArtifactZone {
     SHOP = 'shop',
     PLAYER = 'player'
@@ -35,3 +25,14 @@ export type ArtifactAndLocation = {
     artifact: ArtifactInstance
     location: ArtifactLocation
 }
+
+
+// Note: these are types sent to the client, used only for that
+// they contain only what the client should get
+export type ClientArtifactData = {
+    instanceId: string
+    id: string
+    name: string
+    effectDesc: string
+    cost: number
+};

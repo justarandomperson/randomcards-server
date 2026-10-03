@@ -1,11 +1,9 @@
 import { randomUUID } from "crypto";
 import { ArtifactInstance } from "../../artifacts/artifacts.types";
 import { BasicPlayerData } from "../../matchmaking/matchmaking.types";
-import { Deck, PlayerState } from "../shared/games.types";
+import { PlayerState } from "../shared/games.types";
 import { STARTING_HEALTH, STARTING_MONEY, STARTING_TURN } from "../shared/games.constants";
-import { SpellInstance, UnitInstance } from "../../cards/cards.types";
-import { unitCards } from "../../cards/definitions/units";
-import { spellCards } from "../../cards/definitions/spells";
+import { Deck } from "../../decks/decks.types";
 
 
 export const fillShop = (currentShop: (ArtifactInstance | null)[]): ArtifactInstance[] => {
@@ -38,32 +36,4 @@ export const initPlayerState = (player: BasicPlayerData, deck: Deck): PlayerStat
     }
 
     return playerState;
-}
-
-export const generateUnitInstance = (unitId: string): UnitInstance | null => {
-    const unit = unitCards.get(unitId);
-    if (!unit){
-        return null;
-    }
-
-    const unitInstance = {
-        ...unit,
-        instanceId: randomUUID()
-    }
-
-    return unitInstance;
-}
-
-export const generateSpellInstance = (spellId: string): SpellInstance | null => {
-    const spell = spellCards.get(spellId);
-    if (!spell){
-            return null;
-        }
-
-    const spellInstance = {
-        ...spell,
-        instanceId: randomUUID()
-    }
-
-    return spellInstance ;
 }

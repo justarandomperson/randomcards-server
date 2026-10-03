@@ -1,7 +1,12 @@
-import { ArtifactInstance, ArtifactLocation, ArtifactZone, ClientArtifactData } from "../../artifacts/artifacts.types";
-import { UnitInstance, SpellInstance, ClientUnitData, ClientSpellData, CardZone, CardLocation } from "../../cards/cards.types"; 
+import { ArtifactInstance, ArtifactLocation, ClientArtifactData } from "../../artifacts/artifacts.types";
+import { UnitInstance, SpellInstance, ClientUnitData, ClientSpellData, CardLocation } from "../../cards/cards.types"; 
 import { GameActions } from "../logic/gameActions";
 
+
+export type Game = { 
+  state: GameState
+  actions: GameActions 
+};
 
 export type GameState = {
   //? do we maybe need to keep track of gamePhase? do calculate who starts their shop phase first?
@@ -30,58 +35,8 @@ export enum GamePhase {
   SHOP = 'shop'
 }
 
-export type Deck = {
-  units: UnitInstance[]
-  spells: SpellInstance[]
-}
 
-export type Game = { state: GameState; actions: GameActions };
-
-// Note: these are types sent to the client, used only for that
-// they contain only what the client should get
-
-export type ClientPlayerData = {
-  name: string
-  health: number
-  money: number
-  turn: number
-  drawpileCount: number
-  artifacts: ClientArtifactData[]
-}
-
-
-// event and socket related
-
-export const SOCKET_EVENT_NAMES = { // this is used both on 'emit' and on 'on'
-  CONNECT: 'connect',
-  DISCONNECT: 'disconnect',
-
-  QUEUE: 'queue',
-  DEQUEUE: 'dequeue',
-  PLAY_UNIT: 'play_unit',
-  PLAY_SPELL: 'play_spell',
-  BUY_ARTIFACT: 'buy_artifact',
-  END_TURN: 'end_turn',
-  ATTACK_UNIT: 'attack_unit',
-  ATTACK_PLAYER: 'attack_player',
-
-  MATCH_START: 'match_start',
-  START_TURN: 'start_turn',
-  UPDATE_GAME_PHASE: 'update_game_phase',
-  UPDATE_MONEY: 'update_money',
-  UPDATE_HEALTH: 'update_health',
-  UPDATE_DRAWPILE_COUNT: 'update_drawpile_count',
-  UPDATE_CARD: 'update_card',
-  UPDATE_ARTIFACT: 'update_artifact',
-  UPDATE_HAND: 'update_hand',
-  UPDATE_BENCH: 'update_bench',
-  UPDATE_BOARD: 'update_board',
-  UPDATE_SHOP: 'update_shop',
-  GAME_END: 'game_end'
-} as const;
-
-
-// from server to client
+// event payloads
 export type MatchStartPayload = {
   playerData: ClientPlayerData
   opponentData: ClientPlayerData
@@ -112,4 +67,16 @@ export type UpdateArtifactPayload = {
   artifact: ClientArtifactData,
   location: ArtifactLocation,
   playerId?: string 
+}
+
+
+// Note: these are types sent to the client, used only for that
+// they contain only what the client should get
+export type ClientPlayerData = {
+  name: string
+  health: number
+  money: number
+  turn: number
+  drawpileCount: number
+  artifacts: ClientArtifactData[]
 }

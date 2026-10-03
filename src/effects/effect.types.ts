@@ -1,6 +1,5 @@
 import { GameState } from '../games/shared/games.types';
 import { GameActions } from '../games/logic/gameActions';
-import { on } from 'events';
 
 
 export type EffectTrigger = 'onSummon' | 'onTurnStart' | 'onTurnEnd';

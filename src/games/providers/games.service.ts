@@ -2,25 +2,31 @@ import { Injectable } from '@nestjs/common';
 import { CardLocation, CardZone, SpellAndLocation, SpellInstance, UnitAndLocation, UnitInstance } from '../../cards/cards.types';
 import { CardsService } from '../../cards/cards.service';
 import { GameActions } from '../logic/gameActions';
-import { Deck, Game, GamePhase, GameState } from '../shared/games.types';
+import { Game, GamePhase, GameState } from '../shared/games.types';
 import { Match } from '../../matchmaking/matchmaking.types';
 import { fillShop, initPlayerState } from '../logic/gameSetup';
 import { MAX_CARD_IN_BOARD, MAX_HAND_SIZE } from '../shared/games.constants';
 import { WsException } from '@nestjs/websockets';
 import PlayUnitDto from '../dto/play-unit.dto';
-import { calculateTurnStartMoney, changeGamePhase, CheckPlayUnitValid, findArtifactInstance, findCardInstance, getEmptySlot, shouldSwitchPhase } from '../logic/serviceHelpers';
+import { calculateTurnStartMoney, changeGamePhase, CheckPlayUnitValid, shouldSwitchPhase } from '../logic/serviceHelpers';
 import PlaySpellDto from '../dto/play-spell.dto';
 import BuyArtifactDto from '../dto/buy-artifact.dto';
 import { ArtifactAndLocation, ArtifactZone } from '../../artifacts/artifacts.types';
 import AttackPlayerDto from '../dto/attack-player.dto';
 import AttackUnitDto from '../dto/attack-unit.dto';
+import { Deck } from '../../decks/decks.types';
+import { DecksService } from '../../decks/deck.service';
+import { ArtifactsService } from '../../artifacts/artifacts.service';
 
 
 @Injectable()
 export class GamesService {
     private readonly _games: Map<string, Game> = new Map();
 
-    constructor(private readonly _cardsService: CardsService) {}
+    constructor(
+        private readonly cardsService: CardsService,
+        private readonly artifactsService: ArtifactsService
+    ) {}
 
 
     // initializers, getters and setters etc
@@ -44,7 +50,7 @@ export class GamesService {
 
         const game: Game = {
             state,
-            actions: new GameActions(state, this._cardsService)
+            actions: new GameActions(state, this.cardsService)
         }
 
         this._games.set(state.gameId, game);
@@ -88,7 +94,7 @@ export class GamesService {
         }
 
         const { instanceId, boardIndex } = playUnitDto;
-        const cardInstanceResult = findCardInstance(instanceId, player.bench);
+        const cardInstanceResult = this.cardsService.findCardInstance(instanceId, player.bench);
         if (!cardInstanceResult) {
             throw new WsException('card not found');
         }
@@ -125,7 +131,7 @@ export class GamesService {
         }
 
         const { instanceId } = playSpellDto;
-        const cardInstanceResult = findCardInstance(instanceId, player.hand);
+        const cardInstanceResult = this.cardsService.findCardInstance(instanceId, player.hand);
         if (!cardInstanceResult) {
             throw new WsException('card not found');
         }
@@ -154,7 +160,7 @@ export class GamesService {
         } 
 
         const { instanceId } = buyArtifactDto;
-        const artifactInstanceResult = findArtifactInstance(instanceId, game.state.shop);
+        const artifactInstanceResult = this.artifactsService.findArtifactInstance(instanceId, game.state.shop);
         if (!artifactInstanceResult) {
             throw new WsException('artifact not found');
         }
@@ -268,12 +274,14 @@ export class GamesService {
     ): { attackerData: UnitAndLocation, targetData: UnitAndLocation } {
         const game = this.getGame(gameId);
 
-        const { card: attacker, index: attackerIndex } = findCardInstance(attackUnitDto.attackerId, game.state.board);
+        const { card: attacker, index: attackerIndex } = 
+            this.cardsService.findCardInstance(attackUnitDto.attackerId, game.state.board);
         if (attacker.ownerId != playerId) {
             throw new WsException("Invalid attacker");
         }
 
-        const { card: target, index: targetIndex } = findCardInstance(attackUnitDto.targetId, game.state.board);
+        const { card: target, index: targetIndex } = 
+            this.cardsService.findCardInstance(attackUnitDto.targetId, game.state.board);
 
 
         return {
@@ -290,11 +298,11 @@ export class GamesService {
         let location: CardLocation = { insideOf: CardZone.BOARD, index: targetIndex };
 
         if (isDead) {
-            const targetBench = this.getPlayerState(gameId, this._cardsService.getCardOwnerId(target)).bench;
+            const targetBench = this.getPlayerState(gameId, this.cardsService.getCardOwnerId(target)).bench;
             location = game.actions.moveUnitToBench(
-                this._cardsService.getCardOwnerId(target), 
+                this.cardsService.getCardOwnerId(target), 
                 target, 
-                getEmptySlot(targetBench), 
+                this.cardsService.findEmptySlot(targetBench), 
                 targetIndex
             );
         }
@@ -310,13 +318,13 @@ export class GamesService {
         const game = this.getGame(gameId);
 
         const targetId = attackPlayerDto.isAttackOpponent ? this.getOpponentState(gameId, playerId).socketId : playerId;
-        const { card: attacker } = findCardInstance(attackPlayerDto.attackerId, game.state.board);
+        const { card: attacker } = this.cardsService.findCardInstance(attackPlayerDto.attackerId, game.state.board);
 
         const health = game.actions.damagePlayer(targetId, attacker.atk);
 
         return {
             targetId,
-            attackerId: this._cardsService.getCardOwnerId(attacker),
+            attackerId: this.cardsService.getCardOwnerId(attacker),
             health
         };
     }

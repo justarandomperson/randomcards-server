@@ -1,10 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
-import { GameState, MatchStartPayload, PlayerState, SOCKET_EVENT_NAMES, UpdateArtifactPayload, UpdateCardPayload, UpdateDrawpileCountPayload, UpdateHealthPayload, UpdateMoneyPayload } from '../shared/games.types';
+import { GameState, MatchStartPayload, PlayerState, UpdateArtifactPayload, UpdateCardPayload, UpdateDrawpileCountPayload, UpdateHealthPayload, UpdateMoneyPayload } from '../shared/games.types';
 import { artifactInstanceToClient, playerStateToClient, spellInstanceToClient, unitInstanceToClient } from '../logic/typeConverters';
 import { CardLocation, CardType, SpellInstance, UnitInstance } from '../../cards/cards.types';
 import { ArtifactInstance, ArtifactLocation } from '../../artifacts/artifacts.types';
 import { WsException } from '@nestjs/websockets';
+import { SOCKET_EVENT_NAMES } from '../shared/games.constants';
 
 
 @Injectable()
