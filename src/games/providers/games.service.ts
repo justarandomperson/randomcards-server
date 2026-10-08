@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { CardLocation, CardZone, SpellAndLocation, SpellInstance, UnitAndLocation, UnitInstance } from '../../cards/cards.types';
 import { CardsService } from '../../cards/cards.service';
 import { GameActions } from '../logic/gameActions';
-import { Game, GamePhase, GameState } from '../shared/games.types';
+import { Game, GamePhase, GameState, PlayerState } from '../shared/games.types';
 import { Match } from '../../matchmaking/matchmaking.types';
 import { fillShop, initPlayerState } from '../logic/gameSetup';
 import { MAX_CARD_IN_BOARD, MAX_HAND_SIZE } from '../shared/games.constants';
@@ -17,6 +17,7 @@ import AttackUnitDto from '../dto/attack-unit.dto';
 import { Deck } from '../../decks/decks.types';
 import { DecksService } from '../../decks/deck.service';
 import { ArtifactsService } from '../../artifacts/artifacts.service';
+import { Effect, EFFECT_TRIGGERS, EffectTrigger } from '../../effects/effect.types';
 
 
 @Injectable()
@@ -85,7 +86,7 @@ export class GamesService {
 
 
     // services
-    playUnit(gameId: string, playerId: string, playUnitDto: PlayUnitDto): UnitAndLocation {
+    playUnit(gameId: string, playerId: string, playUnitDto: PlayUnitDto): UnitAndLocation & { needsTarget: boolean } {
         const game = this.getGame(gameId);
         const player = game.actions.getPlayerState(playerId);
 
@@ -116,9 +117,12 @@ export class GamesService {
         game.actions.moveUnitToBoard(playerId, card, translatedDestination, benchIndex);
         game.actions.removeMoney(playerId, card.cost);
 
+        const needsTarget = this.triggerUnit(game, playerId, EFFECT_TRIGGERS.SUMMON, card)
+
         return {
             unit: card,
-            location: { insideOf: CardZone.BOARD, index: boardIndex }
+            location: { insideOf: CardZone.BOARD, index: boardIndex },
+            needsTarget
         };
     }
 
@@ -181,16 +185,15 @@ export class GamesService {
     }
 
     endTurn(gameId: string, playerId: string) {
-        const game = this.getGame(gameId);
+        const game = this.getGame(gameId)
         const opponent = game.actions.getOpponentState(playerId);
 
         if (playerId !== game.state.playerTurnId) {
         throw new WsException("player doesnt match the playerTurnId");
         }
 
-
         game.state.playerTurnId = opponent.socketId;
-        /* this.triggerUnits(game, opponent.socketId, "onTurnEnd"); */ // TODO: effect system later
+        this.triggerUnits(game, opponent.socketId, EFFECT_TRIGGERS.TURN_END);
     }
 
     startTurn(gameId: string, playerId: string) {
@@ -204,6 +207,8 @@ export class GamesService {
         }
 
         player.turn++;
+
+        this.triggerUnits(game, playerId, EFFECT_TRIGGERS.TURN_START)
 
         switch (game.state.gamePhase) {
             case GamePhase.PLAY:
@@ -221,6 +226,7 @@ export class GamesService {
                     phaseChanged: phaseChanged 
                 };
         }
+
     }
 
     private handleStartTurnPlay(gameId: string, playerId: string) {
@@ -293,7 +299,7 @@ export class GamesService {
     private handleAttackUnit(gameId, target: UnitInstance, damage: number, targetIndex): UnitAndLocation {
         const game = this.getGame(gameId);
 
-        const isDead = game.actions.damageUnit(target, damage);
+        const isDead = game.actions.damageUnit(target.id, damage);
 
         let location: CardLocation = { insideOf: CardZone.BOARD, index: targetIndex };
 
@@ -329,22 +335,50 @@ export class GamesService {
         };
     }
 
-
-    // TODO: make this
-    /*
-    private triggerUnits(game: GameState, playerID: string, trigger: EffectTrigger)
+    targetSelected(gameId: string, playerId: string, targetId)
     {
-        const summonedUnits = game.board.filter(
-        (unit): unit is UnitInstance => unit?.ownerID === playerID
-        );
-        summonedUnits.map((unit) => {
-        unit.effects.map((effect) => {
+        const game = this.getGame(gameId)
+        const player: PlayerState = game.state.players[playerId]
+
+        if (!player.currentEffectData) return
+        const {effect, sourceId} = player.currentEffectData
+
+        effect.execute({game, sourceId, playerId, targetId})
+    }
+
+    private triggerUnit(game: Game, playerId: string, trigger: EffectTrigger, unit: UnitInstance)
+    {
+        let needsTarget = false
+        unit.effects.map((effect: Effect) => {
             if (effect.trigger.includes(trigger))
             {
-            effect.execute({game: game, playerId: playerID, actions: this.actions, source: unit})
+                if (effect.hasTarget)
+                {
+                    const player = game.state.players[playerId]
+                    player.currentEffect = effect
+                    needsTarget = true
+                }
+                else effect.execute({game, playerId, sourceId: unit.instanceId!})
             }
         })
-        })
+        
+        return needsTarget
     }
-    */
+
+    private triggerUnits(game: Game, playerID: string, trigger: EffectTrigger)
+    {
+        const state = game.state
+
+        const summonedUnits = state.board.filter(
+        (unit): unit is UnitInstance => unit?.ownerId === playerID
+        );
+
+        let needsTarget = false 
+
+        summonedUnits.map((unit) => {
+            needsTarget = this.triggerUnit(game, playerID, trigger, unit)
+        })
+
+        return needsTarget
+    }
 }

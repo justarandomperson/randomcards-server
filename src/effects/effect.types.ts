@@ -1,18 +1,29 @@
-import { GameState } from '../games/shared/games.types';
+import { Game, GameState } from '../games/shared/games.types';
 import { GameActions } from '../games/logic/gameActions';
 
+export const EFFECT_TRIGGERS = {
+  TURN_START: 'turn_start',
+  TURN_END: 'turn_end',
+  SUMMON: 'summon',
+  DEATH: 'death',
+  KILL: 'kill',
+  DAMAGED: 'damaged',
+  IN_COOLDOWN: 'in_cooldown',
+  COOLDOWN_END: 'cooldown_end'
+} as const;
 
-export type EffectTrigger = 'onSummon' | 'onTurnStart' | 'onTurnEnd';
+export type EffectTrigger = typeof EFFECT_TRIGGERS[keyof typeof EFFECT_TRIGGERS];
 
 export type EffectContext = {
-  game: GameState;
-  source: string;
+  game: Game;
+  sourceId: string;
+  targetId?: string
   playerId: string;
-  actions: GameActions;
 };
 
 export type Effect = {
   trigger: EffectTrigger[];
+  hasTarget?: boolean;
   execute(ctx: EffectContext): void;
 
   value?: number;
@@ -33,17 +44,6 @@ export const EFFECTS = {
   UPDATE_HAND: 'update_hand',
   RETURN_CARD: 'return_card',
   UPDATE_UNIT_STATUS: 'update_unit_status',
-} as const;
-
-export const EFFECT_TRIGGERS = {
-  TURN_START: 'turn_start',
-  TURN_END: 'turn_end',
-  SUMMON: 'summon',
-  DEATH: 'death',
-  KILL: 'kill',
-  DAMAGED: 'damaged',
-  IN_COOLDOWN: 'in_cooldown',
-  COOLDOWN_END: 'cooldown_end'
 } as const;
 
 export const UNIT_STATUSES = {

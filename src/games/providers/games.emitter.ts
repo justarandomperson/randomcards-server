@@ -135,6 +135,11 @@ export class GamesEmitter {
         client.emit(SOCKET_EVENT_NAMES.UPDATE_BOARD, payload);
     }
 
+    getTarget(server: Server, playerId: string)
+    {
+        server.to(playerId).emit(SOCKET_EVENT_NAMES.GET_TARGET)
+    }
+
     gameEnd(server: Server, gameId: string, winnerId: string) {
         const payload = { winnerId };
 
