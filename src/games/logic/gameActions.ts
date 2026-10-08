@@ -5,7 +5,6 @@ import { CurrentEffectData, GameState, PlayerState } from '../shared/games.types
 import { MAX_HAND_SIZE, MINIMUM_MONEY } from '../shared/games.constants';
 import { ArtifactInstance, ArtifactLocation, ArtifactZone } from '../../artifacts/artifacts.types';
 import { fillShop } from './gameSetup';
-import { GamesEmitter } from '../providers/games.emitter';
 
 
 export class GameActions {
