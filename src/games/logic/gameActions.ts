@@ -2,7 +2,7 @@ import { WsException } from '@nestjs/websockets';
 import { CardsService } from '../../cards/cards.service';
 import { CardLocation, CardZone, SpellInstance, UnitInstance } from '../../cards/cards.types';
 import { GameState, PlayerState } from '../shared/games.types';
-import { MINIMUM_MONEY } from '../shared/games.constants';
+import { MAX_HAND_SIZE, MINIMUM_MONEY } from '../shared/games.constants';
 import { ArtifactInstance, ArtifactLocation, ArtifactZone } from '../../artifacts/artifacts.types';
 import { fillShop } from './gameSetup';
 
@@ -66,11 +66,16 @@ export class GameActions {
         };
     }
 
-    moveSpellToDrawpile(playerId: string, card: SpellInstance, handIndex: number): CardLocation {
+    moveSpellToDrawpile(playerId: string, card: SpellInstance, handIndex: number): CardLocation | null {
         const player = this.getPlayerState(playerId);
+        
+        if (player.hand.length === MAX_HAND_SIZE) {
+            return null;
+        }
 
         player.hand.splice(handIndex, 1);
         player.drawpile.push(card);
+
 
         return {
             insideOf: CardZone.NONE

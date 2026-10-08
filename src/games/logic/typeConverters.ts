@@ -27,6 +27,7 @@ export const unitInstanceToClient = (unit: UnitInstance): ClientUnitData => {
         name: unit.name,
         type: unit.type,
         effectDesc: unit.effectDesc,
+        statuses: unit.statuses,
         cost: unit.cost,
         hp: unit.hp,
         atk: unit.atk

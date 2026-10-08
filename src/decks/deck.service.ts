@@ -29,9 +29,9 @@ export class DecksService {
     }
 
 
-    deckIdsToDeck(deckIds: DeckIds): Deck {
-        const units = this.cardIdsToCardList(deckIds.unitIds, CardType.UNIT);
-        const spells = this.cardIdsToCardList(deckIds.spellIds, CardType.SPELL);
+    deckIdsToDeck(deckIds: DeckIds, ownerId: string): Deck {
+        const units = this.cardIdsToCardList(deckIds.unitIds, CardType.UNIT, ownerId);
+        const spells = this.cardIdsToCardList(deckIds.spellIds, CardType.SPELL,  ownerId);
 
         const deck: Deck = {
             units,
@@ -41,12 +41,12 @@ export class DecksService {
         return deck;
     }
 
-    private cardIdsToCardList(cardIds: string[], cardType: CardType.UNIT): UnitInstance[];
-    private cardIdsToCardList(cardIds: string[], cardType: CardType.SPELL): SpellInstance[];
-    private cardIdsToCardList(cardIds: string[], cardType: CardType): CardInstance[] {
+    private cardIdsToCardList(cardIds: string[], cardType: CardType.UNIT, ownerId: string): UnitInstance[];
+    private cardIdsToCardList(cardIds: string[], cardType: CardType.SPELL, ownerId: string): SpellInstance[];
+    private cardIdsToCardList(cardIds: string[], cardType: CardType, ownerId: string): CardInstance[] {
         return cardIds.map((id) => {
             const card = cardType === CardType.UNIT ? 
-                this.cardsService.createUnitInstance(id) : this.cardsService.createSpellInstance(id);
+                this.cardsService.createUnitInstance(id, ownerId) : this.cardsService.createSpellInstance(id,  ownerId);
 
             if (!card || card.type !== cardType) {
                 throw new WsException(`Card with Id ${id} does not exist`);

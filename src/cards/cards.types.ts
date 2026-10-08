@@ -1,4 +1,4 @@
-import { Effect } from '../effects/effect.types';
+import { Effect, Status } from '../effects/effects.types';
 
 
 // cards
@@ -15,6 +15,7 @@ export type UnitInstance = {
   type: CardType.UNIT
   effectDesc: string
   effects: Effect[]
+  statuses: Status[]
   cost: number
   atk: number
   hp: number
@@ -76,6 +77,7 @@ export type ClientUnitData = {
   name: string
   type: CardType.UNIT
   effectDesc: string
+  statuses: Status[]
   cost: number
   hp: number
   atk: number

@@ -1,3 +1,4 @@
+import { EffectContext } from "../../effects/effects.types";
 import { CardType, SpellInstance } from "../cards.types";
 
 
@@ -15,7 +16,14 @@ const spellList: SpellInstance[] = [
         name: "Gaster Blaster",
         type: CardType.SPELL,
         effectDesc: "i will blast your glast",
-        effects: [],
+        effects: [
+            {
+                trigger: [],
+                execute: (context: EffectContext) => {
+                   
+                }
+            }
+        ],
         cost: 4,
     },
 ];

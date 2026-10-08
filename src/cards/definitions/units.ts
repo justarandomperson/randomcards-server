@@ -1,3 +1,5 @@
+import { EFFECT_TRIGGERS, EffectContext } from '../../effects/effects.types';
+import { CardsService } from '../cards.service';
 import { CardType, UnitInstance } from '../cards.types';
 
 
@@ -8,23 +10,26 @@ const unitList: UnitInstance[] = [
         type: CardType.UNIT,
         effectDesc: "im dog",
         effects: [],
+        statuses: [],
         cost: 3,
         hp: 1,
         atk: 2,
     },
     {
-        id: "U_11",
+        id: "U_2",
         name: "sans the skeleton",
         type: CardType.UNIT,
-        effectDesc: "sans attacks",
-        effects: [/*
+        effectDesc: "Summon & Turn Start: Add a Gaster Blaster to your hand.",
+        effects: [
             {
-                trigger: ["onSummon", "onTurnStart"],
-                execute: (ctx) => {
-                    ctx.actions.addCardToPlayerHand(ctx.game, "666", ctx.playerId)
+                trigger: [EFFECT_TRIGGERS.SUMMONED, EFFECT_TRIGGERS.TURN_START],
+                execute: (context: EffectContext) => {
+                    const gasterBlaster = context.cardsService.createSpellInstance("S_666", context.playerId);
+                    context.game.actions.addSpellToHand(context.playerId, gasterBlaster);
                 }
             }
-        */],
+        ],
+        statuses: [],
         cost: 6,
         hp: 1,
         atk: 1

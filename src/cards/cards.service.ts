@@ -8,41 +8,24 @@ export class CardsService {
 
 
     // initializers, getters, setters
-    createCardFromId(id: string, ownerID: string) {
-        const card = unitCards.get(id);
-
-        if (!card) {
-            throw new Error(`Card with id ${id} doesn't exist`);
-        } 
-
-        const uniqueId = Math.random().toString(36).substring(2, 8);
-
-        const cardInstance = {
-            ...card,
-            instanceId: uniqueId,
-            ownerID: ownerID
-        }
-        
-        return cardInstance;
+    createUnitInstance = (unitId: string, ownerId: string): UnitInstance => {
+        return this.createCardInstance(unitCards, unitId, ownerId) as UnitInstance;
     }
 
-    createUnitInstance = (unitId: string, instanceId?: string): UnitInstance | null => {
-        return this.createCardInstance(unitCards, unitId, instanceId) as UnitInstance | null;
+    createSpellInstance(spellId: string, ownerId: string): SpellInstance{
+        return this.createCardInstance(spellCards, spellId, ownerId) as SpellInstance;
     }
 
-    createSpellInstance(spellId: string, instanceId?: string): SpellInstance | null {
-        return this.createCardInstance(spellCards, spellId, instanceId) as SpellInstance | null;
-    }
-
-    private createCardInstance(cardList: Map<string, CardInstance>, cardId: string, instanceId?: string): CardInstance | null {
+    private createCardInstance(cardList: Map<string, CardInstance>, cardId: string, ownerId: string): CardInstance {
         const card = cardList.get(cardId);
         if (!card){
-                return null;
-            }
+            throw new WsException("card with this id does not exist.");
+        }
 
         const cardInstance = {
             ...card,
-            instanceId
+            instanceId: this.generateInstanceId(),
+            ownerId
         };
 
         return cardInstance;
@@ -54,6 +37,18 @@ export class CardsService {
         }
 
         return card.ownerId;
+    }
+
+    getCardInstanceId(card: UnitInstance | SpellInstance): string {
+        if (!card.instanceId) {
+            throw new WsException('card has no instanceId');
+        }
+
+        return card.instanceId;  
+    }
+
+    private generateInstanceId(): string {
+        return Math.random().toString(36).substring(2, 8);
     }
 
 

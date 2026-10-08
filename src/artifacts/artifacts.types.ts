@@ -1,11 +1,13 @@
+import { Effect } from "../effects/effects.types"
+
 // artifacts
 export type ArtifactInstance = {
     id: string
-    instanceId: string
+    instanceId?: string
     name: string
     ownerId?: string
     effectDesc: string
-    effects: []
+    effects: Effect[]
     cost: number
 }
 
@@ -30,7 +32,7 @@ export type ArtifactAndLocation = {
 // Note: these are types sent to the client, used only for that
 // they contain only what the client should get
 export type ClientArtifactData = {
-    instanceId: string
+    instanceId?: string
     id: string
     name: string
     effectDesc: string

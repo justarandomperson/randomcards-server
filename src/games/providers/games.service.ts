@@ -15,8 +15,9 @@ import { ArtifactAndLocation, ArtifactZone } from '../../artifacts/artifacts.typ
 import AttackPlayerDto from '../dto/attack-player.dto';
 import AttackUnitDto from '../dto/attack-unit.dto';
 import { Deck } from '../../decks/decks.types';
-import { DecksService } from '../../decks/deck.service';
 import { ArtifactsService } from '../../artifacts/artifacts.service';
+import { EffectsService } from '../../effects/effects.service';
+import { EFFECT_TRIGGERS } from '../../effects/effects.types';
 
 
 @Injectable()
@@ -25,7 +26,8 @@ export class GamesService {
 
     constructor(
         private readonly cardsService: CardsService,
-        private readonly artifactsService: ArtifactsService
+        private readonly artifactsService: ArtifactsService,
+        private readonly effectsService: EffectsService
     ) {}
 
 
@@ -165,17 +167,17 @@ export class GamesService {
             throw new WsException('artifact not found');
         }
 
-        const { artifactInstance, index: shopIndex } = artifactInstanceResult;
-        if (player.money < artifactInstance.cost) {
+        const { artifact, index: shopIndex } = artifactInstanceResult;
+        if (player.money < artifact.cost) {
             throw new WsException('insufficient money');
         }
 
         // buy artifact
-        game.actions.moveArtifactToInventory(playerId, artifactInstance, shopIndex);
-        game.actions.removeMoney(playerId, artifactInstance.cost);
+        game.actions.moveArtifactToInventory(playerId, artifact, shopIndex);
+        game.actions.removeMoney(playerId, artifact.cost);
 
         return { 
-            artifact: artifactInstance,
+            artifact,
             location: { insideOf: ArtifactZone.PLAYER, index: player.artifacts.length - 1 }
         };
     }
@@ -190,7 +192,7 @@ export class GamesService {
 
 
         game.state.playerTurnId = opponent.socketId;
-        /* this.triggerUnits(game, opponent.socketId, "onTurnEnd"); */ // TODO: effect system later
+        this.effectsService.runEffect(playerId, EFFECT_TRIGGERS.TURN_END); //? Not sure if this should be called here
     }
 
     startTurn(gameId: string, playerId: string) {
@@ -204,6 +206,7 @@ export class GamesService {
         }
 
         player.turn++;
+        this.effectsService.runEffect(playerId, EFFECT_TRIGGERS.TURN_START); //? Not sure if this should be called here
 
         switch (game.state.gamePhase) {
             case GamePhase.PLAY:
@@ -290,7 +293,7 @@ export class GamesService {
         };
     }
 
-    private handleAttackUnit(gameId, target: UnitInstance, damage: number, targetIndex): UnitAndLocation {
+    private handleAttackUnit(gameId: string, target: UnitInstance, damage: number, targetIndex): UnitAndLocation {
         const game = this.getGame(gameId);
 
         const isDead = game.actions.damageUnit(target, damage);
@@ -328,23 +331,4 @@ export class GamesService {
             health
         };
     }
-
-
-    // TODO: make this
-    /*
-    private triggerUnits(game: GameState, playerID: string, trigger: EffectTrigger)
-    {
-        const summonedUnits = game.board.filter(
-        (unit): unit is UnitInstance => unit?.ownerID === playerID
-        );
-        summonedUnits.map((unit) => {
-        unit.effects.map((effect) => {
-            if (effect.trigger.includes(trigger))
-            {
-            effect.execute({game: game, playerId: playerID, actions: this.actions, source: unit})
-            }
-        })
-        })
-    }
-    */
 }

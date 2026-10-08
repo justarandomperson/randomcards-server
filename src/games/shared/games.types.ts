@@ -1,11 +1,12 @@
 import { ArtifactInstance, ArtifactLocation, ClientArtifactData } from "../../artifacts/artifacts.types";
 import { UnitInstance, SpellInstance, ClientUnitData, ClientSpellData, CardLocation } from "../../cards/cards.types"; 
+import { EffectContext } from "../../effects/effects.types";
 import { GameActions } from "../logic/gameActions";
 
 
 export type Game = { 
   state: GameState
-  actions: GameActions 
+  actions: GameActions
 };
 
 export type GameState = {
