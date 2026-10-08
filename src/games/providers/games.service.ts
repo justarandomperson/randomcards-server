@@ -17,7 +17,7 @@ import AttackUnitDto from '../dto/attack-unit.dto';
 import { Deck } from '../../decks/decks.types';
 import { ArtifactsService } from '../../artifacts/artifacts.service';
 import { EffectsService } from '../../effects/effects.service';
-import { EFFECT_TRIGGERS } from '../../effects/effects.types';
+import { Effect, EFFECT_TRIGGERS, EffectTrigger } from '../../effects/effects.types';
 
 
 @Injectable()
@@ -27,7 +27,6 @@ export class GamesService {
     constructor(
         private readonly cardsService: CardsService,
         private readonly artifactsService: ArtifactsService,
-        private readonly effectsService: EffectsService
     ) {}
 
 
@@ -52,8 +51,9 @@ export class GamesService {
 
         const game: Game = {
             state,
-            actions: new GameActions(state, this.cardsService)
-        }
+            actions: new GameActions(state, this.cardsService),
+            effects: new EffectsService(state, this.cardsService, this.artifactsService)
+        };
 
         this._games.set(state.gameId, game);
 
@@ -118,7 +118,7 @@ export class GamesService {
         game.actions.moveUnitToBoard(playerId, card, translatedDestination, benchIndex);
         game.actions.removeMoney(playerId, card.cost);
 
-        const needsTarget = this.triggerUnit(game, playerId, EFFECT_TRIGGERS.SUMMON, card)
+        const needsTarget = game.effects.runEffectsForTrigger(playerId, EFFECT_TRIGGERS.SUMMONED, card);
 
         return {
             unit: card,
@@ -194,7 +194,7 @@ export class GamesService {
         }
 
         game.state.playerTurnId = opponent.socketId;
-        this.effectsService.runEffect(playerId, EFFECT_TRIGGERS.TURN_END); //? Not sure if this should be called here
+        game.effects.runEffectsForTrigger(playerId, EFFECT_TRIGGERS.TURN_END);
     }
 
     startTurn(gameId: string, playerId: string) {
@@ -208,9 +208,7 @@ export class GamesService {
         }
 
         player.turn++;
-        this.effectsService.runEffect(playerId, EFFECT_TRIGGERS.TURN_START); //? Not sure if this should be called here
-
-        this.triggerUnits(game, playerId, EFFECT_TRIGGERS.TURN_START)
+        game.effects.runEffectsForTrigger(playerId, EFFECT_TRIGGERS.TURN_START);
 
         switch (game.state.gamePhase) {
             case GamePhase.PLAY:
@@ -321,8 +319,8 @@ export class GamesService {
         };
     }
 
-    attackPlayer(gameId: string, playerId: string, attackPlayerDto: AttackPlayerDto
-    ): { targetId: string, attackerId: string, health: number } {
+    attackPlayer(gameId: string, playerId: string, attackPlayerDto: AttackPlayerDto): 
+    { targetId: string, attackerId: string, health: number } {
         const game = this.getGame(gameId);
 
         const targetId = attackPlayerDto.isAttackOpponent ? this.getOpponentState(gameId, playerId).socketId : playerId;
@@ -335,5 +333,18 @@ export class GamesService {
             attackerId: this.cardsService.getCardOwnerId(attacker),
             health
         };
+    }
+
+    targetSelected(gameId: string, playerId: string, targetId) {
+        const game = this.getGame(gameId)
+        const player: PlayerState = game.actions.getPlayerState(playerId);
+
+        if (!player.currentEffectData) {
+            return;
+        }
+
+        const { effect, sourceId } = player.currentEffectData
+
+        game.effects.runEffect(effect, playerId, sourceId);
     }
 }

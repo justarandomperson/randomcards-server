@@ -135,9 +135,9 @@ export class GamesEmitter {
         client.emit(SOCKET_EVENT_NAMES.UPDATE_BOARD, payload);
     }
 
-    getTarget(server: Server, playerId: string)
+    getTarget(client: Socket)
     {
-        server.to(playerId).emit(SOCKET_EVENT_NAMES.GET_TARGET)
+        client.emit(SOCKET_EVENT_NAMES.GET_TARGET);
     }
 
     gameEnd(server: Server, gameId: string, winnerId: string) {

@@ -1,16 +1,14 @@
 import { ArtifactInstance, ArtifactLocation, ClientArtifactData } from "../../artifacts/artifacts.types";
 import { UnitInstance, SpellInstance, ClientUnitData, ClientSpellData, CardLocation } from "../../cards/cards.types"; 
-<<<<<<< HEAD
-import { EffectContext } from "../../effects/effects.types";
-=======
-import { Effect } from "../../effects/effect.types";
->>>>>>> 13561ac22eb36fe02a2574dceee12c17b17b0f2e
+import { EffectsService } from "../../effects/effects.service";
+import { Effect } from "../../effects/effects.types";
 import { GameActions } from "../logic/gameActions";
 
 
 export type Game = { 
   state: GameState
   actions: GameActions
+  effects: EffectsService
 };
 
 export type GameState = {
@@ -22,11 +20,6 @@ export type GameState = {
   gamePhase: GamePhase
   playerTurnId: string
 };
-
-export type CurrentEffectData = {
-  effect: Effect,
-  sourceId: string
-}
 
 export type PlayerState = {
   socketId: string
@@ -44,6 +37,11 @@ export type PlayerState = {
 export enum GamePhase {
   PLAY = 'play',
   SHOP = 'shop'
+}
+
+export type CurrentEffectData = {
+  effect: Effect,
+  sourceId: string
 }
 
 

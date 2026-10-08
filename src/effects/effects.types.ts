@@ -2,22 +2,27 @@ import { ArtifactsService } from '../artifacts/artifacts.service';
 import { ArtifactInstance } from '../artifacts/artifacts.types';
 import { CardsService } from '../cards/cards.service'
 import { SpellInstance, UnitInstance } from '../cards/cards.types';
-import { Game } from '../games/shared/games.types'
+import { GameActions } from '../games/logic/gameActions';
+import { GameState } from '../games/shared/games.types'
 
 
 export type EffectContext = {
-  game: Game
+  state: GameState
+  actions: GameActions
   cardsService: CardsService
   artifactsService: ArtifactsService
   playerId: string
   sourceId: string
+  targetId?: string
 };
 
 export type Effect = {
   trigger: EffectTrigger[]
   execute(ctx: EffectContext): void
+  hasTarget?: boolean
   value?: number
 };
+
 
 export type EffectTrigger = typeof EFFECT_TRIGGERS[keyof typeof EFFECT_TRIGGERS]
 

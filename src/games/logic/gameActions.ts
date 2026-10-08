@@ -1,7 +1,7 @@
 import { WsException } from '@nestjs/websockets';
 import { CardsService } from '../../cards/cards.service';
 import { CardLocation, CardZone, SpellInstance, UnitInstance } from '../../cards/cards.types';
-import { GameState, PlayerState } from '../shared/games.types';
+import { CurrentEffectData, GameState, PlayerState } from '../shared/games.types';
 import { MAX_HAND_SIZE, MINIMUM_MONEY } from '../shared/games.constants';
 import { ArtifactInstance, ArtifactLocation, ArtifactZone } from '../../artifacts/artifacts.types';
 import { fillShop } from './gameSetup';
@@ -175,5 +175,11 @@ export class GameActions {
 
     refillShop() {
         this.state.shop = fillShop(this.state.shop);
+    }
+
+    setCurrentEffectData(playerId: string, currentEffectData: CurrentEffectData) {
+        const player = this.getPlayerState(playerId);
+
+        player.currentEffectData = currentEffectData;
     }
 }

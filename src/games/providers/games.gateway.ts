@@ -153,9 +153,8 @@ export class GamesGateway implements OnGatewayInit, OnGatewayDisconnect {
 
 		const { unit, location, needsTarget } = this.gamesService.playUnit(gameId, client.id, playUnitDto);
 
-		if (needsTarget)
-		{
-			this.gamesEmitter.getTarget(this.server, client.id)
+		if (needsTarget) {
+			this.gamesEmitter.getTarget(client);
 		}
 
 		const opponent = this.gamesService.getOpponentState(gameId, client.id);

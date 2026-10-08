@@ -19,49 +19,38 @@ const unitList: UnitInstance[] = [
         id: "U_2",
         name: "sans the skeleton",
         type: CardType.UNIT,
-<<<<<<< HEAD
         effectDesc: "Summon & Turn Start: Add a Gaster Blaster to your hand.",
         effects: [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED, EFFECT_TRIGGERS.TURN_START],
                 execute: (context: EffectContext) => {
                     const gasterBlaster = context.cardsService.createSpellInstance("S_666", context.playerId);
-                    context.game.actions.addSpellToHand(context.playerId, gasterBlaster);
+                    context.actions.addSpellToHand(context.playerId, gasterBlaster);
                 }
             }
         ],
         statuses: [],
-=======
-        effectDesc: "sans attacks",
-        effects: [
-            {
-                trigger: ["summon", "turn_start"],
-                execute: (ctx) => {
-                    ctx.game.actions.createSpellToPlayerHandFromId(ctx.playerId, "666")
-                }
-            }
-        ],
->>>>>>> 13561ac22eb36fe02a2574dceee12c17b17b0f2e
         cost: 6,
         hp: 1,
         atk: 1
     },
     {
-        id: "U_12",
+        id: "U_3",
         name: "Green Gaster",
         type: CardType.UNIT,
         effectDesc: "Summon: Turns an unit to green (deals 1 damage)",
         effects: [
             {
-                trigger: ["summon"],
-                execute: (ctx) => {
+                trigger: [EFFECT_TRIGGERS.SUMMONED],
+                execute: (ctx: EffectContext) => {
                     //maybe later store the effect "magic numbers" somewhere else
                     //probably still inside the card
 
-                    if (ctx.targetId) ctx.game.actions.damageUnit(ctx.targetId, 1)
+                    if (ctx.targetId) ctx.actions.damageUnit(ctx.targetId, 1)
                 }
             }
         ],
+        statuses: [],
         cost: 6,
         hp: 6,
         atk: 6

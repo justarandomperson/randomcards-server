@@ -1,27 +1,34 @@
 import { WsException } from "@nestjs/websockets";
 import { CardsService } from "../cards/cards.service";
 import { UnitInstance } from "../cards/cards.types";
-import { Game } from "../games/shared/games.types";
-import { AnyInstance, EFFECT_TRIGGERS, EffectContext, EffectTrigger, UnitOrArtifact } from "./effects.types";
+import { GameState } from "../games/shared/games.types";
+import { AnyInstance, Effect, EFFECT_TRIGGERS, EffectContext, EffectTrigger, UnitOrArtifact } from "./effects.types";
 import { ArtifactsService } from "../artifacts/artifacts.service";
+import { GameActions } from "../games/logic/gameActions";
 
 
 export class EffectsService {
+    private readonly actions: GameActions;
+
     constructor(
-        private readonly game: Game,
+        private readonly state: GameState,
         private readonly cardsService: CardsService,
         private readonly artifactsService: ArtifactsService
-    ) {}
+    ) {
+        this.actions = new GameActions(this.state, this.cardsService);
+    }
 
 
     // initializers, getters and setters etc
-    private getEffectContext(playerId: string, sourceId: string): EffectContext {
+    private getEffectContext(playerId: string, sourceId: string, targetId?: string): EffectContext {
         return {
-            game: this.game,
+            state: this.state,
+            actions: this.actions,
             cardsService: this.cardsService,
             artifactsService: this.artifactsService,
-            playerId: playerId,
-            sourceId: sourceId
+            playerId,
+            sourceId,
+            targetId
         };
     }
 
@@ -37,7 +44,21 @@ export class EffectsService {
 
 
     // services
-    runEffect(playerId: string, trigger: EffectTrigger, sourceInstance?: AnyInstance) {
+    private checkEffectNeedsTarget(effect: Effect, playerId: string, sourceId: string): boolean {
+        if (effect.hasTarget) {
+            this.actions.setCurrentEffectData(playerId, {effect, sourceId});
+            return true;
+        }
+
+        return false;
+    }
+
+    runEffect(effect: Effect, playerId: string, sourceId: string) {
+        const context = this.getEffectContext(playerId, sourceId);
+        effect.execute(context);
+    }
+
+    runEffectsForTrigger(playerId: string, trigger: EffectTrigger, sourceInstance?: AnyInstance): boolean {
         switch (trigger) {
             case EFFECT_TRIGGERS.TURN_START:
             case EFFECT_TRIGGERS.TURN_END:
@@ -45,46 +66,81 @@ export class EffectsService {
 
             default:
                 if (!sourceInstance) {
-                    throw new WsException("effect needs the source unit/artifact");
+                    throw new WsException("effect needs the source card/artifact id");
                 }
 
-                return this.runInstanceSpecificEffects(playerId, sourceInstance);
+                return this.runInstanceSpecificEffectsForTrigger(playerId, trigger, sourceInstance);
 
         }
     }
 
-    private runTurnStartEndEffects(playerId: string, trigger: EffectTrigger) {
-        const playersSummonedUnits = this.game.state.board.filter(
+    private runTurnStartEndEffects(playerId: string, trigger: EffectTrigger): boolean {
+        //! the needsTarget logic here wont work because it sets the last effect that needs target,
+        //! so if there a few effects that need a target theyll just get skipped and wont be ran.
+
+        let needsTarget = false;
+
+        const playersSummonedUnits = this.state.board.filter(
             (unit): unit is UnitInstance => unit?.ownerId === playerId
         );
 
         playersSummonedUnits.map((unit) => {
             unit.effects.map((effect) => {
                 if (effect.trigger.includes(trigger)) {
-                    const context = this.getEffectContext(playerId, this.cardsService.getCardInstanceId(unit))
-                    effect.execute(context);
+                    const instanceId = this.cardsService.getCardInstanceId(unit);
+
+                    if (this.checkEffectNeedsTarget(effect, playerId, instanceId)) {
+                        needsTarget = true;
+                    }
+
+                    else {
+                        this.runEffect(effect, playerId, instanceId);
+                    }
                 }
             })
         });
 
-        const playersArtifacts = this.game.actions.getPlayerState(playerId).artifacts;
+        const playersArtifacts = this.actions.getPlayerState(playerId).artifacts;
 
         playersArtifacts.map((artifact) => {
             artifact.effects.map((effect) => {
               if (effect.trigger.includes(trigger)) {
-                    const context = this.getEffectContext(playerId, this.artifactsService.getArtifactInstanceId(artifact))
-                    effect.execute(context);
+                    const instanceId = this.artifactsService.getArtifactInstanceId(artifact);
+
+                    if (this.checkEffectNeedsTarget(effect, playerId, instanceId)) {
+                        needsTarget = true;
+                    }
+
+                    else {
+                        this.runEffect(effect, playerId, instanceId);
+                    }
+
                 }  
             })
-        })
+        });
+
+        return needsTarget;
     }
 
-    private runInstanceSpecificEffects(playerId: string, sourceInstance: AnyInstance) {
+    private runInstanceSpecificEffectsForTrigger(playerId: string, trigger: EffectTrigger, sourceInstance: AnyInstance): boolean {
+        //! the needsTarget logic here wont work because it sets the last effect that needs target,
+        //! so if there a few effects that need a target theyll just get skipped and wont be ran.
+
         const instanceId = this.getAnyInstanceId(sourceInstance);
+        let needsTarget = false;
 
         sourceInstance.effects.map((effect) => {
-            const context = this.getEffectContext(playerId, instanceId);
-            effect.execute(context);
-        })
+            if (effect.trigger.includes(trigger)) {
+                if (this.checkEffectNeedsTarget(effect, playerId, instanceId)) {
+                    needsTarget = true;
+                }
+
+                else {
+                    this.runEffect(effect, playerId, instanceId);
+                }
+            }  
+        });
+
+        return needsTarget;
     }
 }
