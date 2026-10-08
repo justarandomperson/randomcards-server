@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { CardLocation, CardZone, SpellAndLocation, SpellInstance, UnitAndLocation, UnitInstance } from '../../cards/cards.types';
 import { CardsService } from '../../cards/cards.service';
 import { GameActions } from '../logic/gameActions';
-import { Game, GamePhase, GameState } from '../shared/games.types';
+import { Game, GamePhase, GameState, PlayerState } from '../shared/games.types';
 import { Match } from '../../matchmaking/matchmaking.types';
 import { fillShop, initPlayerState } from '../logic/gameSetup';
 import { MAX_CARD_IN_BOARD, MAX_HAND_SIZE } from '../shared/games.constants';
@@ -87,7 +87,7 @@ export class GamesService {
 
 
     // services
-    playUnit(gameId: string, playerId: string, playUnitDto: PlayUnitDto): UnitAndLocation {
+    playUnit(gameId: string, playerId: string, playUnitDto: PlayUnitDto): UnitAndLocation & { needsTarget: boolean } {
         const game = this.getGame(gameId);
         const player = game.actions.getPlayerState(playerId);
 
@@ -118,9 +118,12 @@ export class GamesService {
         game.actions.moveUnitToBoard(playerId, card, translatedDestination, benchIndex);
         game.actions.removeMoney(playerId, card.cost);
 
+        const needsTarget = this.triggerUnit(game, playerId, EFFECT_TRIGGERS.SUMMON, card)
+
         return {
             unit: card,
-            location: { insideOf: CardZone.BOARD, index: boardIndex }
+            location: { insideOf: CardZone.BOARD, index: boardIndex },
+            needsTarget
         };
     }
 
@@ -183,13 +186,12 @@ export class GamesService {
     }
 
     endTurn(gameId: string, playerId: string) {
-        const game = this.getGame(gameId);
+        const game = this.getGame(gameId)
         const opponent = game.actions.getOpponentState(playerId);
 
         if (playerId !== game.state.playerTurnId) {
         throw new WsException("player doesnt match the playerTurnId");
         }
-
 
         game.state.playerTurnId = opponent.socketId;
         this.effectsService.runEffect(playerId, EFFECT_TRIGGERS.TURN_END); //? Not sure if this should be called here
@@ -208,6 +210,8 @@ export class GamesService {
         player.turn++;
         this.effectsService.runEffect(playerId, EFFECT_TRIGGERS.TURN_START); //? Not sure if this should be called here
 
+        this.triggerUnits(game, playerId, EFFECT_TRIGGERS.TURN_START)
+
         switch (game.state.gamePhase) {
             case GamePhase.PLAY:
                 return { 
@@ -224,6 +228,7 @@ export class GamesService {
                     phaseChanged: phaseChanged 
                 };
         }
+
     }
 
     private handleStartTurnPlay(gameId: string, playerId: string) {
@@ -296,7 +301,7 @@ export class GamesService {
     private handleAttackUnit(gameId: string, target: UnitInstance, damage: number, targetIndex): UnitAndLocation {
         const game = this.getGame(gameId);
 
-        const isDead = game.actions.damageUnit(target, damage);
+        const isDead = game.actions.damageUnit(target.id, damage);
 
         let location: CardLocation = { insideOf: CardZone.BOARD, index: targetIndex };
 
@@ -312,7 +317,7 @@ export class GamesService {
 
         return {
             unit: target,
-            location
+            location,
         };
     }
 

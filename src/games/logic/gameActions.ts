@@ -5,12 +5,13 @@ import { GameState, PlayerState } from '../shared/games.types';
 import { MAX_HAND_SIZE, MINIMUM_MONEY } from '../shared/games.constants';
 import { ArtifactInstance, ArtifactLocation, ArtifactZone } from '../../artifacts/artifacts.types';
 import { fillShop } from './gameSetup';
+import { GamesEmitter } from '../providers/games.emitter';
 
 
 export class GameActions {
     constructor(
         private readonly state: GameState,
-        private readonly _cardsService: CardsService,
+        private readonly _cardsService: CardsService
     ) {}
 
 
@@ -93,6 +94,20 @@ export class GameActions {
         };
     }
 
+    createSpellToPlayerHandFromId(playerId: string, cardId: string): CardLocation
+    {
+        const card = this._cardsService.createSpellInstance(cardId, playerId)
+        const player = this.getPlayerState(playerId);
+
+        if (!card) throw Error("Card with id " + cardId + " doesn't exist")
+        player.hand.push(card);
+
+        return {
+            insideOf: CardZone.HAND,
+            index: player.hand.length - 1
+        };
+    }
+
     removeSpellFromDrawpile(playerId: string): SpellInstance | null {
         const player = this.getPlayerState(playerId);
 
@@ -118,7 +133,9 @@ export class GameActions {
 
     
     // change card/artifact data
-    damageUnit(targetInstance: UnitInstance, amount: number): boolean {
+    damageUnit(targetId: string, amount: number): boolean {
+        const targetInstance = this._cardsService.findCardInstance(targetId, this.state.board).card
+
         targetInstance.hp -= amount;
         if (targetInstance.hp <= 0) { 
             targetInstance.cooldown = 1;

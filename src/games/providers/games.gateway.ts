@@ -5,7 +5,7 @@ import { MatchMakingService } from '../../matchmaking/matchmaking.service';
 import { Socket } from 'socket.io';
 import { JwtService } from '@nestjs/jwt';
 import { GamesService } from './games.service';
-import { GamePhase } from '../shared/games.types';
+import { GamePhase, PlayerState } from '../shared/games.types';
 import QueueDto from '../dto/queue.dto';
 import { BasicPlayerData, Match } from '../../matchmaking/matchmaking.types';
 import { GamesEmitter } from './games.emitter';
@@ -17,6 +17,7 @@ import AttackPlayerDto from '../dto/attack-player.dto';
 import AttackUnitDto from '../dto/attack-unit.dto';
 import { SOCKET_EVENT_NAMES } from '../shared/games.constants';
 import { DecksService } from '../../decks/deck.service';
+import SelectedTargetDto from '../dto/selected-target.dto';
 
 
 @UsePipes(new ValidationPipe({
@@ -150,7 +151,12 @@ export class GamesGateway implements OnGatewayInit, OnGatewayDisconnect {
 	onPlayUnit(@ConnectedSocket() client: Socket, @MessageBody() playUnitDto: PlayUnitDto) {
 		const gameId = this.getClientGameId(client);
 
-		const { unit, location } = this.gamesService.playUnit(gameId, client.id, playUnitDto);
+		const { unit, location, needsTarget } = this.gamesService.playUnit(gameId, client.id, playUnitDto);
+
+		if (needsTarget)
+		{
+			this.gamesEmitter.getTarget(this.server, client.id)
+		}
 
 		const opponent = this.gamesService.getOpponentState(gameId, client.id);
 		const opponentSocket = this.getSocket(opponent.socketId);
@@ -225,11 +231,14 @@ export class GamesGateway implements OnGatewayInit, OnGatewayDisconnect {
 		const opponent = this.gamesService.getOpponentState(gameId, client.id);
 		const opponentSocket = this.getSocket(opponent.socketId);
 
-		this.gamesEmitter.updateCard(client, targetData.unit, targetData.location);
+		const attackerDead = attackerData.unit.hp < 0
+		const targetDead = targetData.unit.hp < 0
+
+		this.gamesEmitter.updateCard(client, targetData.unit, targetDead ? { insideOf: CardZone.NONE } : targetData.location);
 		this.gamesEmitter.updateCard(client, attackerData.unit, attackerData.location);
 
 		this.gamesEmitter.updateCard(opponentSocket, targetData.unit, targetData.location);
-		this.gamesEmitter.updateCard(opponentSocket, attackerData.unit, attackerData.location);
+		this.gamesEmitter.updateCard(opponentSocket, attackerData.unit, attackerDead ? { insideOf: CardZone.NONE } : attackerData.location);
 	}
 
 	@SubscribeMessage(SOCKET_EVENT_NAMES.ATTACK_PLAYER)
@@ -243,5 +252,13 @@ export class GamesGateway implements OnGatewayInit, OnGatewayDisconnect {
 		if (health <= 0) {
 			this.gamesEmitter.gameEnd(this.server, gameId, attackerId);
 		}
+	}
+
+	@SubscribeMessage(SOCKET_EVENT_NAMES.TARGET_SELECTED)
+	selectTarget(@ConnectedSocket() client: Socket, @MessageBody() selectedTargetDto: SelectedTargetDto)
+	{
+		const gameId = this.getClientGameId(client)
+		
+		this.gamesService.targetSelected(gameId, client.id, selectedTargetDto.instanceId)
 	}
 }

@@ -1,6 +1,10 @@
 import { ArtifactInstance, ArtifactLocation, ClientArtifactData } from "../../artifacts/artifacts.types";
 import { UnitInstance, SpellInstance, ClientUnitData, ClientSpellData, CardLocation } from "../../cards/cards.types"; 
+<<<<<<< HEAD
 import { EffectContext } from "../../effects/effects.types";
+=======
+import { Effect } from "../../effects/effect.types";
+>>>>>>> 13561ac22eb36fe02a2574dceee12c17b17b0f2e
 import { GameActions } from "../logic/gameActions";
 
 
@@ -19,6 +23,11 @@ export type GameState = {
   playerTurnId: string
 };
 
+export type CurrentEffectData = {
+  effect: Effect,
+  sourceId: string
+}
+
 export type PlayerState = {
   socketId: string
   name: string
@@ -29,6 +38,7 @@ export type PlayerState = {
   drawpile: SpellInstance[]
   hand: SpellInstance[]
   bench: (UnitInstance | null)[]
+  currentEffectData?: CurrentEffectData
 };
 
 export enum GamePhase {
