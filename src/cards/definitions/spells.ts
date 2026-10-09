@@ -28,7 +28,11 @@ const spellList: SpellInstance[] = [
                         throw new WsException("no targetId provided");
                     }
 
-                    context.actions.damageUnit(targetId, 8);
+                    context.actions.damageUnit(
+                        targetId,
+                        context.cardsService.findCardInstance(targetId, context.state.board).index,
+                        8
+                    );
                 }
             }
         ],

@@ -19,7 +19,8 @@ export type UnitInstance = {
   cost: number
   atk: number
   hp: number
-  cooldown?: number
+  cooldown: number
+  assignedBenchSlot?: number
 };
 
 export type SpellInstance = {

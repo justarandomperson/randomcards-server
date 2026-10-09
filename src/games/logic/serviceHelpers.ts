@@ -23,10 +23,6 @@ export const translateBoardIndex = (index: number, isPlayer1: boolean) =>
     else return index + 4
 }
 
-export const changeGamePhase = (phase: GamePhase) => {
-    return (phase === GamePhase.PLAY ? GamePhase.SHOP : GamePhase.PLAY);
-}
-
 export const shouldSwitchPhase = (currentPhase: GamePhase, player1Turn: number, player2Turn: number): boolean => {
     const totalTurns = player1Turn + player2Turn;
     const nextTurnPhase = totalTurns % TURNS_PER_CYCLE < PLAY_TURNS_PER_CYCLE ? GamePhase.PLAY : GamePhase.SHOP;

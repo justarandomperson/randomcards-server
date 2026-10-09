@@ -47,6 +47,15 @@ export class CardsService {
         return card.instanceId;  
     }
 
+    getUnitBenchSlot(card: UnitInstance): number {
+        if (!card.assignedBenchSlot) {
+            throw new WsException('card has no assigned bench slot');
+
+        }
+
+        return card.assignedBenchSlot;
+    }
+ 
     private generateInstanceId(): string {
         return Math.random().toString(36).substring(2, 8);
     }

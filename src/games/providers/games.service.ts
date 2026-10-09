@@ -8,7 +8,7 @@ import { fillShop, initPlayerState } from '../logic/gameSetup';
 import { MAX_CARD_IN_BOARD, MAX_HAND_SIZE } from '../shared/games.constants';
 import { WsException } from '@nestjs/websockets';
 import PlayUnitDto from '../dto/play-unit.dto';
-import { calculateTurnStartMoney, changeGamePhase, CheckPlayUnitValid, shouldSwitchPhase } from '../logic/serviceHelpers';
+import { calculateTurnStartMoney, CheckPlayUnitValid, shouldSwitchPhase } from '../logic/serviceHelpers';
 import PlaySpellDto from '../dto/play-spell.dto';
 import BuyArtifactDto from '../dto/buy-artifact.dto';
 import { ArtifactAndLocation, ArtifactZone } from '../../artifacts/artifacts.types';
@@ -17,8 +17,7 @@ import AttackUnitDto from '../dto/attack-unit.dto';
 import { Deck } from '../../decks/decks.types';
 import { ArtifactsService } from '../../artifacts/artifacts.service';
 import { EffectsService } from '../../effects/effects.service';
-import { Effect, EFFECT_TRIGGERS, EffectTrigger } from '../../effects/effects.types';
-
+import { EFFECT_TRIGGERS } from '../../effects/effects.types';
 
 @Injectable()
 export class GamesService {
@@ -187,13 +186,21 @@ export class GamesService {
 
     endTurn(gameId: string, playerId: string) {
         const game = this.getGame(gameId)
+        const player = game.actions.getPlayerState(playerId);
         const opponent = game.actions.getOpponentState(playerId);
 
         if (playerId !== game.state.playerTurnId) {
         throw new WsException("player doesnt match the playerTurnId");
         }
 
-        game.state.playerTurnId = opponent.socketId;
+        player.bench.map((unit) => {
+            if (unit) {
+                game.actions.increaseCooldown(this.cardsService.getCardInstanceId(unit), -1);
+            }
+        })
+        
+
+        game.actions.setPlayerTurnId(opponent.socketId);
         game.effects.runEffectsForTrigger(playerId, EFFECT_TRIGGERS.TURN_END);
     }
 
@@ -204,7 +211,7 @@ export class GamesService {
 
         const phaseChanged = shouldSwitchPhase(game.state.gamePhase, player.turn, opponent.turn);
         if (phaseChanged) {
-            game.state.gamePhase = changeGamePhase(game.state.gamePhase);
+            game.actions.changeGamePhase()
         }
 
         player.turn++;
@@ -296,22 +303,13 @@ export class GamesService {
         };
     }
 
-    private handleAttackUnit(gameId: string, target: UnitInstance, damage: number, targetIndex): UnitAndLocation {
+    private handleAttackUnit(gameId: string, target: UnitInstance, damage: number, targetIndex: number): UnitAndLocation {
         const game = this.getGame(gameId);
 
-        const isDead = game.actions.damageUnit(target.id, damage);
+        const isDead = game.actions.damageUnit(target.id, targetIndex, damage);
 
-        let location: CardLocation = { insideOf: CardZone.BOARD, index: targetIndex };
-
-        if (isDead) {
-            const targetBench = this.getPlayerState(gameId, this.cardsService.getCardOwnerId(target)).bench;
-            location = game.actions.moveUnitToBench(
-                this.cardsService.getCardOwnerId(target), 
-                target, 
-                this.cardsService.findEmptySlot(targetBench), 
-                targetIndex
-            );
-        }
+        const insideOf = isDead ? CardZone.BENCH : CardZone.BOARD;
+        const location: CardLocation = { insideOf: insideOf, index: targetIndex };
 
         return {
             unit: target,

@@ -57,10 +57,16 @@ export const EFFECTS = {
 export const EFFECT_TRIGGERS = {
   TURN_START: 'turn_start',
   TURN_END: 'turn_end',
-  SUMMONED: 'summon',
+  SUMMONED: 'summoned',
   DEATH: 'death',
   KILL: 'kill',
   DAMAGED: 'damaged',
   IN_COOLDOWN: 'in_cooldown',
-  COOLDOWN_END: 'cooldown_end'
+  COOLDOWN_END: 'cooldown_end',
+
+  ANY_SUMMONED: 'any_summoned',
+  ANY_DIED: 'any_died',
+  ANY_KILLED: 'any_killed',
+  ANY_DAMAGED: 'any_damaged',
+  ANY_COOLDOOWN_END: 'any_cooldown_end'
 } as const;

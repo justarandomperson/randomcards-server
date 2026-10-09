@@ -1,7 +1,7 @@
 import { WsException } from '@nestjs/websockets';
 import { CardsService } from '../../cards/cards.service';
 import { CardLocation, CardZone, SpellInstance, UnitInstance } from '../../cards/cards.types';
-import { CurrentEffectData, GameState, PlayerState } from '../shared/games.types';
+import { CurrentEffectData, GamePhase, GameState, PlayerState } from '../shared/games.types';
 import { MAX_HAND_SIZE, MINIMUM_MONEY } from '../shared/games.constants';
 import { ArtifactInstance, ArtifactLocation, ArtifactZone } from '../../artifacts/artifacts.types';
 import { fillShop } from './gameSetup';
@@ -10,11 +10,11 @@ import { fillShop } from './gameSetup';
 export class GameActions {
     constructor(
         private readonly state: GameState,
-        private readonly _cardsService: CardsService
+        private readonly cardsService: CardsService
     ) {}
 
 
-    // initializers, getters, setters etc
+    // initializers, getters
     getPlayerState(playerId: string): PlayerState {
         const player = this.state.players.get(playerId);
         if (!player) {
@@ -37,9 +37,23 @@ export class GameActions {
     isPlayer1(playerId: string): boolean {
         return [...this.state.players.keys()][0] === playerId;
     }
-    
+
 
     // ACTIONS
+
+    // misc
+    setPlayerTurnId(playerId: string) {
+        this.getPlayerState(playerId); // just to check if player exists
+
+        this.state.playerTurnId = playerId;
+    }
+
+    changeGamePhase() {
+        const phase = this.state.gamePhase;
+
+        this.state.gamePhase = (phase === GamePhase.PLAY ? GamePhase.SHOP : GamePhase.PLAY);
+    }
+
 
     // move cards/artifacts, add them etc
     moveUnitToBoard(playerId: string, card: UnitInstance, boardIndex: number, benchIndex: number): CardLocation {
@@ -95,7 +109,7 @@ export class GameActions {
 
     createSpellToPlayerHandFromId(playerId: string, cardId: string): CardLocation
     {
-        const card = this._cardsService.createSpellInstance(cardId, playerId)
+        const card = this.cardsService.createSpellInstance(cardId, playerId)
         const player = this.getPlayerState(playerId);
 
         if (!card) throw Error("Card with id " + cardId + " doesn't exist")
@@ -132,16 +146,31 @@ export class GameActions {
 
     
     // change card/artifact data
-    damageUnit(targetId: string, amount: number): boolean {
-        const targetInstance = this._cardsService.findCardInstance(targetId, this.state.board).card
+    damageUnit(targetId: string, targetBoardIndex: number, amount: number): boolean {
+        const targetInstance = this.cardsService.findCardInstance(targetId, this.state.board).card
 
         targetInstance.hp -= amount;
         if (targetInstance.hp <= 0) { 
-            targetInstance.cooldown = 1;
+            this.increaseCooldown(targetId, 1);
+            this.moveUnitToBench(
+                this.cardsService.getCardOwnerId(targetInstance),
+                targetInstance,
+                this.cardsService.getUnitBenchSlot(targetInstance),
+                targetBoardIndex
+            )
+
             return true; // as in unit died
         }
 
         return false; // as in unit still on board
+    }
+
+    increaseCooldown(targetId: string, amount: number): number {
+        const targetInstance = this.cardsService.findCardInstance(targetId, this.state.board).card
+
+        targetInstance.cooldown += amount;
+
+        return targetInstance.cooldown;
     }
 
 

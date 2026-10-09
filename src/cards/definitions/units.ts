@@ -1,3 +1,4 @@
+import { WsException } from '@nestjs/websockets';
 import { Effect, EFFECT_TRIGGERS, EffectContext, Status } from '../../effects/effects.types';
 import { CardsService } from '../cards.service';
 import { CardType, UnitInstance } from '../cards.types';
@@ -14,6 +15,7 @@ const unitList: UnitInstance[] = [
         cost: 2,
         hp: 1,
         atk: 2,
+        cooldown: 0
     },
     {
         id: "U_2",
@@ -24,7 +26,8 @@ const unitList: UnitInstance[] = [
         statuses: [],
         cost: 2, 
         hp: 2,
-        atk: 1
+        atk: 1,
+        cooldown: 0
     },
     {
         id: "U_3",
@@ -43,7 +46,8 @@ const unitList: UnitInstance[] = [
         statuses: [],
         cost: 6,
         hp: 1,
-        atk: 1
+        atk: 1,
+        cooldown: 0
     },
     {
         id: "U_4",
@@ -53,20 +57,27 @@ const unitList: UnitInstance[] = [
         effects: [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
-                execute: (ctx: EffectContext) => {
+                execute: (context: EffectContext) => {
                     //? maybe later store the effect "magic numbers" somewhere else
                     //? probably still inside the card
-
-                    if (ctx.targetId) {
-                        ctx.actions.damageUnit(ctx.targetId, 1);
+                    if (!context.targetId) { //? maybe make this a helper? this is widely used
+                        throw new WsException("no targetId provided");
                     }
+
+                    context.actions.damageUnit(
+                        context.targetId, 
+                        context.cardsService.findCardInstance(context.targetId, context.state.board).index,
+                        1
+                    );
+                    
                 }
             }
         ],
         statuses: [],
         cost: 6,
         hp: 6,
-        atk: 6
+        atk: 6,
+        cooldown: 0
     },
     {
         id: "U_5",
@@ -90,7 +101,11 @@ const unitList: UnitInstance[] = [
                     for (const unit of playersSummonedUnits) {
                         if (unit.id === "U_2") {
                             const instanceId = context.cardsService.getCardInstanceId(unit);
-                            context.actions.damageUnit(instanceId, unit.hp);
+                            context.actions.damageUnit(
+                                instanceId, 
+                                context.cardsService.findCardInstance(instanceId, context.state.board).index,
+                                unit.hp
+                            );
                         }
                     }
                 }
@@ -99,7 +114,8 @@ const unitList: UnitInstance[] = [
         statuses: [],
         cost: 6,
         hp: 4,
-        atk: 1  
+        atk: 1,
+        cooldown: 0
     },
     {
        id: "U_6",
@@ -110,7 +126,8 @@ const unitList: UnitInstance[] = [
         statuses: [Status.HASTE, Status.DODGE],
         cost: 6,
         hp: 4,
-        atk: 1    
+        atk: 1,
+        cooldown: 0  
     },
     {
         id: "U_6",
@@ -128,7 +145,8 @@ const unitList: UnitInstance[] = [
         statuses: [Status.TAUNT],
         cost: 4,
         hp: 3,
-        atk: 4    
+        atk: 4,
+        cooldown: 0   
     }
 ];
 

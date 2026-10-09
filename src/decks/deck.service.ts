@@ -44,9 +44,13 @@ export class DecksService {
     private cardIdsToCardList(cardIds: string[], cardType: CardType.UNIT, ownerId: string): UnitInstance[];
     private cardIdsToCardList(cardIds: string[], cardType: CardType.SPELL, ownerId: string): SpellInstance[];
     private cardIdsToCardList(cardIds: string[], cardType: CardType, ownerId: string): CardInstance[] {
-        return cardIds.map((id) => {
-            const card = cardType === CardType.UNIT ? 
+        return cardIds.map((id, index) => {
+            const card = (cardType === CardType.UNIT) ? 
                 this.cardsService.createUnitInstance(id, ownerId) : this.cardsService.createSpellInstance(id,  ownerId);
+
+            if (card.type === CardType.UNIT) { //? not sure if this is the right place to put this. but it looks like it.
+                card.assignedBenchSlot = index;
+            }
 
             if (!card || card.type !== cardType) {
                 throw new WsException(`Card with Id ${id} does not exist`);
