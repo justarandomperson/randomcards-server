@@ -62,6 +62,17 @@ export class CardsService {
 
 
     // services
+    getDefaultUnitById(cardId: string): UnitInstance {
+        const unit = unitCards.get(cardId);
+
+        if (!unit) {
+            throw new WsException("card with this id does not exist.");
+        }
+
+        return unit;
+    }
+
+
     findCardInstance<T extends UnitInstance | SpellInstance>
     (instanceId: string, cardList: (T | null)[]): { card: T; index: number } {
         const index = cardList.findIndex(

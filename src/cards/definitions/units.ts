@@ -88,7 +88,7 @@ const unitList: UnitInstance[] = [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
                 execute: (context: EffectContext) => {
-                    // TODO: this effect
+                    // TODO: idk how to get the owner player's side of the board
                 }
             },
             {
@@ -130,8 +130,8 @@ const unitList: UnitInstance[] = [
         cooldown: 0  
     },
     {
-        id: "U_6",
-        name: "Silverfish",
+        id: "U_7",
+        name: "Endermite",
         type: CardType.UNIT,
         effectDesc: "Damaged: paralyze the attacker.",
         effects: [
@@ -143,6 +143,26 @@ const unitList: UnitInstance[] = [
             }
         ],
         statuses: [Status.TAUNT],
+        cost: 4,
+        hp: 3,
+        atk: 4,
+        cooldown: 0   
+    },
+    {
+        id: "U_7",
+        name: "Cooldown Hater 1.0",
+        type: CardType.UNIT,
+        effectDesc: "Turn End & Death: Add a Cooldown Hating Spell to your hand.",
+        effects: [
+            {
+                trigger: [EFFECT_TRIGGERS.TURN_END, EFFECT_TRIGGERS.DEATH],
+                execute: (context: EffectContext) => {
+                    const cooldownHatingSpell = context.cardsService.createSpellInstance("S_4", context.playerId);
+                    context.actions.addSpellToHand(context.playerId, cooldownHatingSpell);
+                }
+            }
+        ],
+        statuses: [],
         cost: 4,
         hp: 3,
         atk: 4,

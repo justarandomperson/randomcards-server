@@ -38,6 +38,14 @@ export class GameActions {
         return [...this.state.players.keys()][0] === playerId;
     }
 
+    getPlayerBoard() {
+        // TODO: this
+    }
+
+    getOpponetBoard() {
+        // TODO: this
+    }
+
 
     // ACTIONS
 
@@ -53,7 +61,6 @@ export class GameActions {
 
         this.state.gamePhase = (phase === GamePhase.PLAY ? GamePhase.SHOP : GamePhase.PLAY);
     }
-
 
     // move cards/artifacts, add them etc
     moveUnitToBoard(playerId: string, card: UnitInstance, boardIndex: number, benchIndex: number): CardLocation {
@@ -96,8 +103,12 @@ export class GameActions {
         };
     }
 
-    addSpellToHand(playerId: string, card: SpellInstance): CardLocation {
+    addSpellToHand(playerId: string, card: SpellInstance): CardLocation | null {
         const player = this.getPlayerState(playerId);
+
+        if (player.hand.length === MAX_HAND_SIZE) {
+            return null;
+        }
 
         player.hand.push(card);
 
@@ -146,6 +157,16 @@ export class GameActions {
 
     
     // change card/artifact data
+    resetUnitData(unit: UnitInstance) { //? maybe change targetInstance to targetId?
+        const defaultUnit = this.cardsService.getDefaultUnitById(unit.id);
+
+        unit.hp = defaultUnit.hp;
+        unit.atk = defaultUnit.atk;
+        unit.cost = defaultUnit.cost;
+        unit.effects = defaultUnit.effects;
+        unit.statuses = defaultUnit.statuses;
+    }
+
     damageUnit(targetId: string, targetBoardIndex: number, amount: number): boolean {
         const targetInstance = this.cardsService.findCardInstance(targetId, this.state.board).card
 
@@ -157,12 +178,30 @@ export class GameActions {
                 targetInstance,
                 this.cardsService.getUnitBenchSlot(targetInstance),
                 targetBoardIndex
-            )
+            );
+
+            this.resetUnitData(targetInstance);
 
             return true; // as in unit died
         }
 
         return false; // as in unit still on board
+    }
+
+    increaseAttack(targetId: string, amount: number): number {
+        const targetInstance = this.cardsService.findCardInstance(targetId, this.state.board).card
+
+        targetInstance.atk += amount;
+
+        return targetInstance.atk;
+    }
+
+    increaseUnitHealth(targetId: string, amount: number): number {
+        const targetInstance = this.cardsService.findCardInstance(targetId, this.state.board).card
+
+        targetInstance.hp += amount;
+
+        return targetInstance.hp;
     }
 
     increaseCooldown(targetId: string, amount: number): number {
@@ -179,6 +218,14 @@ export class GameActions {
         const player = this.getPlayerState(playerId);
 
         player.health -= amount;
+
+        return player.health;
+    }
+
+    healPlayer(playerId: string, amount: number): number {
+        const player = this.getPlayerState(playerId);
+
+        player.health += amount;
 
         return player.health;
     }

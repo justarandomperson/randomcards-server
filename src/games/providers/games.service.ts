@@ -258,15 +258,13 @@ export class GamesService {
 
     private drawSpell(gameId: string, playerId: string): SpellInstance | null {
         const game = this.getGame(gameId);
-        const player = game.actions.getPlayerState(playerId);
-
-        if (player.hand.length === MAX_HAND_SIZE) {
-            return null;
-        }
 
         const spellInstance = game.actions.removeSpellFromDrawpile(playerId);
         if (spellInstance) {
-            game.actions.addSpellToHand(playerId, spellInstance);
+            const result = game.actions.addSpellToHand(playerId, spellInstance);
+            if (!result) {
+                return null;
+            }
         }
 
         return spellInstance;
