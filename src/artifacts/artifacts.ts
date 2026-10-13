@@ -56,7 +56,7 @@ const ArtifactList: ArtifactInstance[] = [
     },
     {
         id: "A_3",
-        name: "Vampire Survivor",
+        name: "Vampire Destructor",
         effectDesc: "Every time a unit is summoned, damage a random opponent's unit.",
         effects: [
             {

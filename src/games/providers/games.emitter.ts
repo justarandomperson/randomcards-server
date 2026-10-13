@@ -10,16 +10,36 @@ import { SOCKET_EVENT_NAMES } from '../shared/games.constants';
 
 @Injectable()
 export class GamesEmitter {
-    allMatchStartEvents(player1Socket: Socket, player2Socket: Socket, gameState: GameState) {
-        const player1State = gameState.players.get(player1Socket.id);
-        const player2State = gameState.players.get(player2Socket.id);
+    constructor(private readonly server: Server) {}
+
+
+    // initializers, getters setters etc
+	private playerIdToSocket(socketId: string): Socket {
+		const socket = this.server.sockets.sockets.get(socketId);
+		if (!socket) {
+			throw new WsException("socket not connected");
+		}
+
+		return socket;
+	}
+
+
+    // SERVICES
+
+    // match start
+    allMatchStartEvents(player1Id: string, player2Id: string, gameState: GameState) {
+        const player1State = gameState.players.get(player1Id);
+        const player2State = gameState.players.get(player2Id);
         if (!player1State || !player2State) {
             //! if this throws then the client dont get match_start but the GameState is created
             //! so we need to delete the GameState before or whatever, deal with this later
             throw new WsException("couldn't find the player states");
         }
 
-        const isPlayer1First = gameState.playerTurnId === player1Socket.id;
+        const isPlayer1First = gameState.playerTurnId === player1Id;
+
+        const player1Socket = this.playerIdToSocket(player1Id);
+        const player2Socket = this.playerIdToSocket(player2Id)
 
         this.matchStart(player1Socket, player1State, player2State, isPlayer1First);
         this.matchStart(player2Socket, player2State, player1State, !isPlayer1First);
@@ -27,8 +47,8 @@ export class GamesEmitter {
         this.allCardEvents(player1Socket, player1State, gameState.board);
         this.allCardEvents(player2Socket, player2State, gameState.board);
 
-        this.updateShop(player1Socket, gameState.shop);
-        this.updateShop(player2Socket, gameState.shop);
+        this.updateShop(player1Id, gameState.shop);
+        this.updateShop(player2Id, gameState.shop);
     }
 
     private matchStart(client: Socket, playerState: PlayerState, opponentState: PlayerState, isFirstTurn: boolean) {
@@ -44,74 +64,7 @@ export class GamesEmitter {
         client.emit(SOCKET_EVENT_NAMES.MATCH_START, payload);
     }
 
-    startTurn(client: Socket) {
-        client.emit(SOCKET_EVENT_NAMES.START_TURN);
-    }
-
-    updateGamePhase(server: Server, gameId: string) {
-        server.to(gameId).emit(SOCKET_EVENT_NAMES.UPDATE_GAME_PHASE);
-    }
-
-    updateMoney(server: Server, gameId: string, playerId: string, money: number) {
-        const payload: UpdateMoneyPayload = {
-            playerId,
-            newMoney: money
-        };
-
-        server.to(gameId).emit(SOCKET_EVENT_NAMES.UPDATE_MONEY, payload);
-    }
-
-    updateHealth(server: Server, gameId: string, playerId: string, health: number) {
-        const payload: UpdateHealthPayload = {
-            playerId,
-            newHealth: health
-        };
-
-        server.to(gameId).emit(SOCKET_EVENT_NAMES.UPDATE_HEALTH, payload);
-    }
-
-    updateDrawpileCount(server: Server, gameId: string, playerId: string, drawpileCount: number) {
-        const payload: UpdateDrawpileCountPayload = {
-            playerId,
-            newDrawpileCount: drawpileCount
-        };
-
-        server.to(gameId).emit(SOCKET_EVENT_NAMES.UPDATE_DRAWPILE_COUNT, payload);
-    }
-
-    updateCard(client: Socket, card: UnitInstance | SpellInstance, cardLocation: CardLocation) {
-        const clientCardData = (card.type == CardType.UNIT) 
-            ? unitInstanceToClient(card) : spellInstanceToClient(card);
-
-        const payload: UpdateCardPayload = {
-            card: clientCardData,
-            location: cardLocation
-        };
-
-       client.emit(SOCKET_EVENT_NAMES.UPDATE_CARD, payload);
-    }
-    
-    updateArtifact(client: Socket, artifact: ArtifactInstance, artifactLocation: ArtifactLocation, playerId?: string) {
-        const clientArtifactData = artifactInstanceToClient(artifact);
-
-        const payload: UpdateArtifactPayload = {
-            artifact: clientArtifactData,
-            location: artifactLocation,
-            playerId
-        };
-
-        client.emit(SOCKET_EVENT_NAMES.UPDATE_ARTIFACT, payload);
-    }
-
-    updateShop(client: Socket, shop: (ArtifactInstance | null)[]) {
-        const payload = shop.map((artifact) => artifact ? artifactInstanceToClient(artifact) : artifact);
-
-        client.emit(SOCKET_EVENT_NAMES.UPDATE_SHOP, payload);
-    }
-
-    // Note: the functions below currently only activate from allStartEvents() and thats why theyre private
-
-    private allCardEvents(client: Socket, player: PlayerState, board: (UnitInstance | null)[]) {
+     private allCardEvents(client, player: PlayerState, board: (UnitInstance | null)[]) {
         this.updateHand(client, player.hand);
         this.updateBench(client, player.bench);
         this.updateBoard(client, board);
@@ -135,14 +88,90 @@ export class GamesEmitter {
         client.emit(SOCKET_EVENT_NAMES.UPDATE_BOARD, payload);
     }
 
-    getTarget(client: Socket)
-    {
+
+    // client specific
+    updateShop(clientId: string, shop: (ArtifactInstance | null)[]) {
+        const client = this.playerIdToSocket(clientId);
+        const payload = shop.map((artifact) => artifact ? artifactInstanceToClient(artifact) : artifact);
+
+        client.emit(SOCKET_EVENT_NAMES.UPDATE_SHOP, payload);
+    }
+
+    startTurn(clientId: string) {
+        const client = this.playerIdToSocket(clientId);
+
+        client.emit(SOCKET_EVENT_NAMES.START_TURN);
+    }
+
+    updateCard(clientId: string, card: UnitInstance | SpellInstance, cardLocation: CardLocation) {
+        const client = this.playerIdToSocket(clientId);
+
+        const clientCardData = (card.type == CardType.UNIT) 
+            ? unitInstanceToClient(card) : spellInstanceToClient(card);
+
+        const payload: UpdateCardPayload = {
+            card: clientCardData,
+            location: cardLocation
+        };
+
+       client.emit(SOCKET_EVENT_NAMES.UPDATE_CARD, payload);
+    }
+    
+    updateArtifact(clientId: string, artifact: ArtifactInstance, artifactLocation: ArtifactLocation, playerId?: string) {
+        const client = this.playerIdToSocket(clientId);
+        const clientArtifactData = artifactInstanceToClient(artifact);
+
+        const payload: UpdateArtifactPayload = {
+            artifact: clientArtifactData,
+            location: artifactLocation,
+            playerId
+        };
+
+        client.emit(SOCKET_EVENT_NAMES.UPDATE_ARTIFACT, payload);
+    }
+
+    getTarget(clientId: string) {
+        const client = this.playerIdToSocket(clientId);
+
         client.emit(SOCKET_EVENT_NAMES.GET_TARGET);
     }
 
-    gameEnd(server: Server, gameId: string, winnerId: string) {
+
+    // to both players
+    updateGamePhase(gameId: string) {
+        this.server.to(gameId).emit(SOCKET_EVENT_NAMES.UPDATE_GAME_PHASE);
+    }
+
+    updateMoney(gameId: string, playerId: string, money: number) {
+        const payload: UpdateMoneyPayload = {
+            playerId,
+            newMoney: money
+        };
+
+        this.server.to(gameId).emit(SOCKET_EVENT_NAMES.UPDATE_MONEY, payload);
+    }
+
+    updateHealth(gameId: string, playerId: string, health: number) {
+        const payload: UpdateHealthPayload = {
+            playerId,
+            newHealth: health
+        };
+
+        this.server.to(gameId).emit(SOCKET_EVENT_NAMES.UPDATE_HEALTH, payload);
+    }
+
+    updateDrawpileCount(gameId: string, playerId: string, drawpileCount: number) {
+        const payload: UpdateDrawpileCountPayload = {
+            playerId,
+            newDrawpileCount: drawpileCount
+        };
+
+        this.server.to(gameId).emit(SOCKET_EVENT_NAMES.UPDATE_DRAWPILE_COUNT, payload);
+    }
+
+    gameEnd(gameId: string, winnerId: string) {
         const payload = { winnerId };
 
-        server.to(gameId).emit(SOCKET_EVENT_NAMES.GAME_END, payload);
+        this.server.to(gameId).emit(SOCKET_EVENT_NAMES.GAME_END, payload);
     }
 }

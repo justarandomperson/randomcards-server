@@ -35,18 +35,20 @@ import SelectedTargetDto from '../dto/selected-target.dto';
 
 
 export class GamesGateway implements OnGatewayInit, OnGatewayDisconnect {
-	private readonly _logger = new Logger(GamesGateway.name);
+	private readonly logger = new Logger(GamesGateway.name);
+	private readonly gamesEmitter: GamesEmitter;
 
 	@WebSocketServer()
 	server: Server;
 
 	constructor(
 		private readonly gamesService: GamesService,
-		private readonly gamesEmitter: GamesEmitter,
 		private readonly matchMakingService: MatchMakingService,
 		private readonly decksService: DecksService,
 		private readonly jwtService: JwtService
-	) {}
+	) {
+		this.gamesEmitter = new GamesEmitter(this.server);
+	}
 
 
 	// initializers, getters and setters etc
@@ -87,7 +89,7 @@ export class GamesGateway implements OnGatewayInit, OnGatewayDisconnect {
 	}
 
 	handleDisconnect(client: Socket) {
-		this._logger.debug(`Socket ${client.id} disconnected`);
+		this.logger.debug(`Socket ${client.id} disconnected`);
 		this.matchMakingService.removeFromQueue(client.id);
 
 		// TODO: if client.data.gameId is set, tell the opponent and remove the room
@@ -111,7 +113,7 @@ export class GamesGateway implements OnGatewayInit, OnGatewayDisconnect {
 	}
 
 	private handleMatchStart(match: Match) {
-		this._logger.log(`Match ${match.gameId} starting...`);
+		this.logger.log(`Match ${match.gameId} starting...`);
 
 		// get the matched players
 		const player1Id = match.players[0].socketId;
@@ -135,7 +137,7 @@ export class GamesGateway implements OnGatewayInit, OnGatewayDisconnect {
 		const game = this.gamesService.createGame(match, player1Deck, player2Deck);
 
 		// emit startup events
-		this.gamesEmitter.allMatchStartEvents(player1Socket, player2Socket, game.state);
+		this.gamesEmitter.allMatchStartEvents(player1Id, player2Id, game.state);
 	}
 
 	@SubscribeMessage(SOCKET_EVENT_NAMES.DEQUEUE)
@@ -154,13 +156,12 @@ export class GamesGateway implements OnGatewayInit, OnGatewayDisconnect {
 		const { unit, location, needsTarget } = this.gamesService.playUnit(gameId, client.id, playUnitDto);
 
 		if (needsTarget) {
-			this.gamesEmitter.getTarget(client);
+			this.gamesEmitter.getTarget(client.id);
 		}
 
 		const opponent = this.gamesService.getOpponentState(gameId, client.id);
-		const opponentSocket = this.getSocket(opponent.socketId);
 
-		this.gamesEmitter.updateCard(opponentSocket, unit, location);
+		this.gamesEmitter.updateCard(opponent.socketId, unit, location);
 	}
 
 	@SubscribeMessage(SOCKET_EVENT_NAMES.PLAY_SPELL)
@@ -170,9 +171,8 @@ export class GamesGateway implements OnGatewayInit, OnGatewayDisconnect {
 		const { spell, location } = this.gamesService.playSpell(gameId, client.id, playSpellDto);
 
 		const opponent = this.gamesService.getOpponentState(gameId, client.id);
-		const opponentSocket = this.getSocket(opponent.socketId);
 
-		this.gamesEmitter.updateCard(opponentSocket, spell, location);
+		this.gamesEmitter.updateCard(opponent.socketId, spell, location);
 	}
 
 	@SubscribeMessage(SOCKET_EVENT_NAMES.BUY_ARTIFACT)
@@ -182,9 +182,8 @@ export class GamesGateway implements OnGatewayInit, OnGatewayDisconnect {
 		const { artifact, location } = this.gamesService.buyArtifact(gameId, client.id, buyArtifactDto);
 
 		const opponent = this.gamesService.getOpponentState(gameId, client.id);
-		const opponentSocket = this.getSocket(opponent.socketId);
 
-		this.gamesEmitter.updateArtifact(opponentSocket, artifact, location, client.id);
+		this.gamesEmitter.updateArtifact(opponent.socketId, artifact, location, client.id);
 	}
 
 	@SubscribeMessage(SOCKET_EVENT_NAMES.END_TURN)
@@ -194,30 +193,29 @@ export class GamesGateway implements OnGatewayInit, OnGatewayDisconnect {
 
 		// start opponents turn
 		const opponent = this.gamesService.getOpponentState(gameId, client.id);
-		const opponentSocket = this.getSocket(opponent.socketId);
-		this.handleStartTurn(opponentSocket, gameId);
+		this.handleStartTurn(opponent.socketId, gameId);
 
-		this.gamesEmitter.startTurn(opponentSocket);
+		this.gamesEmitter.startTurn(opponent.socketId);
 	}
 
-	private handleStartTurn(client: Socket, gameId: string) {
-		const newTurnData = this.gamesService.startTurn(gameId, client.id);
+	private handleStartTurn(clientId: string, gameId: string) {
+		const newTurnData = this.gamesService.startTurn(gameId, clientId);
 		if (newTurnData.phaseChanged) {
-			this.gamesEmitter.updateGamePhase(this.server, gameId);
+			this.gamesEmitter.updateGamePhase(gameId);
 		}
 
 		if (newTurnData.phase === GamePhase.PLAY && newTurnData.data) {
 			const { newSpell, newMoney, newDrawpileCount } = newTurnData.data;
 
 			if (newSpell) {
-				const player = this.gamesService.getPlayerState(gameId, client.id);
+				const player = this.gamesService.getPlayerState(gameId, clientId);
 				const location: CardLocation = { insideOf: CardZone.HAND, index: player.hand.length - 1};
 
-				this.gamesEmitter.updateCard(client, newSpell, location);
-				this.gamesEmitter.updateDrawpileCount(this.server, gameId, client.id, newDrawpileCount);
+				this.gamesEmitter.updateCard(clientId, newSpell, location);
+				this.gamesEmitter.updateDrawpileCount(gameId, clientId, newDrawpileCount);
 			}
 
-			this.gamesEmitter.updateMoney(this.server, gameId, client.id, newMoney);
+			this.gamesEmitter.updateMoney(gameId, clientId, newMoney);
 		}
 	}
 
@@ -228,16 +226,18 @@ export class GamesGateway implements OnGatewayInit, OnGatewayDisconnect {
 		const { attackerData, targetData } = this.gamesService.attackUnit(gameId, client.id, attackUnitDto);
 
 		const opponent = this.gamesService.getOpponentState(gameId, client.id);
-		const opponentSocket = this.getSocket(opponent.socketId);
 
-		const attackerDead = attackerData.unit.hp < 0
-		const targetDead = targetData.unit.hp < 0
+		const attackerDead = attackerData.unit.hp < 0;
+		const attackerLocation: CardLocation = attackerDead ? { insideOf: CardZone.NONE } : attackerData.location;
 
-		this.gamesEmitter.updateCard(client, targetData.unit, targetDead ? { insideOf: CardZone.NONE } : targetData.location);
-		this.gamesEmitter.updateCard(client, attackerData.unit, attackerData.location);
+		const targetDead = targetData.unit.hp < 0;
+		const targetLocation: CardLocation = targetDead ? { insideOf: CardZone.NONE } : targetData.location;
 
-		this.gamesEmitter.updateCard(opponentSocket, targetData.unit, targetData.location);
-		this.gamesEmitter.updateCard(opponentSocket, attackerData.unit, attackerDead ? { insideOf: CardZone.NONE } : attackerData.location);
+		this.gamesEmitter.updateCard(client.id, targetData.unit, targetLocation);
+		this.gamesEmitter.updateCard(client.id, attackerData.unit, attackerData.location);
+
+		this.gamesEmitter.updateCard(opponent.socketId, targetData.unit, targetData.location);
+		this.gamesEmitter.updateCard(opponent.socketId, attackerData.unit, attackerLocation);
 	}
 
 	@SubscribeMessage(SOCKET_EVENT_NAMES.ATTACK_PLAYER)
@@ -246,10 +246,10 @@ export class GamesGateway implements OnGatewayInit, OnGatewayDisconnect {
 
 		const { targetId, health, attackerId } = this.gamesService.attackPlayer(gameId, client.id, attackPlayerDto);
 
-		this.gamesEmitter.updateHealth(this.server, gameId, targetId, health);
+		this.gamesEmitter.updateHealth(gameId, targetId, health);
 
 		if (health <= 0) {
-			this.gamesEmitter.gameEnd(this.server, gameId, attackerId);
+			this.gamesEmitter.gameEnd(gameId, attackerId);
 		}
 	}
 
