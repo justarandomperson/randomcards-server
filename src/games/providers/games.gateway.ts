@@ -5,7 +5,7 @@ import { MatchMakingService } from '../../matchmaking/matchmaking.service';
 import { Socket } from 'socket.io';
 import { JwtService } from '@nestjs/jwt';
 import { GamesService } from './games.service';
-import { GamePhase, PlayerState } from '../shared/games.types';
+import { effectEventPayload, GamePhase, PlayerState } from '../shared/games.types';
 import QueueDto from '../dto/queue.dto';
 import { BasicPlayerData, Match } from '../../matchmaking/matchmaking.types';
 import { GamesEmitter } from './games.emitter';
@@ -37,6 +37,7 @@ import SelectedTargetDto from '../dto/selected-target.dto';
 export class GamesGateway implements OnGatewayInit, OnGatewayDisconnect {
 	private readonly logger = new Logger(GamesGateway.name);
 	private readonly gamesEmitter: GamesEmitter;
+	private effectEvents: effectEventPayload[] = [];
 
 	@WebSocketServer()
 	server: Server;
@@ -93,6 +94,49 @@ export class GamesGateway implements OnGatewayInit, OnGatewayDisconnect {
 		this.matchMakingService.removeFromQueue(client.id);
 
 		// TODO: if client.data.gameId is set, tell the opponent and remove the room
+	}
+
+
+	// effect events handler
+	addEffectEvent(event: effectEventPayload) {
+		this.effectEvents.push(event);
+	}
+
+	private emitEffectEvents() {
+		while (this.effectEvents.length !== 0) {
+			const event = this.effectEvents[0];
+			this.emitEffectEvent(event);
+			this.effectEvents.shift();
+		}
+	}
+
+	private emitEffectEvent(event: effectEventPayload) {
+		switch(event.name) {
+			case SOCKET_EVENT_NAMES.UPDATE_CARD:
+				this.gamesEmitter.updateCard(event.payload.clientId, event.payload.card, event.payload.cardLocation);
+				break;
+
+			case SOCKET_EVENT_NAMES.UPDATE_ARTIFACT:
+				this.gamesEmitter.updateArtifact(
+					event.payload.clientId, 
+					event.payload.artifact, 
+					event.payload.artifactLocation, 
+					event.payload.playerId
+				);
+				break;
+
+			case SOCKET_EVENT_NAMES.UPDATE_MONEY:
+				this.gamesEmitter.updateMoney(event.payload.gameId, event.payload.playerId, event.payload.amount);
+				break;
+
+			case SOCKET_EVENT_NAMES.UPDATE_HEALTH:
+				this.gamesEmitter.updateHealth(event.payload.gameId, event.payload.playerId, event.payload.amount)
+				break;
+
+			case SOCKET_EVENT_NAMES.UPDATE_DRAWPILE_COUNT:
+				this.gamesEmitter.updateHealth(event.payload.gameId, event.payload.playerId, event.payload.amount)
+				break;
+		}
 	}
 
 
@@ -162,6 +206,7 @@ export class GamesGateway implements OnGatewayInit, OnGatewayDisconnect {
 		const opponent = this.gamesService.getOpponentState(gameId, client.id);
 
 		this.gamesEmitter.updateCard(opponent.socketId, unit, location);
+		this.emitEffectEvents();
 	}
 
 	@SubscribeMessage(SOCKET_EVENT_NAMES.PLAY_SPELL)
@@ -173,6 +218,7 @@ export class GamesGateway implements OnGatewayInit, OnGatewayDisconnect {
 		const opponent = this.gamesService.getOpponentState(gameId, client.id);
 
 		this.gamesEmitter.updateCard(opponent.socketId, spell, location);
+		this.emitEffectEvents();
 	}
 
 	@SubscribeMessage(SOCKET_EVENT_NAMES.BUY_ARTIFACT)
@@ -184,6 +230,7 @@ export class GamesGateway implements OnGatewayInit, OnGatewayDisconnect {
 		const opponent = this.gamesService.getOpponentState(gameId, client.id);
 
 		this.gamesEmitter.updateArtifact(opponent.socketId, artifact, location, client.id);
+		//? shouldnt there be effects that need emitting after this but also why wouldnt we try here? idk
 	}
 
 	@SubscribeMessage(SOCKET_EVENT_NAMES.END_TURN)
@@ -196,6 +243,7 @@ export class GamesGateway implements OnGatewayInit, OnGatewayDisconnect {
 		this.handleStartTurn(opponent.socketId, gameId);
 
 		this.gamesEmitter.startTurn(opponent.socketId);
+		this.emitEffectEvents();
 	}
 
 	private handleStartTurn(clientId: string, gameId: string) {
@@ -238,6 +286,8 @@ export class GamesGateway implements OnGatewayInit, OnGatewayDisconnect {
 
 		this.gamesEmitter.updateCard(opponent.socketId, targetData.unit, targetData.location);
 		this.gamesEmitter.updateCard(opponent.socketId, attackerData.unit, attackerLocation);
+
+		this.emitEffectEvents();
 	}
 
 	@SubscribeMessage(SOCKET_EVENT_NAMES.ATTACK_PLAYER)
@@ -251,9 +301,11 @@ export class GamesGateway implements OnGatewayInit, OnGatewayDisconnect {
 		if (health <= 0) {
 			this.gamesEmitter.gameEnd(gameId, attackerId);
 		}
+
+		this.emitEffectEvents();
 	}
 
-	@SubscribeMessage(SOCKET_EVENT_NAMES.TARGET_SELECTED)
+	@SubscribeMessage(SOCKET_EVENT_NAMES.SELECT_TARGET)
 	selectTarget(@ConnectedSocket() client: Socket, @MessageBody() selectedTargetDto: SelectedTargetDto)
 	{
 		const gameId = this.getClientGameId(client)

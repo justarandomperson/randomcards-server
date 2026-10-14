@@ -3,6 +3,7 @@ import { UnitInstance, SpellInstance, ClientUnitData, ClientSpellData, CardLocat
 import { EffectsService } from "../../effects/effects.service";
 import { Effect } from "../../effects/effects.types";
 import { GameActions } from "../logic/gameActions";
+import { SOCKET_EVENT_NAMES } from "./games.constants";
 
 
 export type Game = { 
@@ -77,6 +78,13 @@ export type UpdateArtifactPayload = {
   location: ArtifactLocation,
   playerId?: string 
 }
+
+// TODO; make it so that i can use SOCKET_EVENT_NAMES here, if that means switching it to an enum or wahtever
+// TODO: cuz no being able to use that here kind of defeats the purpose of it existing
+export type effectEventPayload = 
+  | { name: 'update_card', payload: { clientId: string, card: UnitInstance | SpellInstance, cardLocation: CardLocation } }
+  | { name: 'update_artifact', payload: { clientId: string, artifact: ArtifactInstance, artifactLocation: ArtifactLocation, playerId?: string } }
+  | { name: 'update_money' | 'update_health' | 'update_drawpile_count', payload: { gameId: string, playerId: string, amount: number }}
 
 
 // Note: these are types sent to the client, used only for that

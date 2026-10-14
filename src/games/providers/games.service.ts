@@ -126,7 +126,7 @@ export class GamesService {
         };
     }
 
-    playSpell(gameId: string, playerId: string, playSpellDto: PlaySpellDto): SpellAndLocation {
+    playSpell(gameId: string, playerId: string, playSpellDto: PlaySpellDto): SpellAndLocation & { needsTarget: boolean } {
         const game = this.getGame(gameId);
         const player = game.actions.getPlayerState(playerId);
 
@@ -149,9 +149,12 @@ export class GamesService {
         game.actions.moveSpellToDrawpile(playerId, card, handIndex);
         game.actions.removeMoney(playerId, card.cost);
 
+        const needsTarget = game.effects.runEffectsForTrigger(playerId, EFFECT_TRIGGERS.SUMMONED, card);
+
         return { 
             spell: card, 
-            location: { insideOf: CardZone.NONE }
+            location: { insideOf: CardZone.NONE },
+            needsTarget
         };    
     }
 
