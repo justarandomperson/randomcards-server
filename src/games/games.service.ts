@@ -1,9 +1,9 @@
-import { UnitInstance, SpellInstance } from './cards/card.types';
-import { CardsService } from './cards/cards.service';
-import { EffectTrigger } from './cards/effect.types';
-import { GameActions } from './cards/game-actions';
-import { place } from "./dto/play-unit.dto"
-import { GameState, Player, PlayerState } from './games.types';
+import { UnitInstance, SpellInstance } from '../cards/cards.types'
+import { CardsService } from '../cards/cards.service'
+import { EFFECT_TRIGGERS, EffectTrigger } from '../effects/effects.types'
+import { GameActions } from './logic/gameActions'
+import PlayUnitDto from "./dto/play-unit.dto"
+import { GameState, ClientPlayerData, PlayerState, GamePhase } from '../games/shared/games.types'
 
 export class GamesService {
   private Rooms: GameState[] = [];
@@ -11,10 +11,9 @@ export class GamesService {
   private readonly actions: GameActions;
 
   constructor(private readonly _cardsService: CardsService) {
-    this.actions = new GameActions(_cardsService)
   }
 
-  createRoom(players: Player[], gameID: string) {
+  createRoom(players: PlayerState[], gameID: string) {
     const [player1, player2] = players;
 
     const player1State = this.initializePlayerState(player1);
@@ -22,12 +21,14 @@ export class GamesService {
 
     const room: GameState = {
       players: new Map([
-        [player1.id, player1State],
-        [player2.id, player2State]
+        [player1.socketId, player1State],
+        [player2.socketId, player2State]
       ]),
       board: [],
-      gameID: gameID,
-      playerTurnID: player1.id,
+      gameId: gameID,
+      playerTurnId: player1.socketId,
+      gamePhase: GamePhase.PLAY,
+      shop: []
     };
 
     this.Rooms.push(room);
@@ -35,9 +36,10 @@ export class GamesService {
     return room;
   }
 
-  private initializePlayerState(player: Player) {
-    const player1Cards = player.deck.map((cardId) =>
-      this._cardsService.createCardFromId(cardId, player.id),
+  private initializePlayerState(player: PlayerState) {
+    //there is no deck field for player now
+    const player1Cards = player.map((cardId) =>
+      this._cardsService.createUnitInstance(cardId, player.socketId),
     );
 
     const playerState: PlayerState = {
@@ -45,23 +47,23 @@ export class GamesService {
       hp: 20,
       bench: [],
       hand: [],
-      id: player.id,
+      id: player.socketId,
     };
 
     return playerState;
   }
 
   getRoom(gameID: string) {
-    const game = this.Rooms.find((room) => room.gameID == gameID);
+    const game = this.Rooms.find((room) => room.gameId == gameID);
     if (!game) throw new Error("Game doesn't exist");
     return game;
   }
 
-  placeUnit(playerID: string, gameID: string, placeUnitData: PlaceUnitDto) {
+  placeUnit(playerID: string, gameID: string, placeUnitData: PlayUnitDto) {
     const context = this.getPlayerGame(playerID, gameID);
     const { isPlayer1, bench, game } = context;
 
-    const { id, boardIndex } = placeUnitData;
+    const { instanceId, boardIndex } = placeUnitData;
 
     const translatedDestination = isPlayer1
       ? boardIndex
@@ -70,7 +72,7 @@ export class GamesService {
     this.throwIfPlaceUnitInvalid(game, translatedDestination);
 
     const card: UnitInstance | undefined = bench.find((card) => {
-      card.id == id;
+      card.id == instanceId;
     });
     if (!card) throw new Error("card doesn't exist");
 
@@ -92,8 +94,8 @@ export class GamesService {
 
     if (attackerInstance.ownerID != playerID || targetInstance.ownerID == playerID) throw new Error("Invalid targets")
 
-    this.actions.dealDamageToUnitInstance(game, targetInstance, attackerInstance.atk)
-    this.actions.dealDamageToUnitInstance(game, attackerInstance, targetInstance.atk)
+    this.actions.damageUnit(targetInstance.id, attackerInstance.atk)
+    this.actions.damageUnit(attackerInstance.id, targetInstance.atk)
   }
 
   private throwIfPlaceUnitInvalid(game: GameState, boardIndex: number) {
@@ -107,7 +109,7 @@ export class GamesService {
     const context = this.getPlayerGame(playerID, gameID)
     const game = context.game
 
-    this.triggerUnits(game, playerID, "onTurnStart")
+    //this.triggerUnits(game, playerID, EFFECT_TRIGGERS.TURN_START)
   }
 
   endTurn(playerID: string, gameID: string) {
@@ -119,8 +121,8 @@ export class GamesService {
     const nextIndex = (playerIndex + 1) % game.players.size
     const nextID = playerIds[nextIndex]
 
-    game.playerTurnID = nextID
-    this.triggerUnits(game, playerID, "onTurnEnd")
+    game.playerTurnId = nextID
+    //this.triggerUnits(game, playerID, EFFECT_TRIGGERS.TURN_END)
   }
 
   getPlayerGame(playerID: string, gameID: string) {
@@ -131,9 +133,9 @@ export class GamesService {
     )
       throw new Error('player not in game');
 
-    const isPlayer1 = playerID === game.players.entries().next().value?.[1].id
+    const isPlayer1 = playerID === game.players.entries().next().value?.[1].socketId
     const playerState = game.players[playerID]
-    const isPlayerTurn = game.playerTurnID == playerID
+    const isPlayerTurn = game.playerTurnId == playerID
 
     if (!isPlayerTurn) throw new Error("not player's turn");
 
@@ -160,19 +162,19 @@ export class GamesService {
     return game.board;
   }
 
-  private triggerUnits(game: GameState, playerID: string, trigger: EffectTrigger)
-  {
-    const summonedUnits = game.board.filter(
-      (unit): unit is UnitInstance => unit?.ownerID === playerID
-    );
+  // private triggerUnits(game: GameState, playerID: string, trigger: EffectTrigger)
+  // {
+  //   const summonedUnits = game.board.filter(
+  //     (unit): unit is UnitInstance => unit?.ownerId === playerID
+  //   );
     
-    summonedUnits.map((unit) => {
-      unit.effects.map((effect) => {
-        if (effect.trigger.includes(trigger))
-        {
-          effect.execute({game: game, playerId: playerID, actions: this.actions, source: unit})
-        }
-      })
-    })
-  }
+  //   summonedUnits.map((unit) => {
+  //     unit.effects.map((effect) => {
+  //       if (effect.trigger.includes(trigger))
+  //       {
+  //         e
+  //       }
+  //     })
+  //   })
+  // }
 }
