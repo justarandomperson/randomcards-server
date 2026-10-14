@@ -6,11 +6,10 @@ import { CardsService } from '../cards/cards.service';
 import { GamesEmitter } from './providers/games.emitter';
 import { ArtifactsService } from '../artifacts/artifacts.service';
 import { DecksService } from '../decks/deck.service';
-import { Server } from 'node:http';
+import { Server } from 'socket.io';
 
 
 @Module({
-  providers: [GamesService, GamesGateway, GamesEmitter, MatchMakingService, CardsService, ArtifactsService, DecksService],
-  imports: [Server]
+  providers: [GamesService, GamesGateway, GamesEmitter, MatchMakingService, CardsService, ArtifactsService, DecksService, Server],
 })
 export class GamesModule {}

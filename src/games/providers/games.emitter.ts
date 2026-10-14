@@ -10,7 +10,11 @@ import { SOCKET_EVENT_NAMES } from '../shared/games.constants';
 
 @Injectable()
 export class GamesEmitter {
-    constructor(private readonly server: Server) {}
+    private readonly server: Server
+
+    constructor(server: Server) {
+        this.server = server;
+    }
 
 
     // initializers, getters setters etc
