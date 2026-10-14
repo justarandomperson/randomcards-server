@@ -91,7 +91,6 @@ const spellList: SpellInstance[] = [
 
                     context.actions.damageUnit(
                         targetId,
-                        context.cardsService.findCardInstance(targetId, context.state.board).index,
                         8
                     );
                 }

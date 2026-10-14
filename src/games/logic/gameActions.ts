@@ -167,8 +167,8 @@ export class GameActions {
         unit.statuses = defaultUnit.statuses;
     }
 
-    damageUnit(targetId: string, targetBoardIndex: number, amount: number): boolean {
-        const targetInstance = this.cardsService.findCardInstance(targetId, this.state.board).card
+    damageUnit(targetId: string, amount: number): boolean {
+        const { card: targetInstance, index: boardIndex } = this.cardsService.findCardInstance(targetId, this.state.board)
 
         targetInstance.hp -= amount;
         if (targetInstance.hp <= 0) { 
@@ -177,7 +177,7 @@ export class GameActions {
                 this.cardsService.getCardOwnerId(targetInstance),
                 targetInstance,
                 this.cardsService.getUnitBenchSlot(targetInstance),
-                targetBoardIndex
+                boardIndex
             );
 
             this.resetUnitData(targetInstance);

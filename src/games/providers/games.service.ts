@@ -307,7 +307,7 @@ export class GamesService {
     private handleAttackUnit(gameId: string, target: UnitInstance, damage: number, targetIndex: number): UnitAndLocation {
         const game = this.getGame(gameId);
 
-        const isDead = game.actions.damageUnit(target.id, targetIndex, damage);
+        const isDead = game.actions.damageUnit(target.id, damage);
 
         const insideOf = isDead ? CardZone.BENCH : CardZone.BOARD;
         const location: CardLocation = { insideOf: insideOf, index: targetIndex };

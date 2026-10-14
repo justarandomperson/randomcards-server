@@ -66,7 +66,6 @@ const unitList: UnitInstance[] = [
 
                     context.actions.damageUnit(
                         context.targetId, 
-                        context.cardsService.findCardInstance(context.targetId, context.state.board).index,
                         1
                     );
                     
@@ -103,7 +102,6 @@ const unitList: UnitInstance[] = [
                             const instanceId = context.cardsService.getCardInstanceId(unit);
                             context.actions.damageUnit(
                                 instanceId, 
-                                context.cardsService.findCardInstance(instanceId, context.state.board).index,
                                 unit.hp
                             );
                         }
