@@ -1,6 +1,9 @@
 import { WsException } from "@nestjs/websockets";
 import { EFFECT_TRIGGERS, EffectContext } from "../../effects/effects.types";
-import { CardType, SpellInstance } from "../cards.types";
+import { CardType, CardZone, SpellInstance } from "../cards.types";
+import { getTargetId } from "../../effects/helpers";
+import { SOCKET_EVENT_NAMES } from "../../games/shared/games.constants";
+import { effectEventPayload } from "../../games/shared/games.types";
 
 
 const spellList: SpellInstance[] = [
@@ -12,7 +15,7 @@ const spellList: SpellInstance[] = [
                     "Pray, doth it befit thee to name such a being a cat?" +
                     "Farewell, and may the hours yet before you be wondrous and fair!",
         effects: [],
-        cost: 3,
+        cost: 0,
     },
     {
         id: "S_2",
@@ -21,14 +24,13 @@ const spellList: SpellInstance[] = [
         effectDesc: "Give an ally monster +2 ATK",
         effects: [
             {
-                trigger: [EFFECT_TRIGGERS.SUMMONED], //? maybe it shouldnt have a trigger, but i mean that works! right?   
+                trigger: [EFFECT_TRIGGERS.SUMMONED],
                 execute: (context: EffectContext) => {
-                    const targetId = context.targetId;
-                    if (!targetId) {
-                        throw new WsException("no targetId provided");
-                    }
+                    const targetId = getTargetId(context);
 
                     context.actions.increaseAttack(targetId, 2);
+
+                    // TODO: need to emit 2 events here, one for each
                 }
             }
         ],
@@ -41,15 +43,14 @@ const spellList: SpellInstance[] = [
         effectDesc: "I couldn't think of a better name",
         effects: [
             {
-                trigger: [EFFECT_TRIGGERS.SUMMONED], //? maybe it shouldnt have a trigger, but i mean that works! right?   
+                trigger: [EFFECT_TRIGGERS.SUMMONED],
                 execute: (context: EffectContext) => {
-                    const targetId = context.targetId;
-                    if (!targetId) {
-                        throw new WsException("no targetId provided");
-                    }
+                    const targetId = getTargetId(context);
 
                     context.actions.damagePlayer(context.playerId, 3);
                     context.actions.increaseUnitHealth(targetId, 3);
+
+                    // TODO: need to emit 4 events here (two for changing the player hp and two for update unit)
                 }
             }
         ],
@@ -62,14 +63,23 @@ const spellList: SpellInstance[] = [
         effectDesc: "remove 1 turn from one of your benched unit's cooldown",
         effects: [
             {
-                trigger: [EFFECT_TRIGGERS.SUMMONED], //? maybe it shouldnt have a trigger, but i mean that works! right?   
+                trigger: [EFFECT_TRIGGERS.SUMMONED],
                 execute: (context: EffectContext) => {
-                    const targetId = context.targetId;
-                    if (!targetId) {
-                        throw new WsException("no targetId provided");
-                    }
-
+                    const targetId = getTargetId(context);
+                
                     context.actions.increaseCooldown(targetId, -1);
+
+                    const player = context.actions.getPlayerState(context.playerId);
+                    const { card, index } = context.cardsService.findCardInstance(targetId, player.bench)
+
+                    const event: effectEventPayload= {
+                        name: SOCKET_EVENT_NAMES.UPDATE_CARD,
+                        payload: {
+                            clientId: context.playerId,
+                            card: card,
+                            cardLocation: { insideOf: CardZone.BENCH, index: index }
+                        }
+                    }
                 }
             }
         ],
@@ -82,17 +92,13 @@ const spellList: SpellInstance[] = [
         effectDesc: "i will blast your glast (deal 8 damage to a unit)",
         effects: [
             {
-                trigger: [EFFECT_TRIGGERS.SUMMONED], //? maybe it shouldnt have a trigger, but i mean that works! right?
+                trigger: [EFFECT_TRIGGERS.SUMMONED],
                 execute: (context: EffectContext) => {
-                    const targetId = context.targetId;
-                    if (!targetId) {
-                        throw new WsException("no targetId provided");
-                    }
+                    const targetId = getTargetId(context);
 
-                    context.actions.damageUnit(
-                        targetId,
-                        8
-                    );
+                    context.actions.damageUnit(targetId, 8);
+
+                    // TODO: emit 2 events
                 }
             }
         ],

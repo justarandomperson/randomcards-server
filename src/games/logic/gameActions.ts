@@ -1,15 +1,18 @@
 import { WsException } from '@nestjs/websockets';
 import { CardsService } from '../../cards/cards.service';
 import { CardLocation, CardZone, SpellInstance, UnitInstance } from '../../cards/cards.types';
-import { CurrentEffectData, GamePhase, GameState, PlayerState } from '../shared/games.types';
+import { CurrentEffectData, effectEventPayload, GamePhase, GameState, PlayerState } from '../shared/games.types';
 import { MAX_HAND_SIZE, MINIMUM_MONEY } from '../shared/games.constants';
 import { ArtifactInstance, ArtifactLocation, ArtifactZone } from '../../artifacts/artifacts.types';
 import { fillShop } from './gameSetup';
+import { EffectsService } from '../../effects/effects.service';
+import { EFFECT_TRIGGERS } from '../../effects/effects.types';
 
 
 export class GameActions {
     constructor(
         private readonly state: GameState,
+        private readonly effects: EffectsService,
         private readonly cardsService: CardsService
     ) {}
 
@@ -38,12 +41,52 @@ export class GameActions {
         return [...this.state.players.keys()][0] === playerId;
     }
 
-    getPlayerBoard() {
-        // TODO: this
+    getPlayerBoard(playerId: string) {
+        if (this.isPlayer1(playerId)) {
+            return this.state.board.slice(0, 4);
+        }
+
+        return this.state.board.slice(4, 8);
     }
 
-    getOpponetBoard() {
-        // TODO: this
+    getOpponentBoard(playerId: string) {
+        if (this.isPlayer1(playerId)) {
+            return this.state.board.slice(4, 8);
+        }
+        
+        return this.state.board.slice(0, 4);
+    }
+
+    getPlayerBoardUnits(playerId: string): { unit: UnitInstance, index: number}[] {
+        const playerBoard = this.getPlayerBoard(playerId);
+
+        const boardUnits: { unit: UnitInstance, index: number}[] = []
+
+        for (let i = 0; i < playerBoard.length; i++) {
+            const slot = playerBoard[i];
+
+            if (slot) {
+                boardUnits.push({ unit: slot, index: i })
+            }
+        }
+
+        return boardUnits;
+    }
+
+    getOpponentBoardUnits(playerId: string): { unit: UnitInstance, index: number}[] {
+        const playerBoard = this.getOpponentBoard(playerId);
+
+        const boardUnits: { unit: UnitInstance, index: number}[] = []
+
+        for (let i = 0; i < playerBoard.length; i++) {
+            const slot = playerBoard[i];
+
+            if (slot) {
+                boardUnits.push({ unit: slot, index: i })
+            }
+        }
+
+        return boardUnits;
     }
 
 
@@ -62,12 +105,19 @@ export class GameActions {
         this.state.gamePhase = (phase === GamePhase.PLAY ? GamePhase.SHOP : GamePhase.PLAY);
     }
 
+    // effect events
+    addEffectEvent(event: effectEventPayload) {
+        this.state.effectEvents.push(event);
+    }
+
     // move cards/artifacts, add them etc
-    moveUnitToBoard(playerId: string, card: UnitInstance, boardIndex: number, benchIndex: number): CardLocation {
+    moveUnitToBoard(playerId: string, card: UnitInstance, boardIndex: number, benchIndex?: number): CardLocation {
         const player = this.getPlayerState(playerId);
 
         this.state.board[boardIndex] = card;
-        player.bench[benchIndex] = null;
+        if (benchIndex) {
+            player.bench[benchIndex] = null;
+        }
 
         return {
             insideOf: CardZone.BOARD,
@@ -135,7 +185,9 @@ export class GameActions {
     removeSpellFromDrawpile(playerId: string): SpellInstance | null {
         const player = this.getPlayerState(playerId);
 
-        const spell = player.drawpile.pop(); // TODO: add logic to drawing a card (randomly) later
+        const spellIndex = Math.floor(Math.random() * player.drawpile.length / 2) // first half of drawpile
+        const spell = player.drawpile[spellIndex];
+        player.drawpile.splice(spellIndex, 1);
         if (!spell) {
             return null;
         }
@@ -157,7 +209,7 @@ export class GameActions {
 
     
     // change card/artifact data
-    resetUnitData(unit: UnitInstance) { //? maybe change targetInstance to targetId?
+    resetUnitData(unit: UnitInstance) {
         const defaultUnit = this.cardsService.getDefaultUnitById(unit.id);
 
         unit.hp = defaultUnit.hp;

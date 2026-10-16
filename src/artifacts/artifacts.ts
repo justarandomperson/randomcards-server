@@ -33,7 +33,11 @@ const ArtifactList: ArtifactInstance[] = [
                         }
 
                         // rng target
-                        // TODO: idk how to get the opponents' board
+                        const opponentPlayedUnits = context.actions.getOpponentBoardUnits(context.playerId);
+
+                        // TODO: randomly choose target
+                        // TODO: deal damage to it
+                        // TODO: emit 2 events 1 for each client
                     }
                 }
             }
@@ -49,6 +53,8 @@ const ArtifactList: ArtifactInstance[] = [
                 trigger: [EFFECT_TRIGGERS.ANY_DIED],
                 execute: (context: EffectContext) => {
                     context.actions.healPlayer(context.playerId, 2);
+
+                    // TODO: emit 2 events
                 }
             }
         ],
@@ -57,12 +63,13 @@ const ArtifactList: ArtifactInstance[] = [
     {
         id: "A_3",
         name: "Vampire Destructor",
-        effectDesc: "Every time a unit is summoned, damage a random opponent's unit.",
+        effectDesc: "Every time a unit is summoned, deal 1 damage to a random opponent's unit.",
         effects: [
             {
                 trigger: [EFFECT_TRIGGERS.ANY_SUMMONED],
                 execute: (context: EffectContext) => {
-                    // TODO: idk how to get the opponents' board
+                    const opponentPlayedUnits = context.actions.getOpponentBoardUnits(context.playerId);
+                    // TODO: this
                 }
             }
         ],

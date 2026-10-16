@@ -53,7 +53,6 @@ export const EFFECTS = {
   UPDATE_UNIT_STATUS: 'update_unit_status',
 } as const;
 
-// TODO: add effect triggers for artifacts. (e.g. if any unit killed an opponents unit, if any unit died...)
 export const EFFECT_TRIGGERS = {
   TURN_START: 'turn_start',
   TURN_END: 'turn_end',
@@ -61,7 +60,6 @@ export const EFFECT_TRIGGERS = {
   DEATH: 'death',
   KILL: 'kill',
   DAMAGED: 'damaged',
-  IN_COOLDOWN: 'in_cooldown',
   COOLDOWN_END: 'cooldown_end',
 
   ANY_SUMMONED: 'any_summoned',

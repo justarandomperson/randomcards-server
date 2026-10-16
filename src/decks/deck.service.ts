@@ -13,7 +13,6 @@ export class DecksService {
 
     // services
     getStorage(): Deck {
-        //* All players just have all cards in their storage right now.
         const units: UnitInstance[] = [...unitCards.values()]
 
         const spells: SpellInstance[] = [];
@@ -48,7 +47,7 @@ export class DecksService {
             const card = (cardType === CardType.UNIT) ? 
                 this.cardsService.createUnitInstance(id, ownerId) : this.cardsService.createSpellInstance(id,  ownerId);
 
-            if (card.type === CardType.UNIT) { //? not sure if this is the right place to put this. but it looks like it.
+            if (card.type === CardType.UNIT) {
                 card.assignedBenchSlot = index;
             }
 

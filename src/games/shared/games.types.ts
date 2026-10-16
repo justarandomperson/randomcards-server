@@ -3,7 +3,6 @@ import { UnitInstance, SpellInstance, ClientUnitData, ClientSpellData, CardLocat
 import { EffectsService } from "../../effects/effects.service";
 import { Effect } from "../../effects/effects.types";
 import { GameActions } from "../logic/gameActions";
-import { SOCKET_EVENT_NAMES } from "./games.constants";
 
 
 export type Game = { 
@@ -13,13 +12,14 @@ export type Game = {
 };
 
 export type GameState = {
-  //? do we maybe need to keep track of gamePhase? do calculate who starts their shop phase first?
   gameId: string
   players: Map<string, PlayerState>
   board: (UnitInstance | null)[]
   shop: (ArtifactInstance | null)[]
   gamePhase: GamePhase
   playerTurnId: string
+  effectEvents: effectEventPayload[];
+
 };
 
 export type PlayerState = {
@@ -79,8 +79,6 @@ export type UpdateArtifactPayload = {
   playerId?: string 
 }
 
-// TODO; make it so that i can use SOCKET_EVENT_NAMES here, if that means switching it to an enum or wahtever
-// TODO: cuz no being able to use that here kind of defeats the purpose of it existing
 export type effectEventPayload = 
   | { name: 'update_card', payload: { clientId: string, card: UnitInstance | SpellInstance, cardLocation: CardLocation } }
   | { name: 'update_artifact', payload: { clientId: string, artifact: ArtifactInstance, artifactLocation: ArtifactLocation, playerId?: string } }

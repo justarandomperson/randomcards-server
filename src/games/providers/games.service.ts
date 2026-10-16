@@ -2,10 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { CardLocation, CardZone, SpellAndLocation, SpellInstance, UnitAndLocation, UnitInstance } from '../../cards/cards.types';
 import { CardsService } from '../../cards/cards.service';
 import { GameActions } from '../logic/gameActions';
-import { Game, GamePhase, GameState, PlayerState } from '../shared/games.types';
+import { effectEventPayload, Game, GamePhase, GameState, PlayerState } from '../shared/games.types';
 import { Match } from '../../matchmaking/matchmaking.types';
 import { fillShop, initPlayerState } from '../logic/gameSetup';
-import { MAX_CARD_IN_BOARD, MAX_HAND_SIZE } from '../shared/games.constants';
+import { MAX_CARD_IN_BOARD } from '../shared/games.constants';
 import { WsException } from '@nestjs/websockets';
 import PlayUnitDto from '../dto/play-unit.dto';
 import { calculateTurnStartMoney, CheckPlayUnitValid, shouldSwitchPhase } from '../logic/serviceHelpers';
@@ -18,6 +18,7 @@ import { Deck } from '../../decks/decks.types';
 import { ArtifactsService } from '../../artifacts/artifacts.service';
 import { EffectsService } from '../../effects/effects.service';
 import { EFFECT_TRIGGERS } from '../../effects/effects.types';
+
 
 @Injectable()
 export class GamesService {
@@ -45,13 +46,16 @@ export class GamesService {
             board: Array(MAX_CARD_IN_BOARD).fill(null),
             shop: fillShop([]), 
             gamePhase: GamePhase.PLAY,
-            playerTurnId: player1.socketId //* player1 starts first. this is solid
+            playerTurnId: player1.socketId,
+            effectEvents: []
         };
+
+        const effects = new EffectsService(state, this.cardsService, this.artifactsService)
 
         const game: Game = {
             state,
-            actions: new GameActions(state, this.cardsService),
-            effects: new EffectsService(state, this.cardsService, this.artifactsService)
+            actions: new GameActions(state, effects, this.cardsService),
+            effects
         };
 
         this._games.set(state.gameId, game);
@@ -82,6 +86,10 @@ export class GamesService {
 
     getOpponentState(gameId: string, playerId: string) {
         return this.getGame(gameId).actions.getOpponentState(playerId);
+    }
+
+    getEffectEvents(gameId: string): effectEventPayload[] {
+        return this.getGame(gameId).state.effectEvents;
     }
 
 
@@ -336,7 +344,7 @@ export class GamesService {
 
     targetSelected(gameId: string, playerId: string, targetId) {
         const game = this.getGame(gameId)
-        const player: PlayerState = game.actions.getPlayerState(playerId);
+        const player = game.actions.getPlayerState(playerId);
 
         if (!player.currentEffectData) {
             return;
@@ -344,6 +352,6 @@ export class GamesService {
 
         const { effect, sourceId } = player.currentEffectData
 
-        game.effects.runEffect(effect, playerId, sourceId);
+        game.effects.runEffect(effect, playerId, sourceId);     
     }
 }

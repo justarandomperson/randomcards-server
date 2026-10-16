@@ -2,7 +2,7 @@ import { WsException } from "@nestjs/websockets";
 import { CardsService } from "../cards/cards.service";
 import { UnitInstance } from "../cards/cards.types";
 import { GameState } from "../games/shared/games.types";
-import { AnyInstance, Effect, EFFECT_TRIGGERS, EffectContext, EffectTrigger, UnitOrArtifact } from "./effects.types";
+import { AnyInstance, Effect, EFFECT_TRIGGERS, EffectContext, EffectTrigger } from "./effects.types";
 import { ArtifactsService } from "../artifacts/artifacts.service";
 import { GameActions } from "../games/logic/gameActions";
 
@@ -53,8 +53,8 @@ export class EffectsService {
         return false;
     }
 
-    runEffect(effect: Effect, playerId: string, sourceId: string) {
-        const context = this.getEffectContext(playerId, sourceId);
+    runEffect(effect: Effect, playerId: string, sourceId: string, targetId?: string) {
+        const context = this.getEffectContext(playerId, sourceId, targetId);
         effect.execute(context);
     }
 
@@ -75,9 +75,6 @@ export class EffectsService {
     }
 
     private runTurnStartEndEffects(playerId: string, trigger: EffectTrigger): boolean {
-        //! the needsTarget logic here wont work because it sets the last effect that needs target,
-        //! so if there a few effects that need a target theyll just get skipped and wont be ran.
-
         let needsTarget = false;
 
         const playersSummonedUnits = this.state.board.filter(
@@ -123,9 +120,6 @@ export class EffectsService {
     }
 
     private runInstanceSpecificEffectsForTrigger(playerId: string, trigger: EffectTrigger, sourceInstance: AnyInstance): boolean {
-        //! the needsTarget logic here wont work because it sets the last effect that needs target,
-        //! so if there a few effects that need a target theyll just get skipped and wont be ran.
-
         const instanceId = this.getAnyInstanceId(sourceInstance);
         let needsTarget = false;
 

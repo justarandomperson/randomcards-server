@@ -7,7 +7,7 @@ import { Deck } from "../../decks/decks.types";
 
 
 export const fillShop = (currentShop: (ArtifactInstance | null)[]): ArtifactInstance[] => {
-    // TODO: make this actually fill the null spaces of a shop with new random artifacts.
+    // TODO: make this actually fill the null spaces of a shop with new random artifacts that havent been bought yet
     const placeholderArtifact: ArtifactInstance = {
         id: '0',
         instanceId: randomUUID(),

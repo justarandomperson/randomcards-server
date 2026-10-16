@@ -1,7 +1,10 @@
 import { WsException } from '@nestjs/websockets';
 import { Effect, EFFECT_TRIGGERS, EffectContext, Status } from '../../effects/effects.types';
 import { CardsService } from '../cards.service';
-import { CardType, UnitInstance } from '../cards.types';
+import { CardType, CardZone, UnitInstance } from '../cards.types';
+import { effectEventPayload } from '../../games/shared/games.types';
+import { SOCKET_EVENT_NAMES } from '../../games/shared/games.constants';
+import { getTargetId } from '../../effects/helpers';
 
 
 const unitList: UnitInstance[] = [
@@ -39,7 +42,22 @@ const unitList: UnitInstance[] = [
                 trigger: [EFFECT_TRIGGERS.SUMMONED, EFFECT_TRIGGERS.TURN_START],
                 execute: (context: EffectContext) => {
                     const gasterBlaster = context.cardsService.createSpellInstance("S_666", context.playerId);
-                    context.actions.addSpellToHand(context.playerId, gasterBlaster);
+                    const location = context.actions.addSpellToHand(context.playerId, gasterBlaster);
+
+                    if (location) {
+                        const event: effectEventPayload = {
+                            name: SOCKET_EVENT_NAMES.UPDATE_CARD,
+                            payload: {
+                                clientId: context.playerId,
+                                card: gasterBlaster,
+                                cardLocation: location
+                            }
+                        };
+
+                        context.actions.addEffectEvent(event);
+                    }
+
+
                 }
             }
         ],
@@ -58,17 +76,22 @@ const unitList: UnitInstance[] = [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
                 execute: (context: EffectContext) => {
-                    //? maybe later store the effect "magic numbers" somewhere else
-                    //? probably still inside the card
-                    if (!context.targetId) { //? maybe make this a helper? this is widely used
-                        throw new WsException("no targetId provided");
-                    }
+                    const targetId = getTargetId(context);
 
-                    context.actions.damageUnit(
-                        context.targetId, 
-                        1
-                    );
+                    context.actions.damageUnit(targetId, 1);
+                   
                     
+                    //? we will need to emit 2 events, for effects that a unit directly attacks, even 4
+                    //? we should make an event called UPDATE_CARD_BOTH or something, idk... 
+                    const event: effectEventPayload = {
+                        name: SOCKET_EVENT_NAMES.UPDATE_CARD,
+                        payload: {
+                            clientId:
+                            card:
+                            location:
+                        }
+                    }
+                    context.actions.addEffectEvent(event)
                 }
             }
         ],
@@ -87,24 +110,33 @@ const unitList: UnitInstance[] = [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
                 execute: (context: EffectContext) => {
-                    // TODO: idk how to get the owner player's side of the board
+                    const playerBoard = context.actions.getPlayerBoard(context.playerId);
+
+                    for (const slot of playerBoard) {
+                        if (!slot) {
+                            const cat = context.cardsService.createUnitInstance("U_2", context.playerId);
+
+                            //? need to run "any_summoned" effect over this>???
+                            context.actions.moveUnitToBoard(context.playerId, cat, )
+
+                            //? umm how will i actually set the cat to appear in the slot?
+                        }
+                    }
                 }
             },
             {
                 trigger: [EFFECT_TRIGGERS.DEATH],
                 execute: (context: EffectContext) => {
-                    const playersSummonedUnits = context.state.board.filter(
-                        (unit): unit is UnitInstance => unit?.ownerId === context.playerId
-                    );
+                    const playerBoard = context.actions.getPlayerBoard(context.playerId);
 
-                    for (const unit of playersSummonedUnits) {
-                        if (unit.id === "U_2") {
+                    for (const unit of playerBoard) {
+                        if (unit && unit.id === "U_2") {
                             const instanceId = context.cardsService.getCardInstanceId(unit);
-                            context.actions.damageUnit(
-                                instanceId, 
-                                unit.hp
-                            );
+                            context.actions.damageUnit(instanceId, unit.hp);
+
+                            //! Need to emit 2 events per unit here. one for each client
                         }
+
                     }
                 }
             }
@@ -156,7 +188,21 @@ const unitList: UnitInstance[] = [
                 trigger: [EFFECT_TRIGGERS.TURN_END, EFFECT_TRIGGERS.DEATH],
                 execute: (context: EffectContext) => {
                     const cooldownHatingSpell = context.cardsService.createSpellInstance("S_4", context.playerId);
-                    context.actions.addSpellToHand(context.playerId, cooldownHatingSpell);
+                    const location = context.actions.addSpellToHand(context.playerId, cooldownHatingSpell);
+
+                    if (location) {
+                        // if location is null, then nothing was added. nothing to emit
+                        const event: effectEventPayload = {
+                            name: SOCKET_EVENT_NAMES.UPDATE_CARD,
+                            payload: {
+                                clientId: context.playerId,
+                                card: cooldownHatingSpell,
+                                cardLocation: location
+                            }
+                        };
+
+                        context.actions.addEffectEvent(event);
+                    }
                 }
             }
         ],

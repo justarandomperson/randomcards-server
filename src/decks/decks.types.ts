@@ -7,6 +7,6 @@ export type Deck = {
 }
 
 export type DeckIds = {
-    unitIds: string[]
-    spellIds: string[]
+  unitIds: string[]
+  spellIds: string[]
 }
