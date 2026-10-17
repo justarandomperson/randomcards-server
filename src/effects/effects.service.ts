@@ -5,19 +5,16 @@ import { GameState } from "../games/shared/games.types";
 import { AnyInstance, Effect, EFFECT_TRIGGERS, EffectContext, EffectTrigger } from "./effects.types";
 import { ArtifactsService } from "../artifacts/artifacts.service";
 import { GameActions } from "../games/providers/games.actions";
-import { Server } from 'socket.io';
 
 
 export class EffectsService {
-    private readonly actions: GameActions;
 
     constructor(
         private readonly state: GameState,
+        private readonly actions: GameActions,
         private readonly cards: CardsService,
         private readonly artifacts: ArtifactsService,
-        private readonly gameActions: GameActions
-    ) {
-    }
+    ) {}
 
 
     // initializers, getters and setters etc

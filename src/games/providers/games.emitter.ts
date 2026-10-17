@@ -9,7 +9,6 @@ import { SOCKET_EVENT_NAMES } from '../shared/games.constants';
 
 
 @Injectable()
-//! cuz of new architecture, games.actions creates a new instance of this every time. I dont think it sohuld be likje that
 export class GamesEmitter {
     private server: Server
 

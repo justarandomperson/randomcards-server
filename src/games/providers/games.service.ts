@@ -24,9 +24,9 @@ export class GamesService {
     private readonly _games: Map<string, Game> = new Map();
 
     constructor(
+        public readonly emitter: GamesEmitter,
         private readonly cards: CardsService,
-        private readonly artifacts: ArtifactsService,
-        private readonly gamesEmitter: GamesEmitter
+        private readonly artifacts: ArtifactsService
     ) {}
 
 
@@ -48,7 +48,7 @@ export class GamesService {
             gamePhase: GamePhase.PLAY,
             playerTurnId: player1.socketId
         };
-        const actions = new GameActions(state, this.cards, this.artifacts, this.gamesEmitter);
+        const actions = new GameActions(state, this.emitter, this.cards, this.artifacts);
         const game: Game = { state, actions };
 
         this._games.set(state.gameId, game);

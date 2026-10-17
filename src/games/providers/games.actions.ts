@@ -9,21 +9,19 @@ import { CardsService } from "../../cards/cards.service";
 import { fillShop } from "../logic/gameSetup";
 import { GamesEmitter } from "./games.emitter";
 import { ArtifactsService } from "../../artifacts/artifacts.service";
-import { Server } from 'socket.io';
 import { calculateTurnStartMoney, shouldSwitchPhase } from "../logic/serviceHelpers";
 
 
 export class GameActions { 
     private readonly effects: EffectsService;
-    private readonly emitter: GamesEmitter;
 
     constructor(
         public readonly state: GameState,
+        private readonly emitter: GamesEmitter,
         private readonly cards: CardsService,
-        private readonly artifacts: ArtifactsService,
-        private readonly gamesEmitter: GamesEmitter
+        private readonly artifacts: ArtifactsService
     ) {
-        this.effects = new EffectsService(this.state, this.cards, this.artifacts, this);
+        this.effects = new EffectsService(this.state, this, this.cards, this.artifacts);
     }
 
     // getters

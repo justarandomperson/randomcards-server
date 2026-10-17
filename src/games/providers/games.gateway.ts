@@ -81,7 +81,7 @@ export class GamesGateway implements OnGatewayInit, OnGatewayDisconnect {
 			}
 		});
 
-		/* this.gamesService.setServer(server); */ //! we need to fix this
+		this.gamesService.emitter.setServer(server);
 	}
 
 	handleDisconnect(client: Socket) {
