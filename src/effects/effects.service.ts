@@ -15,9 +15,8 @@ export class EffectsService {
         private readonly state: GameState,
         private readonly cards: CardsService,
         private readonly artifacts: ArtifactsService,
-        server: Server
+        private readonly gameActions: GameActions
     ) {
-        this.actions = new GameActions(this.state, this.cards, this.artifacts, server);
     }
 
 

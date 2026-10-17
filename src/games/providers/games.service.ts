@@ -16,6 +16,7 @@ import { Deck } from '../../decks/decks.types';
 import { ArtifactsService } from '../../artifacts/artifacts.service';
 import { GameActions } from './games.actions';
 import { Server } from 'socket.io';
+import { GamesEmitter } from './games.emitter';
 
 
 @Injectable()
@@ -25,6 +26,7 @@ export class GamesService {
     constructor(
         private readonly cards: CardsService,
         private readonly artifacts: ArtifactsService,
+        private readonly gamesEmitter: GamesEmitter
     ) {}
 
 
@@ -46,7 +48,7 @@ export class GamesService {
             gamePhase: GamePhase.PLAY,
             playerTurnId: player1.socketId
         };
-        const actions = new GameActions(state, this.cards, this.artifacts, server);
+        const actions = new GameActions(state, this.cards, this.artifacts, this.gamesEmitter);
         const game: Game = { state, actions };
 
         this._games.set(state.gameId, game);
