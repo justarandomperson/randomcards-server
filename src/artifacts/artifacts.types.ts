@@ -9,6 +9,7 @@ export type ArtifactInstance = {
     effectDesc: string
     effects: Effect[]
     cost: number
+    location?: ArtifactLocation
 }
 
 
@@ -22,11 +23,6 @@ export type ArtifactLocation = {
     insideOf: ArtifactZone
     index: number
 };
-
-export type ArtifactAndLocation = {
-    artifact: ArtifactInstance
-    location: ArtifactLocation
-}
 
 
 // Note: these are types sent to the client, used only for that

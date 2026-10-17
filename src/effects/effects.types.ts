@@ -2,7 +2,7 @@ import { ArtifactsService } from '../artifacts/artifacts.service';
 import { ArtifactInstance } from '../artifacts/artifacts.types';
 import { CardsService } from '../cards/cards.service'
 import { SpellInstance, UnitInstance } from '../cards/cards.types';
-import { GameActions } from '../games/logic/gameActions';
+import { GameActions } from '../games/providers/games.actions';
 import { GameState } from '../games/shared/games.types'
 
 
@@ -63,6 +63,7 @@ export const EFFECT_TRIGGERS = {
   COOLDOWN_END: 'cooldown_end',
 
   ANY_SUMMONED: 'any_summoned',
+  ANY_SPELL_PLAYED: 'any_spell_played',
   ANY_DIED: 'any_died',
   ANY_KILLED: 'any_killed',
   ANY_DAMAGED: 'any_damaged',

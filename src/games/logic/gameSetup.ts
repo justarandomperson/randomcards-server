@@ -1,5 +1,5 @@
 import { randomUUID } from "crypto";
-import { ArtifactInstance } from "../../artifacts/artifacts.types";
+import { ArtifactInstance, ArtifactZone } from "../../artifacts/artifacts.types";
 import { BasicPlayerData } from "../../matchmaking/matchmaking.types";
 import { PlayerState } from "../shared/games.types";
 import { STARTING_HEALTH, STARTING_MONEY, STARTING_TURN } from "../shared/games.constants";
@@ -17,7 +17,9 @@ export const fillShop = (currentShop: (ArtifactInstance | null)[]): ArtifactInst
         cost: 3
     };
 
-    const newShop = currentShop.map((artifact) => artifact ?? placeholderArtifact);
+    const newShop = currentShop.map(
+        (artifact, i) => artifact ?? {...placeholderArtifact, location: { insideOf: ArtifactZone.SHOP, index: i }}
+    );
 
     return newShop;
 }
@@ -26,7 +28,7 @@ export const initPlayerState = (player: BasicPlayerData, deck: Deck): PlayerStat
     const playerState: PlayerState = {
         socketId: player.socketId,
         name: player.name,
-        health: STARTING_HEALTH,
+        hp: STARTING_HEALTH,
         money: STARTING_MONEY,
         turn: STARTING_TURN,
         artifacts: [],

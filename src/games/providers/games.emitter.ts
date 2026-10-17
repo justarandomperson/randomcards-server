@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
-import { effectEventPayload, GameState, MatchStartPayload, PlayerState, UpdateArtifactPayload, UpdateCardPayload, UpdateDrawpileCountPayload, UpdateHealthPayload, UpdateMoneyPayload } from '../shared/games.types';
+import { GameState, MatchStartPayload, PlayerState, UpdateArtifactPayload, UpdateCardPayload, UpdateDrawpileCountPayload, UpdateHealthPayload, UpdateMoneyPayload } from '../shared/games.types';
 import { artifactInstanceToClient, playerStateToClient, spellInstanceToClient, unitInstanceToClient } from '../logic/typeConverters';
 import { CardLocation, CardType, SpellInstance, UnitInstance } from '../../cards/cards.types';
 import { ArtifactInstance, ArtifactLocation } from '../../artifacts/artifacts.types';
@@ -9,17 +9,21 @@ import { SOCKET_EVENT_NAMES } from '../shared/games.constants';
 
 
 @Injectable()
+//! cuz of new architecture, games.actions creates a new instance of this every time. I dont think it sohuld be likje that
 export class GamesEmitter {
-    private readonly server: Server
+    private server: Server
 
     constructor(server: Server) {
+        this.setServer(server);
+    }
+
+    setServer(server: Server) {
         this.server = server;
     }
 
-
     // initializers, getters setters etc
 	private playerIdToSocket(socketId: string): Socket {
-		const socket = this.server.sockets.sockets.get(socketId);
+		const socket = this.server.sockets.sockets.get(socketId)
 		if (!socket) {
 			throw new WsException("socket not connected");
 		}
@@ -27,49 +31,9 @@ export class GamesEmitter {
 		return socket;
 	}
 
-
     // SERVICES
-    // effect events
-    emitEffectEvents(effectEvents: effectEventPayload[]) {
-        while (effectEvents.length !== 0) {
-            const event = effectEvents[0];
-            this.emitEffectEvent(event);
-            effectEvents.shift();
-        }
-    }
-
-    private emitEffectEvent(event: effectEventPayload) {
-        switch(event.name) {
-            case SOCKET_EVENT_NAMES.UPDATE_CARD:
-                this.updateCard(event.payload.clientId, event.payload.card, event.payload.cardLocation);
-                break;
-
-            case SOCKET_EVENT_NAMES.UPDATE_ARTIFACT:
-                this.updateArtifact(
-                    event.payload.clientId, 
-                    event.payload.artifact, 
-                    event.payload.artifactLocation, 
-                    event.payload.playerId
-                );
-                break;
-
-            case SOCKET_EVENT_NAMES.UPDATE_MONEY:
-                this.updateMoney(event.payload.gameId, event.payload.playerId, event.payload.amount);
-                break;
-
-            case SOCKET_EVENT_NAMES.UPDATE_HEALTH:
-                this.updateHealth(event.payload.gameId, event.payload.playerId, event.payload.amount)
-                break;
-
-            case SOCKET_EVENT_NAMES.UPDATE_DRAWPILE_COUNT:
-                this.updateHealth(event.payload.gameId, event.payload.playerId, event.payload.amount)
-                break;
-        }
-    }
-
-
     // match start
-    allMatchStartEvents(player1Id: string, player2Id: string, gameState: GameState): boolean {
+    allMatchStartEvents(gameState: GameState, player1Id: string, player2Id: string ): boolean {
         const player1State = gameState.players.get(player1Id);
         const player2State = gameState.players.get(player2Id);
         if (!player1State || !player2State) {

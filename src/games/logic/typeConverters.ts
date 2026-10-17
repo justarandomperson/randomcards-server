@@ -10,7 +10,7 @@ export const playerStateToClient = (player: PlayerState): ClientPlayerData => {
 
     const clientPlayerData: ClientPlayerData = {
         name: player.name,
-        health: player.health,
+        hp: player.hp,
         money: player.money,
         turn: player.turn,
         drawpileCount: player.drawpile.length,

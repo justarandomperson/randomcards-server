@@ -1,12 +1,10 @@
 import { WsException } from '@nestjs/websockets';
-import { UnitInstance, SpellInstance, CardInstance } from './cards.types';
+import { UnitInstance, SpellInstance, CardInstance, CardLocation } from './cards.types';
 import { unitCards } from './definitions/units';
 import { spellCards } from './definitions/spells';
 
 
 export class CardsService {
-
-
     // initializers, getters, setters
     createUnitInstance = (unitId: string, ownerId: string): UnitInstance => {
         return this.createCardInstance(unitCards, unitId, ownerId) as UnitInstance;
@@ -47,6 +45,14 @@ export class CardsService {
         return card.instanceId;  
     }
 
+    getCardLocation(card: UnitInstance | SpellInstance): CardLocation {
+        if (!card.location) {
+            throw new WsException('card has no location');
+        }
+
+        return card.location;
+    }
+
     getUnitBenchSlot(card: UnitInstance): number {
         if (!card.assignedBenchSlot) {
             throw new WsException('card has no assigned bench slot');
@@ -73,8 +79,7 @@ export class CardsService {
     }
 
 
-    findCardInstance<T extends UnitInstance | SpellInstance>
-    (instanceId: string, cardList: (T | null)[]): { card: T; index: number } {
+    findCardInstance<T extends UnitInstance | SpellInstance>(instanceId: string, cardList: (T | null)[]): T {
         const index = cardList.findIndex(
             (card) => card?.instanceId === instanceId
         );
@@ -83,11 +88,8 @@ export class CardsService {
             throw new WsException('target not found');
         }
     
-        return { 
-            card: cardList[index]!,
-            index 
-        };
-    };
+        return cardList[index]!;
+    }
 
     findEmptySlot(cardList: (CardInstance | null)[]): number {
         for (let i = 0; i < cardList.length; i++) {

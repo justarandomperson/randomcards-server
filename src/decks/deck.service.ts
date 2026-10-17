@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { Deck, DeckIds } from "./decks.types";
 import { CardsService } from "../cards/cards.service";
-import { CardInstance, CardType, SpellInstance, UnitInstance } from "../cards/cards.types";
+import { CardInstance, CardType, CardZone, SpellInstance, UnitInstance } from "../cards/cards.types";
 import { WsException } from "@nestjs/websockets";
 import { unitCards } from "../cards/definitions/units";
 
@@ -47,12 +47,13 @@ export class DecksService {
             const card = (cardType === CardType.UNIT) ? 
                 this.cardsService.createUnitInstance(id, ownerId) : this.cardsService.createSpellInstance(id,  ownerId);
 
-            if (card.type === CardType.UNIT) {
-                card.assignedBenchSlot = index;
-            }
-
             if (!card || card.type !== cardType) {
                 throw new WsException(`Card with Id ${id} does not exist`);
+            }
+            
+            if (card.type === CardType.UNIT) {
+                card.assignedBenchSlot = index;
+                card.location = { insideOf: CardZone.BENCH, index: index };
             }
 
             return card;

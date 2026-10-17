@@ -21,6 +21,7 @@ export type UnitInstance = {
   hp: number
   cooldown: number
   assignedBenchSlot?: number
+  location?: CardLocation
 };
 
 export type SpellInstance = {
@@ -32,6 +33,7 @@ export type SpellInstance = {
   effectDesc: string
   effects: Effect[]
   cost: number
+  location?: CardLocation
 };
 
 export type CardInstance = UnitInstance | SpellInstance;
@@ -48,17 +50,6 @@ export enum CardZone {
 export type CardLocation = 
   | { insideOf: CardZone.BENCH | CardZone.BOARD | CardZone.HAND, index: number }
   | { insideOf: CardZone.NONE }
-
-
-export type UnitAndLocation = {
-  unit: UnitInstance
-  location: CardLocation
-}
-
-export type SpellAndLocation = {
-  spell: SpellInstance
-  location: CardLocation
-}
 
 
 // Note: these are types sent to the client, used only for that

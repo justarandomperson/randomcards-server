@@ -1,5 +1,5 @@
 import { WsException } from "@nestjs/websockets";
-import { ArtifactInstance } from "./artifacts.types";
+import { ArtifactInstance, ArtifactLocation } from "./artifacts.types";
 
 
 export class ArtifactsService {
@@ -10,6 +10,14 @@ export class ArtifactsService {
         }
 
         return artifact.instanceId;  
+    }
+
+    getArtifactLocation(artifact: ArtifactInstance): ArtifactLocation {
+        if (!artifact.location) {
+            throw new WsException('artifact has no location'); 
+        }
+
+        return artifact.location;
     }
 
 

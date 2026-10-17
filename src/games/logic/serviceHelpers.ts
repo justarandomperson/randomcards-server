@@ -1,17 +1,6 @@
 import { PLAY_TURNS_PER_CYCLE, TURNS_PER_CYCLE } from "../shared/games.constants";
-import { GamePhase, GameState } from "../shared/games.types";
+import { GamePhase } from "../shared/games.types";
 
-
-export const CheckPlayUnitValid = (game: GameState, boardIndex: number): string | null => {
-    if (boardIndex > game.board.length || boardIndex < 0) {
-        return 'out of bounds';
-    } 
-    if (game.board[boardIndex] != null) {
-        return 'slot taken';
-    }
-
-    return null;
-}
 
 export const calculateTurnStartMoney = (turn: number): number => {
     return (turn * 2);

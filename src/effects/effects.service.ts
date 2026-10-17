@@ -4,7 +4,8 @@ import { UnitInstance } from "../cards/cards.types";
 import { GameState } from "../games/shared/games.types";
 import { AnyInstance, Effect, EFFECT_TRIGGERS, EffectContext, EffectTrigger } from "./effects.types";
 import { ArtifactsService } from "../artifacts/artifacts.service";
-import { GameActions } from "../games/logic/gameActions";
+import { GameActions } from "../games/providers/games.actions";
+import { Server } from 'socket.io';
 
 
 export class EffectsService {
@@ -12,10 +13,11 @@ export class EffectsService {
 
     constructor(
         private readonly state: GameState,
-        private readonly cardsService: CardsService,
-        private readonly artifactsService: ArtifactsService
+        private readonly cards: CardsService,
+        private readonly artifacts: ArtifactsService,
+        server: Server
     ) {
-        this.actions = new GameActions(this.state, this.cardsService);
+        this.actions = new GameActions(this.state, this.cards, this.artifacts, server);
     }
 
 
@@ -24,8 +26,8 @@ export class EffectsService {
         return {
             state: this.state,
             actions: this.actions,
-            cardsService: this.cardsService,
-            artifactsService: this.artifactsService,
+            cardsService: this.cards,
+            artifactsService: this.artifacts,
             playerId,
             sourceId,
             targetId
@@ -44,15 +46,6 @@ export class EffectsService {
 
 
     // services
-    private checkEffectNeedsTarget(effect: Effect, playerId: string, sourceId: string): boolean {
-        if (effect.hasTarget) {
-            this.actions.setCurrentEffectData(playerId, {effect, sourceId});
-            return true;
-        }
-
-        return false;
-    }
-
     runEffect(effect: Effect, playerId: string, sourceId: string, targetId?: string) {
         const context = this.getEffectContext(playerId, sourceId, targetId);
         effect.execute(context);
@@ -84,7 +77,7 @@ export class EffectsService {
         playersSummonedUnits.map((unit) => {
             unit.effects.map((effect) => {
                 if (effect.trigger.includes(trigger)) {
-                    const instanceId = this.cardsService.getCardInstanceId(unit);
+                    const instanceId = this.cards.getCardInstanceId(unit);
 
                     if (this.checkEffectNeedsTarget(effect, playerId, instanceId)) {
                         needsTarget = true;
@@ -102,7 +95,7 @@ export class EffectsService {
         playersArtifacts.map((artifact) => {
             artifact.effects.map((effect) => {
               if (effect.trigger.includes(trigger)) {
-                    const instanceId = this.artifactsService.getArtifactInstanceId(artifact);
+                    const instanceId = this.artifacts.getArtifactInstanceId(artifact);
 
                     if (this.checkEffectNeedsTarget(effect, playerId, instanceId)) {
                         needsTarget = true;
@@ -136,5 +129,14 @@ export class EffectsService {
         });
 
         return needsTarget;
+    }
+
+    private checkEffectNeedsTarget(effect: Effect, playerId: string, sourceId: string): boolean {
+        if (effect.hasTarget) {
+            this.actions.setPlayerCurrentEffectData(playerId, {effect, sourceId});
+            return true;
+        }
+
+        return false;
     }
 }
