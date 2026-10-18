@@ -78,7 +78,6 @@ export class CardsService {
         return unit;
     }
 
-
     findCardInstance<T extends UnitInstance | SpellInstance>(instanceId: string, cardList: (T | null)[]): T {
         const index = cardList.findIndex(
             (card) => card?.instanceId === instanceId
@@ -99,6 +98,5 @@ export class CardsService {
         }
 
         throw new WsException('cannot find empty slot');
-    }
-    
+    }    
 }

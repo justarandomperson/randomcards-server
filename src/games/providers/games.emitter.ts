@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
-import { GameState, MatchStartPayload, PlayerState, UpdateArtifactPayload, UpdateCardPayload, UpdateDrawpileCountPayload, UpdateHealthPayload, UpdateMoneyPayload } from '../shared/games.types';
+import { GameState, MatchStartPayload, PlayerState, UpdateArtifactPayload, UpdateCardPayload, UpdateDrawpileCountPayload, UpdateHealthPayload, UpdateMoneyPayload, UpdateTurnPayload } from '../shared/games.types';
 import { artifactInstanceToClient, playerStateToClient, spellInstanceToClient, unitInstanceToClient } from '../logic/typeConverters';
 import { CardLocation, CardType, SpellInstance, UnitInstance } from '../../cards/cards.types';
 import { ArtifactInstance, ArtifactLocation } from '../../artifacts/artifacts.types';
@@ -106,6 +106,18 @@ export class GamesEmitter {
         const client = this.playerIdToSocket(clientId);
 
         client.emit(SOCKET_EVENT_NAMES.START_TURN);
+    }
+
+    updateCardBoth(gameId: string, card: UnitInstance | SpellInstance, cardLocation: CardLocation) {
+        const clientCardData = (card.type == CardType.UNIT) 
+            ? unitInstanceToClient(card) : spellInstanceToClient(card);
+
+        const payload: UpdateCardPayload = {
+            card: clientCardData,
+            location: cardLocation
+        };
+
+        this.server.to(gameId).emit(SOCKET_EVENT_NAMES.UPDATE_CARD, payload);
     }
 
     updateCard(clientId: string, card: UnitInstance | SpellInstance, cardLocation: CardLocation) {

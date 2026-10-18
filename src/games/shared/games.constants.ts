@@ -47,6 +47,7 @@ export const SOCKET_EVENT_NAMES = { // this is used both on 'emit' and on 'on'
   UPDATE_MONEY: 'update_money',
   UPDATE_HEALTH: 'update_health',
   UPDATE_DRAWPILE_COUNT: 'update_drawpile_count',
+  UPDATE_TURN: 'update_turn',
   UPDATE_CARD: 'update_card',
   UPDATE_ARTIFACT: 'update_artifact',
   UPDATE_HAND: 'update_hand',

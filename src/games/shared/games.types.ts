@@ -64,6 +64,11 @@ export type UpdateDrawpileCountPayload = {
   newDrawpileCount: number
 }
 
+export type UpdateTurnPayload = {
+  playerId: string,
+  newTurn: number
+}
+
 export type UpdateCardPayload = {
   card: ClientUnitData | ClientSpellData,
   location: CardLocation
