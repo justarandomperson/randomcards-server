@@ -1,8 +1,5 @@
-import { WsException } from '@nestjs/websockets';
-import { Effect, EFFECT_TRIGGERS, EffectContext, Status } from '../../effects/effects.types';
-import { CardsService } from '../cards.service';
-import { CardType, CardZone, UnitInstance } from '../cards.types';
-import { effectEventPayload } from '../../games/shared/games.types';
+import { EFFECT_TRIGGERS, EffectContext, Status } from '../../effects/effects.types';
+import { CardType, UnitInstance } from '../cards.types';
 import { SOCKET_EVENT_NAMES } from '../../games/shared/games.constants';
 import { getTargetId } from '../../effects/helpers';
 
@@ -40,24 +37,9 @@ const unitList: UnitInstance[] = [
         effects: [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED, EFFECT_TRIGGERS.TURN_START],
-                execute: (context: EffectContext) => {
-                    const gasterBlaster = context.cardsService.createSpellInstance("S_666", context.playerId);
-                    const location = context.actions.addSpellToHand(context.playerId, gasterBlaster);
-
-                    if (location) {
-                        const event: effectEventPayload = {
-                            name: SOCKET_EVENT_NAMES.UPDATE_CARD,
-                            payload: {
-                                clientId: context.playerId,
-                                card: gasterBlaster,
-                                cardLocation: location
-                            }
-                        };
-
-                        context.actions.addEffectEvent(event);
-                    }
-
-
+                execute: (ctx: EffectContext) => {
+                    const gasterBlaster = ctx.cardsService.createSpellInstance("S_666", ctx.playerId);
+                    ctx.actions.addSpellToHand(ctx.actions.getPlayerState(ctx.playerId), gasterBlaster);
                 }
             }
         ],
@@ -75,10 +57,10 @@ const unitList: UnitInstance[] = [
         effects: [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
-                execute: (context: EffectContext) => {
-                    const targetId = getTargetId(context);
+                execute: (ctx: EffectContext) => {
+                    const targetId = getTargetId(ctx);
 
-                    context.actions.damageUnit(targetId, 1);
+                    ctx.actions.attackUnit(ctx.actions.getPlayerState(ctx.playerId), ctx.cards.findCardInstance(targetId));
                    
                     
                     //? we will need to emit 2 events, for effects that a unit directly attacks, even 4

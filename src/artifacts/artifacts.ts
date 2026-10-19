@@ -13,7 +13,7 @@ const ArtifactList: ArtifactInstance[] = [
                     EFFECT_TRIGGERS.ANY_DAMAGED, EFFECT_TRIGGERS.ANY_DIED, EFFECT_TRIGGERS.ANY_KILLED,
                     EFFECT_TRIGGERS.ANY_SUMMONED, EFFECT_TRIGGERS.TURN_END, EFFECT_TRIGGERS.TURN_START
                 ],
-                execute: (context: EffectContext) => {
+                execute: (ctx: EffectContext) => {
                     const willTrigger = Math.random() > 0.8;
                     if (willTrigger) {
                         // rng damage
@@ -33,11 +33,9 @@ const ArtifactList: ArtifactInstance[] = [
                         }
 
                         // rng target
-                        const opponentPlayedUnits = context.actions.getOpponentBoardUnits(context.playerId);
-
+                        const opponentPlayedUnits = ctx.actions.getOpponentBoardUnits(ctx.playerId);
                         // TODO: randomly choose target
                         // TODO: deal damage to it
-                        // TODO: emit 2 events 1 for each client
                     }
                 }
             }
@@ -51,10 +49,8 @@ const ArtifactList: ArtifactInstance[] = [
         effects: [
             {
                 trigger: [EFFECT_TRIGGERS.ANY_DIED],
-                execute: (context: EffectContext) => {
-                    context.actions.healPlayer(context.playerId, 2);
-
-                    // TODO: emit 2 events
+                execute: (ctx: EffectContext) => {
+                    ctx.actions.increasePlayerHealth(ctx.actions.getPlayerState(ctx.playerId), 2);
                 }
             }
         ],
@@ -67,9 +63,10 @@ const ArtifactList: ArtifactInstance[] = [
         effects: [
             {
                 trigger: [EFFECT_TRIGGERS.ANY_SUMMONED],
-                execute: (context: EffectContext) => {
-                    const opponentPlayedUnits = context.actions.getOpponentBoardUnits(context.playerId);
-                    // TODO: this
+                execute: (ctx: EffectContext) => {
+                    const opponentPlayedUnits = ctx.actions.getOpponentBoardUnits(ctx.playerId);
+                    // TODO: randomly choose target
+                    // TODO: deal damage to it
                 }
             }
         ],

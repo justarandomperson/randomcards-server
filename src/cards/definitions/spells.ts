@@ -1,9 +1,7 @@
-import { WsException } from "@nestjs/websockets";
 import { EFFECT_TRIGGERS, EffectContext } from "../../effects/effects.types";
 import { CardType, CardZone, SpellInstance } from "../cards.types";
 import { getTargetId } from "../../effects/helpers";
 import { SOCKET_EVENT_NAMES } from "../../games/shared/games.constants";
-import { effectEventPayload } from "../../games/shared/games.types";
 
 
 const spellList: SpellInstance[] = [
