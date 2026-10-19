@@ -381,8 +381,15 @@ export class GameActions {
         return isMatched;
     }
 
-    summonUnit(playerId: string, card: UnitInstance, boardIndex: number) {
+    summonUnit(playerId: string, card: UnitInstance, boardIndex?: number) {
         const player = this.getPlayerState(playerId);
+
+        if (!boardIndex) {
+            boardIndex = this.getPlayerBoard(playerId).findIndex((slot) => !slot);
+            if (!boardIndex) {
+                return; // no place left to summon
+            }
+        }
 
         this.moveUnitFromBenchToBoard(player, card, boardIndex);
 

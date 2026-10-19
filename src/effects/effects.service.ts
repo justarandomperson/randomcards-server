@@ -18,15 +18,15 @@ export class EffectsService {
 
 
     // initializers, getters and setters etc
-    private getEffectContext(playerId: string, sourceId: string, targetId?: string): EffectContext {
+    private getEffectContext(playerId: string, sourceId: string, target?: UnitInstance): EffectContext {
         return {
             state: this.state,
             actions: this.actions,
-            cardsService: this.cards,
-            artifactsService: this.artifacts,
+            cards: this.cards,
+            artifacts: this.artifacts,
             playerId,
             sourceId,
-            targetId
+            target
         };
     }
 
@@ -42,7 +42,7 @@ export class EffectsService {
 
 
     // services
-    runEffect(effect: Effect, playerId: string, sourceId: string, targetId?: string) {
+    runEffect(effect: Effect, playerId: string, sourceId: string, targetId?: UnitInstance) {
         const context = this.getEffectContext(playerId, sourceId, targetId);
         effect.execute(context);
     }

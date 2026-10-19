@@ -1,7 +1,6 @@
 import { EFFECT_TRIGGERS, EffectContext, Status } from '../../effects/effects.types';
 import { CardType, UnitInstance } from '../cards.types';
 import { SOCKET_EVENT_NAMES } from '../../games/shared/games.constants';
-import { getTargetId } from '../../effects/helpers';
 
 
 const unitList: UnitInstance[] = [
@@ -38,7 +37,7 @@ const unitList: UnitInstance[] = [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED, EFFECT_TRIGGERS.TURN_START],
                 execute: (ctx: EffectContext) => {
-                    const gasterBlaster = ctx.cardsService.createSpellInstance("S_666", ctx.playerId);
+                    const gasterBlaster = ctx.cards.createSpellInstance("S_666", ctx.playerId);
                     ctx.actions.addSpellToHand(ctx.actions.getPlayerState(ctx.playerId), gasterBlaster);
                 }
             }
@@ -58,23 +57,10 @@ const unitList: UnitInstance[] = [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
                 execute: (ctx: EffectContext) => {
-                    const targetId = getTargetId(ctx);
-
-                    ctx.actions.attackUnit(ctx.actions.getPlayerState(ctx.playerId), ctx.cards.findCardInstance(targetId));
-                   
-                    
-                    //? we will need to emit 2 events, for effects that a unit directly attacks, even 4
-                    //? we should make an event called UPDATE_CARD_BOTH or something, idk... 
-                    const event: effectEventPayload = {
-                        name: SOCKET_EVENT_NAMES.UPDATE_CARD,
-                        payload: {
-                            clientId:
-                            card:
-                            location:
-                        }
-                    }
-                    context.actions.addEffectEvent(event)
-                }
+                    if (ctx.target) {
+                        ctx.actions.attackUnit(ctx.playerId, ctx.target, 1);
+                    }          
+                }            
             }
         ],
         statuses: [],
@@ -91,34 +77,26 @@ const unitList: UnitInstance[] = [
         effects: [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
-                execute: (context: EffectContext) => {
-                    const playerBoard = context.actions.getPlayerBoard(context.playerId);
+                execute: (ctx: EffectContext) => {
+                    const cat = ctx.cards.createUnitInstance("U_2", ctx.playerId);
 
-                    for (const slot of playerBoard) {
-                        if (!slot) {
-                            const cat = context.cardsService.createUnitInstance("U_2", context.playerId);
-
-                            //? need to run "any_summoned" effect over this>???
-                            context.actions.moveUnitToBoard(context.playerId, cat, )
-
-                            //? umm how will i actually set the cat to appear in the slot?
-                        }
-                    }
+                    // Note: we just try to fill the whole board, the action finds a slot
+                    ctx.actions.summonUnit(ctx.playerId, cat);
+                    ctx.actions.summonUnit(ctx.playerId, cat);
+                    ctx.actions.summonUnit(ctx.playerId, cat);
+                    ctx.actions.summonUnit(ctx.playerId, cat);
                 }
             },
             {
                 trigger: [EFFECT_TRIGGERS.DEATH],
-                execute: (context: EffectContext) => {
-                    const playerBoard = context.actions.getPlayerBoard(context.playerId);
+                execute: (ctx: EffectContext) => {
+                    const playerBoard = ctx.actions.getPlayerBoard(ctx.playerId);
 
                     for (const unit of playerBoard) {
                         if (unit && unit.id === "U_2") {
-                            const instanceId = context.cardsService.getCardInstanceId(unit);
-                            context.actions.damageUnit(instanceId, unit.hp);
-
-                            //! Need to emit 2 events per unit here. one for each client
+                            const instanceId = ctx.cards.getCardInstanceId(unit);
+                            ctx.actions.attackUnit(ctx.playerId, unit, unit.hp);
                         }
-
                     }
                 }
             }
@@ -149,7 +127,7 @@ const unitList: UnitInstance[] = [
         effects: [
             {
                 trigger: [EFFECT_TRIGGERS.DAMAGED],
-                execute: (context: EffectContext) => {
+                execute: (ctx: EffectContext) => {
                     // TODO: idk how to get the attacker we need to do that too
                 }
             }
@@ -168,23 +146,9 @@ const unitList: UnitInstance[] = [
         effects: [
             {
                 trigger: [EFFECT_TRIGGERS.TURN_END, EFFECT_TRIGGERS.DEATH],
-                execute: (context: EffectContext) => {
-                    const cooldownHatingSpell = context.cardsService.createSpellInstance("S_4", context.playerId);
-                    const location = context.actions.addSpellToHand(context.playerId, cooldownHatingSpell);
-
-                    if (location) {
-                        // if location is null, then nothing was added. nothing to emit
-                        const event: effectEventPayload = {
-                            name: SOCKET_EVENT_NAMES.UPDATE_CARD,
-                            payload: {
-                                clientId: context.playerId,
-                                card: cooldownHatingSpell,
-                                cardLocation: location
-                            }
-                        };
-
-                        context.actions.addEffectEvent(event);
-                    }
+                execute: (ctx: EffectContext) => {
+                    const cooldownHatingSpell = ctx.cards.createSpellInstance("S_4", ctx.playerId);
+                    ctx.actions.addSpellToHand(ctx.actions.getPlayerState(ctx.playerId), cooldownHatingSpell);
                 }
             }
         ],

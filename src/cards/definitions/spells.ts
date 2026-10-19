@@ -1,6 +1,5 @@
 import { EFFECT_TRIGGERS, EffectContext } from "../../effects/effects.types";
 import { CardType, CardZone, SpellInstance } from "../cards.types";
-import { getTargetId } from "../../effects/helpers";
 import { SOCKET_EVENT_NAMES } from "../../games/shared/games.constants";
 
 
@@ -23,12 +22,10 @@ const spellList: SpellInstance[] = [
         effects: [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
-                execute: (context: EffectContext) => {
-                    const targetId = getTargetId(context);
-
-                    context.actions.increaseAttack(targetId, 2);
-
-                    // TODO: need to emit 2 events here, one for each
+                execute: (ctx: EffectContext) => {
+                    if (ctx.target) {
+                        ctx.actions.increaseUnitAttack(ctx.target, 2);
+                    }
                 }
             }
         ],
@@ -42,13 +39,11 @@ const spellList: SpellInstance[] = [
         effects: [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
-                execute: (context: EffectContext) => {
-                    const targetId = getTargetId(context);
-
-                    context.actions.damagePlayer(context.playerId, 3);
-                    context.actions.increaseUnitHealth(targetId, 3);
-
-                    // TODO: need to emit 4 events here (two for changing the player hp and two for update unit)
+                execute: (ctx: EffectContext) => {
+                    if (ctx.target) {
+                        ctx.actions.attackPlayer(ctx.playerId, 3);
+                        ctx.actions.increaseUnitHealth(ctx.target, 3);
+                    }
                 }
             }
         ],
@@ -62,22 +57,10 @@ const spellList: SpellInstance[] = [
         effects: [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
-                execute: (context: EffectContext) => {
-                    const targetId = getTargetId(context);
-                
-                    context.actions.increaseCooldown(targetId, -1);
-
-                    const player = context.actions.getPlayerState(context.playerId);
-                    const { card, index } = context.cardsService.findCardInstance(targetId, player.bench)
-
-                    const event: effectEventPayload= {
-                        name: SOCKET_EVENT_NAMES.UPDATE_CARD,
-                        payload: {
-                            clientId: context.playerId,
-                            card: card,
-                            cardLocation: { insideOf: CardZone.BENCH, index: index }
-                        }
-                    }
+                execute: (ctx: EffectContext) => {
+                    if (ctx.target) {
+                        ctx.actions.increaseUnitCooldown(ctx.target, -1);
+                    }   
                 }
             }
         ],
@@ -91,12 +74,10 @@ const spellList: SpellInstance[] = [
         effects: [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
-                execute: (context: EffectContext) => {
-                    const targetId = getTargetId(context);
-
-                    context.actions.damageUnit(targetId, 8);
-
-                    // TODO: emit 2 events
+                execute: (ctx: EffectContext) => {
+                    if (ctx.target) {
+                        ctx.actions.attackUnit(ctx.playerId, ctx.target, 8);
+                    }
                 }
             }
         ],

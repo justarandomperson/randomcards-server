@@ -13,7 +13,7 @@ export type EffectContext = {
   artifacts: ArtifactsService
   playerId: string
   sourceId: string
-  targetId?: string
+  target?: UnitInstance
 };
 
 export type Effect = {
