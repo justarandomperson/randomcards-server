@@ -9,8 +9,8 @@ import { GameState } from '../games/shared/games.types'
 export type EffectContext = {
   state: GameState
   actions: GameActions
-  cardsService: CardsService
-  artifactsService: ArtifactsService
+  cards: CardsService
+  artifacts: ArtifactsService
   playerId: string
   sourceId: string
   targetId?: string

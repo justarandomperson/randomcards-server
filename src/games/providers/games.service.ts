@@ -101,7 +101,7 @@ export class GamesService {
 
         const { card, destination } = this.validatePlayUnit(game, player, dto);
 
-        game.actions.summonUnit(player, card, destination);
+        game.actions.summonUnit(player.socketId, card, destination);
         game.actions.decreasePlayerMoney(player, card.cost);
     }
 
@@ -136,7 +136,7 @@ export class GamesService {
 
         const card = this.validatePlaySpell(game, player, dto);
 
-        game.actions.useSpell(player, card);
+        game.actions.useSpell(player.socketId, card);
         game.actions.decreasePlayerMoney(player, card.cost);
     }
 
@@ -186,14 +186,14 @@ export class GamesService {
         }
 
         const player = game.actions.getPlayerState(playerId);
-        game.actions.endTurn(player);
+        game.actions.endTurn(player.socketId);
     }
 
     startTurn(gameId: string, playerId: string) {
         const game = this.getGame(gameId);
         const player = game.actions.getPlayerState(playerId);
 
-        game.actions.startTurn(player);
+        game.actions.startTurn(player.socketId);
     }
 
     attackUnit(gameId: string, playerId: string, dto: AttackUnitDto) {
@@ -202,8 +202,8 @@ export class GamesService {
 
         const { attacker, target } = this.validateAttackUnit(game, player, dto);
 
-        game.actions.attackUnit(player, target, attacker.atk);
-        game.actions.attackUnit(player, attacker, target.atk);
+        game.actions.attackUnit(player.socketId, target, attacker.atk);
+        game.actions.attackUnit(player.socketId, attacker, target.atk);
     }
 
     private validateAttackUnit(game: Game, player: PlayerState, dto: AttackUnitDto): { attacker: UnitInstance, target: UnitInstance } {
@@ -224,7 +224,7 @@ export class GamesService {
         const attacker = this.validateAttackPlayer(game, player, dto);
         const target = (dto.isAttackOpponent) ? this.getOpponentState(gameId, playerId) : player;
 
-        game.actions.attackPlayer(target, attacker.atk);
+        game.actions.attackPlayer(target.socketId, attacker.atk);
     }
 
     private validateAttackPlayer(game: Game, player: PlayerState, dto: AttackPlayerDto): UnitInstance {

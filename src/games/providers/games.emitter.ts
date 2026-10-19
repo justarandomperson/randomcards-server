@@ -133,6 +133,17 @@ export class GamesEmitter {
 
        client.emit(SOCKET_EVENT_NAMES.UPDATE_CARD, payload);
     }
+
+    updateArtifactBoth(gameId: string, artifact: ArtifactInstance, artifactLocation: ArtifactLocation) {
+        const clientArtifactData = artifactInstanceToClient(artifact);
+
+        const payload: UpdateArtifactPayload = {
+            artifact: clientArtifactData,
+            location: artifactLocation
+        };
+
+        this.server.to(gameId).emit(SOCKET_EVENT_NAMES.UPDATE_ARTIFACT, payload);
+    }
     
     updateArtifact(clientId: string, artifact: ArtifactInstance, artifactLocation: ArtifactLocation, playerId?: string) {
         const client = this.playerIdToSocket(clientId);

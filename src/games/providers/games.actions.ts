@@ -143,6 +143,17 @@ export class GameActions {
     }
 
 
+    //helpers
+    private emitTwoDifferentUpdateCard(playerId: string, card: UnitInstance | SpellInstance) {
+        const cardLocation = this.cards.getCardLocation(card);
+        const playerCardLocation = this.getClientBoardLocation(playerId, playerId, cardLocation);
+        this.emitter.updateCard(playerId, card, playerCardLocation);
+
+        const opponentCardLocation = this.getClientBoardLocation(this.getOpponentId(playerId), playerId, cardLocation);
+        this.emitter.updateCard(this.getOpponentId(playerId), card, opponentCardLocation);
+    }
+
+
     // moving stuff
     moveUnitFromBenchToBoard(player: PlayerState, card: UnitInstance, boardIndex: number): CardLocation {
         this.state.board[boardIndex] = card;
@@ -152,8 +163,7 @@ export class GameActions {
 
         card.location = { insideOf: CardZone.BOARD, index: boardIndex };
 
-        this.emitter.updateCard(player.socketId, card, card.location);
-        this.emitter.updateCard(this.getOpponentId(player.socketId), card, card.location);
+        this.emitTwoDifferentUpdateCard(player.socketId, card);
 
         return card.location;
     }
@@ -173,8 +183,7 @@ export class GameActions {
 
         card.location = { insideOf: CardZone.BENCH, index: card.assignedBenchSlot };
 
-        this.emitter.updateCard(player.socketId, card, card.location);
-        this.emitter.updateCard(this.getOpponentId(player.socketId), card, { insideOf: CardZone.NONE });
+        this.emitTwoDifferentUpdateCard(player.socketId, card);
 
         return card.location;
     }
@@ -189,8 +198,7 @@ export class GameActions {
 
         card.location = { insideOf: CardZone.NONE }
 
-        this.emitter.updateCard(player.socketId, card, { insideOf: CardZone.NONE });
-        this.emitter.updateCard(this.getOpponentId(player.socketId), card, { insideOf: CardZone.NONE })
+        this.emitTwoDifferentUpdateCard(player.socketId, card);
 
         //? should i delete the card or something? set it to null if possible?
     }
@@ -373,14 +381,18 @@ export class GameActions {
         return isMatched;
     }
 
-    summonUnit(player: PlayerState, card: UnitInstance, boardIndex: number) {
+    summonUnit(playerId: string, card: UnitInstance, boardIndex: number) {
+        const player = this.getPlayerState(playerId);
+
         this.moveUnitFromBenchToBoard(player, card, boardIndex);
 
         this.effects.runEffectsForTrigger(player.socketId, EFFECT_TRIGGERS.SUMMONED, card);
         this.effects.runEffectsForTrigger(player.socketId, EFFECT_TRIGGERS.ANY_SUMMONED);
     }
 
-    attackUnit(player: PlayerState, card: UnitInstance, amount: number) {
+    attackUnit(playerId: string, card: UnitInstance, amount: number) {
+        const player = this.getPlayerState(playerId);
+
         const isUnitDead = this.decreaseUnitHealth(card, amount);
 
         this.effects.runEffectsForTrigger(player.socketId, EFFECT_TRIGGERS.DAMAGED, card);
@@ -404,7 +416,9 @@ export class GameActions {
         }
     }
 
-    useSpell(player: PlayerState, card: SpellInstance) {
+    useSpell(playerId: string, card: SpellInstance) {
+        const player = this.getPlayerState(playerId);
+
         this.effects.runEffectsForTrigger(player.socketId, EFFECT_TRIGGERS.SUMMONED, card);
         
         this.moveSpellFromHandToDrawpile(player, card);
@@ -412,17 +426,23 @@ export class GameActions {
         this.effects.runEffectsForTrigger(player.socketId, EFFECT_TRIGGERS.ANY_SPELL_PLAYED);
     }
 
-    drawSpell(player: PlayerState) {
+    drawSpell(playerId: string) {
+        const player = this.getPlayerState(playerId);
+
         const spell = this.drawSpellFromDrawpile(player);
         this.addSpellToHand(player, spell);
     }
 
-    attackPlayer(player: PlayerState, amount: number) {
+    attackPlayer(playerId: string, amount: number) {
+        const player = this.getPlayerState(playerId);
+
         this.decreasePlayerHealth(player, amount);
         // this function will probably grow
     }
 
-    endTurn(player: PlayerState) {
+    endTurn(playerId: string) {
+        const player = this.getPlayerState(playerId);
+
         this.decrementBenchCooldown(player);
 
         this.effects.runEffectsForTrigger(player.socketId, EFFECT_TRIGGERS.TURN_END);
@@ -436,7 +456,9 @@ export class GameActions {
         })
     }
 
-    startTurn(player: PlayerState) {
+    startTurn(playerId: string) {
+        const player = this.getPlayerState(playerId);
+
         this.setPlayerTurnId(player.socketId);
 
         const opponent = this.getOpponentState(player.socketId);
@@ -470,7 +492,7 @@ export class GameActions {
     }
 
     private startTurnPlay(player: PlayerState) {
-        this.drawSpell(player);
+        this.drawSpell(player.socketId);
 
         const newMoney = calculateTurnStartMoney(player.turn);
         this.increasePlayerMoney(player, newMoney);
