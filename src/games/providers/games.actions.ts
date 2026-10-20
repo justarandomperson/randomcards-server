@@ -2,8 +2,8 @@ import { WsException } from "@nestjs/websockets";
 import { EffectsService } from "../../effects/effects.service";
 import { CurrentEffectData, GamePhase, GameState, PlayerState } from "../shared/games.types";
 import { CardLocation, CardZone, SpellInstance, UnitInstance } from "../../cards/cards.types";
-import { EFFECT_TRIGGERS } from "../../effects/effects.types";
-import { MAX_HAND_SIZE, MINIMUM_MONEY } from "../shared/games.constants";
+import { AnyInstance, EFFECT_TRIGGERS, EffectTrigger } from "../../effects/effects.types";
+import { MAX_HAND_SIZE, MINIMUM_MONEY, STARTING_SPELLS_IN_HAND } from "../shared/games.constants";
 import { ArtifactInstance, ArtifactLocation, ArtifactZone } from "../../artifacts/artifacts.types";
 import { CardsService } from "../../cards/cards.service";
 import { fillShop } from "../logic/gameSetup";
@@ -23,6 +23,7 @@ export class GameActions {
     ) {
         this.effects = new EffectsService(this.state, this, this.cards, this.artifacts);
     }
+
 
     // getters
     getPlayerState(playerId: string): PlayerState {
@@ -122,6 +123,14 @@ export class GameActions {
         return location;
     }
 
+    private runTriggerEffects(playerId: string, trigger: EffectTrigger, sourceInstance?: AnyInstance) {
+        const needsTarget = this.effects.runTriggerEffects(playerId, trigger, sourceInstance);
+
+        if (needsTarget) {
+            this.emitter.selectTarget(playerId);
+        }
+    }
+
 
     // setters
     setPlayerTurnId(playerId: string) {
@@ -143,7 +152,7 @@ export class GameActions {
     }
 
 
-    //helpers
+    // helpers (for emitting and running effects)
     private emitTwoDifferentUpdateCard(playerId: string, card: UnitInstance | SpellInstance) {
         const cardLocation = this.cards.getCardLocation(card);
         const playerCardLocation = this.getClientBoardLocation(playerId, playerId, cardLocation);
@@ -378,6 +387,14 @@ export class GameActions {
     // main actions
     startMatch(player1Id: string, player2Id: string): boolean {
         const isMatched = this.emitter.allMatchStartEvents(this.state, player1Id, player2Id);
+
+        if (isMatched) {
+            for (let i = 0; i < STARTING_SPELLS_IN_HAND; i++) {
+                this.drawSpell(player1Id);
+                this.drawSpell(player2Id);
+            }
+        }
+
         return isMatched;
     }
 
@@ -393,8 +410,8 @@ export class GameActions {
 
         this.moveUnitFromBenchToBoard(player, card, boardIndex);
 
-        this.effects.runEffectsForTrigger(player.socketId, EFFECT_TRIGGERS.SUMMONED, card);
-        this.effects.runEffectsForTrigger(player.socketId, EFFECT_TRIGGERS.ANY_SUMMONED);
+        this.runTriggerEffects(player.socketId, EFFECT_TRIGGERS.SUMMONED, card);
+        this.runTriggerEffects(player.socketId, EFFECT_TRIGGERS.ANY_SUMMONED);
     }
 
     attackUnit(playerId: string, card: UnitInstance, amount: number) {
@@ -402,8 +419,8 @@ export class GameActions {
 
         const isUnitDead = this.decreaseUnitHealth(card, amount);
 
-        this.effects.runEffectsForTrigger(player.socketId, EFFECT_TRIGGERS.DAMAGED, card);
-        this.effects.runEffectsForTrigger(player.socketId, EFFECT_TRIGGERS.ANY_DAMAGED);
+        this.runTriggerEffects(player.socketId, EFFECT_TRIGGERS.DAMAGED, card);
+        this.runTriggerEffects(player.socketId, EFFECT_TRIGGERS.ANY_DAMAGED);
 
         if (isUnitDead) {
             if (card.assignedBenchSlot) {
@@ -418,19 +435,21 @@ export class GameActions {
 
             this.increaseUnitCooldown(card, +1);
 
-            this.effects.runEffectsForTrigger(player.socketId, EFFECT_TRIGGERS.DEATH, card);
-            this.effects.runEffectsForTrigger(player.socketId, EFFECT_TRIGGERS.ANY_DIED);
+            this.runTriggerEffects(player.socketId, EFFECT_TRIGGERS.DEATH, card);
+            this.runTriggerEffects(player.socketId, EFFECT_TRIGGERS.ANY_DIED);
         }
     }
 
     useSpell(playerId: string, card: SpellInstance) {
         const player = this.getPlayerState(playerId);
 
-        this.effects.runEffectsForTrigger(player.socketId, EFFECT_TRIGGERS.SUMMONED, card);
+        this.runTriggerEffects(player.socketId, EFFECT_TRIGGERS.SUMMONED, card);
         
         this.moveSpellFromHandToDrawpile(player, card);
+        
+        this.emitter.opponentPlayedSpell(this.getOpponentId(playerId), card);
 
-        this.effects.runEffectsForTrigger(player.socketId, EFFECT_TRIGGERS.ANY_SPELL_PLAYED);
+        this.runTriggerEffects(player.socketId, EFFECT_TRIGGERS.ANY_SPELL_PLAYED);
     }
 
     drawSpell(playerId: string) {
@@ -452,7 +471,7 @@ export class GameActions {
 
         this.decrementBenchCooldown(player);
 
-        this.effects.runEffectsForTrigger(player.socketId, EFFECT_TRIGGERS.TURN_END);
+        this.runTriggerEffects(player.socketId, EFFECT_TRIGGERS.TURN_END);
     }
 
     private decrementBenchCooldown(player: PlayerState) {
@@ -486,7 +505,7 @@ export class GameActions {
 
         this.incrementPlayerTurn(player);
 
-        this.effects.runEffectsForTrigger(player.socketId, EFFECT_TRIGGERS.TURN_START);
+        this.runTriggerEffects(player.socketId, EFFECT_TRIGGERS.TURN_START);
     }
 
     private changeGamePhase() {
@@ -508,4 +527,14 @@ export class GameActions {
     private startTurnShop() {
         this.refillShop();
     }
-};
+
+    runCurrentEffect(player: PlayerState) {
+        if (!player.currentEffectData) {
+            return; //? or do we need to throw an error
+        }
+
+        const { effect, sourceId } = player.currentEffectData;
+
+        this.effects.runEffect(effect, player.socketId, sourceId);    
+    }
+}

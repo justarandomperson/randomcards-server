@@ -47,7 +47,7 @@ export class EffectsService {
         effect.execute(context);
     }
 
-    runEffectsForTrigger(playerId: string, trigger: EffectTrigger, sourceInstance?: AnyInstance): boolean {
+    runTriggerEffects(playerId: string, trigger: EffectTrigger, sourceInstance?: AnyInstance): boolean {
         switch (trigger) {
             case EFFECT_TRIGGERS.TURN_START:
             case EFFECT_TRIGGERS.TURN_END:

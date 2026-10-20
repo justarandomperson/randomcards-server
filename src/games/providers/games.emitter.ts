@@ -158,10 +158,10 @@ export class GamesEmitter {
         client.emit(SOCKET_EVENT_NAMES.UPDATE_ARTIFACT, payload);
     }
 
-    getTarget(clientId: string) {
+    selectTarget(clientId: string) {
         const client = this.playerIdToSocket(clientId);
 
-        client.emit(SOCKET_EVENT_NAMES.GET_TARGET);
+        client.emit(SOCKET_EVENT_NAMES.SELECT_TARGET);
     }
 
 
@@ -195,6 +195,13 @@ export class GamesEmitter {
         };
 
         this.server.to(gameId).emit(SOCKET_EVENT_NAMES.UPDATE_DRAWPILE_COUNT, payload);
+    }
+
+    opponentPlayedSpell(clientId: string, spell: SpellInstance) {
+        const client = this.playerIdToSocket(clientId);
+        const payload = spellInstanceToClient(spell);
+
+        client.emit(SOCKET_EVENT_NAMES.OPPONENT_PLAYED_SPELL, payload);
     }
 
     gameEnd(gameId: string, winnerId: string) {

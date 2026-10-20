@@ -3,6 +3,7 @@ import { PLAYERS_IN_MATCH } from "../../matchmaking/matchmaking.constants";
 export const STARTING_HEALTH = 20;
 export const STARTING_MONEY = 20;
 export const STARTING_TURN = 0;
+export const STARTING_SPELLS_IN_HAND = 3;
 
 export const UNITS_IN_DECK = 8;
 export const SPELLS_IN_DECK = 12; // also max drawpile size
@@ -42,7 +43,6 @@ export const SOCKET_EVENT_NAMES = { // this is used both on 'emit' and on 'on'
 
   MATCH_START: 'match_start',
   START_TURN: 'start_turn',
-  GET_TARGET: "get_target",
   UPDATE_GAME_PHASE: 'update_game_phase',
   UPDATE_MONEY: 'update_money',
   UPDATE_HEALTH: 'update_health',
@@ -54,6 +54,7 @@ export const SOCKET_EVENT_NAMES = { // this is used both on 'emit' and on 'on'
   UPDATE_BENCH: 'update_bench',
   UPDATE_BOARD: 'update_board',
   UPDATE_SHOP: 'update_shop',
+  OPPONENT_PLAYED_SPELL: 'opponent_played_spell',
   GAME_END: 'game_end'
 } as const;
 

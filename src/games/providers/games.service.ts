@@ -236,19 +236,10 @@ export class GamesService {
         return attacker; 
     }
 
-    // TODO: handle this
-    targetSelected(gameId: string, playerId: string, targetId) {
-        /*
+    runCurrentEffect(gameId: string, playerId: string, targetId) {
         const game = this.getGame(gameId)
         const player = game.actions.getPlayerState(playerId);
 
-        if (!player.currentEffectData) {
-            return;
-        }
-
-        const { effect, sourceId } = player.currentEffectData
-
-        game.effects.runEffect(effect, playerId, sourceId);  
-        */   
+        game.actions.runCurrentEffect(player);
     }
 }
