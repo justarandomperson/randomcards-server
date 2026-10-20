@@ -1,7 +1,7 @@
 import { WsException } from "@nestjs/websockets";
 import { CardsService } from "../cards/cards.service";
 import { UnitInstance } from "../cards/cards.types";
-import { GameState } from "../games/shared/games.types";
+import { CurrentEffectData, GameState } from "../games/shared/games.types";
 import { AnyInstance, Effect, EFFECT_TRIGGERS, EffectContext, EffectTrigger } from "./effects.types";
 import { ArtifactsService } from "../artifacts/artifacts.service";
 import { GameActions } from "../games/providers/games.actions";
@@ -129,7 +129,9 @@ export class EffectsService {
 
     private checkEffectNeedsTarget(effect: Effect, playerId: string, sourceId: string): boolean {
         if (effect.hasTarget) {
-            this.actions.setPlayerCurrentEffectData(playerId, {effect, sourceId});
+            const newEffectData: CurrentEffectData = { effect, sourceId };
+            this.actions.pushPlayerCurrentEffect(this.actions.getPlayerState(playerId), newEffectData);
+            
             return true;
         }
 

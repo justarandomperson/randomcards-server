@@ -373,9 +373,12 @@ export class GameActions {
         return player.turn;
     }
 
-    setPlayerCurrentEffectData(playerId: string, currentEffectData: CurrentEffectData) {
-        const player = this.getPlayerState(playerId);
-        player.currentEffectData = currentEffectData;
+    pushPlayerCurrentEffect(player: PlayerState, currentEffect: CurrentEffectData) {
+        player.currentEffects.push(currentEffect);
+    }
+
+    shiftPlayerCurrentEffect(player: PlayerState) {
+        player.currentEffects.shift();
     }
 
 
@@ -529,12 +532,14 @@ export class GameActions {
     }
 
     runCurrentEffect(player: PlayerState) {
-        if (!player.currentEffectData) {
+        if (!player.currentEffects[0]) {
             return; //? or do we need to throw an error
         }
 
-        const { effect, sourceId } = player.currentEffectData;
+        const { effect, sourceId } = player.currentEffects[0];
 
-        this.effects.runEffect(effect, player.socketId, sourceId);    
+        this.effects.runEffect(effect, player.socketId, sourceId);
+        
+        this.shiftPlayerCurrentEffect(player);
     }
 }

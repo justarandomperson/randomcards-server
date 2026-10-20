@@ -28,7 +28,7 @@ export type PlayerState = {
   drawpile: SpellInstance[]
   hand: SpellInstance[]
   bench: (UnitInstance | null)[]
-  currentEffectData?: CurrentEffectData
+  currentEffects: CurrentEffectData[]
 };
 
 export enum GamePhase {
