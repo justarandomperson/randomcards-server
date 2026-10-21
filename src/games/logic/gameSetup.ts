@@ -6,24 +6,6 @@ import { STARTING_HEALTH, STARTING_MONEY, STARTING_TURN } from "../shared/games.
 import { Deck } from "../../decks/decks.types";
 
 
-export const fillShop = (currentShop: (ArtifactInstance | null)[]): ArtifactInstance[] => {
-    // TODO: make this actually fill the null spaces of a shop with new random artifacts that havent been bought yet
-    const placeholderArtifact: ArtifactInstance = {
-        id: '0',
-        instanceId: randomUUID(),
-        name: 'buy me for respect',
-        effectDesc: 'yeah, you should',
-        effects: [],
-        cost: 3
-    };
-
-    const newShop = currentShop.map(
-        (artifact, i) => artifact ?? {...placeholderArtifact, location: { insideOf: ArtifactZone.SHOP, index: i }}
-    );
-
-    return newShop;
-}
-
 export const initPlayerState = (player: BasicPlayerData, deck: Deck): PlayerState => {
     const playerState: PlayerState = {
         socketId: player.socketId,
@@ -34,8 +16,9 @@ export const initPlayerState = (player: BasicPlayerData, deck: Deck): PlayerStat
         artifacts: [],
         drawpile: deck.spells,
         hand: [],
-        bench: deck.units
-    }
+        bench: deck.units,
+        currentEffects: []
+    };
 
     return playerState;
 }

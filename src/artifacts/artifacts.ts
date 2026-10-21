@@ -74,6 +74,6 @@ const ArtifactList: ArtifactInstance[] = [
     }
 ];
 
-export const Artifacts = new Map<string, ArtifactInstance>(
+export const artifactsMap = new Map<string, ArtifactInstance>(
     ArtifactList.map((spell) => [spell.id, spell])
 );

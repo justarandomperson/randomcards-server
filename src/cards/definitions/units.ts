@@ -160,6 +160,6 @@ const unitList: UnitInstance[] = [
     }
 ];
 
-export const unitCards = new Map<string, UnitInstance>(
+export const unitsMap = new Map<string, UnitInstance>(
     unitList.map((spell) => [spell.id, spell])
 );

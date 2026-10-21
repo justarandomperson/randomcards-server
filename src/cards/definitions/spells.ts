@@ -85,6 +85,6 @@ const spellList: SpellInstance[] = [
     },
 ];
 
-export const spellCards = new Map<string, SpellInstance>(
+export const spellsMap = new Map<string, SpellInstance>(
     spellList.map((spell) => [spell.id, spell])
 );

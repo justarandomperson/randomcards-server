@@ -16,6 +16,7 @@ export type GameState = {
   shop: (ArtifactInstance | null)[]
   gamePhase: GamePhase
   playerTurnId: string
+  possibleShopPool: ArtifactInstance[]
 };
 
 export type PlayerState = {

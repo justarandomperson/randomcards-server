@@ -6,10 +6,9 @@ import { AnyInstance, EFFECT_TRIGGERS, EffectTrigger } from "../../effects/effec
 import { MAX_HAND_SIZE, MINIMUM_MONEY, STARTING_SPELLS_IN_HAND } from "../shared/games.constants";
 import { ArtifactInstance, ArtifactLocation, ArtifactZone } from "../../artifacts/artifacts.types";
 import { CardsService } from "../../cards/cards.service";
-import { fillShop } from "../logic/gameSetup";
 import { GamesEmitter } from "./games.emitter";
 import { ArtifactsService } from "../../artifacts/artifacts.service";
-import { calculateTurnStartMoney, shouldSwitchPhase, translateBoardIndex } from "../logic/serviceHelpers";
+import { calculateTurnStartMoney, fillShop, shouldSwitchPhase, translateBoardIndex } from "../logic/serviceHelpers";
 
 
 export class GameActions { 
@@ -102,7 +101,6 @@ export class GameActions {
     }
 
     private getClientBoardLocation(clientId: string, actionPlayerId: string, location: CardLocation): CardLocation {
-        //? will we use it or rather change website?
         if (location.insideOf !== CardZone.BOARD) {
             throw new WsException('cardLocation is not in board');
         }
@@ -148,7 +146,7 @@ export class GameActions {
     }
 
     refillShop() {
-        this.setShop(fillShop(this.state.shop));
+        this.setShop(fillShop(this.state.shop, this.state.possibleShopPool));
     }
 
 
@@ -224,8 +222,7 @@ export class GameActions {
         card.location = { insideOf: CardZone.NONE };
 
         this.emitter.updateCard(player.socketId, card, { insideOf: CardZone.NONE });
-        // TODO: send the card to opponent on a different event so theyll see what card user played
-        //this.emitter.updateCard(this.getOpponentState(player.socketId).socketId, card, { insideOf: CardZone.NONE });
+        this.emitter.opponentPlayedSpell(this.getOpponentId(player.socketId), card);
 
         return card.location;
     }
@@ -266,7 +263,8 @@ export class GameActions {
 
         this.state.shop[location.index] = null;
         player.artifacts.push(artifact);
-        
+        this.state.possibleShopPool.splice(this.state.possibleShopPool.indexOf(artifact), 1);
+
         artifact.location = { insideOf: ArtifactZone.PLAYER, index: player.artifacts.length - 1 };
 
         this.emitter.updateArtifact(player.socketId, artifact, artifact.location);
@@ -485,30 +483,39 @@ export class GameActions {
         })
     }
 
-    startTurn(playerId: string) {
-        const player = this.getPlayerState(playerId);
+    startTurn() {
+        const players = [...this.state.players.values()]
 
-        this.setPlayerTurnId(player.socketId);
-
-        const opponent = this.getOpponentState(player.socketId);
-        const phaseChanged = shouldSwitchPhase(this.state.gamePhase, player.turn, opponent.turn);
+        const phaseChanged = shouldSwitchPhase(this.state.gamePhase, players[0].turn, players[1].turn);
         if (phaseChanged) {
             this.changeGamePhase();
         }
 
+        if (this.state.gamePhase === GamePhase.PLAY || !phaseChanged) { // dont run for if shopPhase just started
+            const opponent = this.getOpponentState(this.state.playerTurnId);
+            this.setPlayerTurnId(opponent.socketId);
+        }
+        else { // run if shopPhase just started
+            const lessHpId = players.toSorted((player) => player.hp)[0].socketId;
+            this.setPlayerTurnId(lessHpId);
+        }
+
         switch(this.state.gamePhase) {
-            case GamePhase.PLAY:
+            case GamePhase.PLAY: {
+                const player = this.getPlayerState(this.state.playerTurnId);
+
+                this.incrementPlayerTurn(player);
+                this.runTriggerEffects(player.socketId, EFFECT_TRIGGERS.TURN_START);
                 this.startTurnPlay(player);
                 break;
+            }
 
             case GamePhase.SHOP:
                 this.startTurnShop();
                 break;
         }
 
-        this.incrementPlayerTurn(player);
-
-        this.runTriggerEffects(player.socketId, EFFECT_TRIGGERS.TURN_START);
+        this.emitter.startTurn(this.state.playerTurnId);
     }
 
     private changeGamePhase() {
@@ -516,7 +523,7 @@ export class GameActions {
         this.setGamePhase((phase === GamePhase.PLAY ? GamePhase.SHOP : GamePhase.PLAY));
 
         if (this.state.gamePhase === GamePhase.PLAY) { // changed from shop
-            this.setShop(fillShop([])); // generate a new shop
+            this.setShop(fillShop([], this.state.possibleShopPool)); // generate a new shop
         }
     }
 

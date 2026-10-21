@@ -88,8 +88,10 @@ export class GamesGateway implements OnGatewayInit, OnGatewayDisconnect {
 		this.logger.debug(`Socket ${client.id} disconnected`);
 		this.matchMaking.removeFromQueue(client.id);
 
-		// TODO: if client.data.gameId is set, tell the opponent and remove the room
-	}
+		if (client.data.gameId) {
+			this.gamesService.playerDisconnected(client.data.gameId, client.id);
+		}
+ 	}
 
 
 	// listeners
@@ -169,11 +171,7 @@ export class GamesGateway implements OnGatewayInit, OnGatewayDisconnect {
 	@SubscribeMessage(SOCKET_EVENT_NAMES.END_TURN)
 	onEndTurn(@ConnectedSocket() client: Socket) {
 		const gameId = this.getClientGameId(client);
-		this.gamesService.endTurn(gameId, client.id);
-
-		// start opponents turn
-		const opponent = this.gamesService.getOpponentState(gameId, client.id); //? is there an easier way to get this
-		this.gamesService.startTurn(opponent.socketId, gameId);
+		this.gamesService.endTurn(gameId, client.id); // also runs the next turn
 	}
 
 	@SubscribeMessage(SOCKET_EVENT_NAMES.ATTACK_UNIT)

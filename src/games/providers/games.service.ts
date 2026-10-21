@@ -3,7 +3,7 @@ import { SpellInstance, UnitInstance } from '../../cards/cards.types';
 import { CardsService } from '../../cards/cards.service';
 import { Game, GamePhase, GameState, PlayerState } from '../shared/games.types';
 import { Match } from '../../matchmaking/matchmaking.types';
-import { fillShop, initPlayerState } from '../logic/gameSetup';
+import { initPlayerState } from '../logic/gameSetup';
 import { MAX_CARD_IN_BOARD } from '../shared/games.constants';
 import { WsException } from '@nestjs/websockets';
 import PlayUnitDto from '../dto/play-unit.dto';
@@ -17,6 +17,8 @@ import { ArtifactsService } from '../../artifacts/artifacts.service';
 import { GameActions } from './games.actions';
 import { Server } from 'socket.io';
 import { GamesEmitter } from './games.emitter';
+import { fillShop } from '../logic/serviceHelpers';
+import { artifactsMap } from '../../artifacts/artifacts';
 
 
 @Injectable()
@@ -37,6 +39,7 @@ export class GamesService {
         const player1State = initPlayerState(player1, player1Deck);
         const player2State = initPlayerState(player2, player2Deck);
 
+        const possibleShopPool = [...artifactsMap.values()];
         const state: GameState = {
             gameId: match.gameId,
             players: new Map([
@@ -44,9 +47,10 @@ export class GamesService {
                 [player2.socketId, player2State]
             ]),
             board: Array(MAX_CARD_IN_BOARD).fill(null),
-            shop: fillShop([]), 
+            shop: fillShop([], possibleShopPool), 
             gamePhase: GamePhase.PLAY,
-            playerTurnId: player1.socketId
+            playerTurnId: player1.socketId,
+            possibleShopPool
         };
         const actions = new GameActions(state, this.emitter, this.cards, this.artifacts);
         const game: Game = { state, actions };
@@ -84,6 +88,14 @@ export class GamesService {
 
 
     // services
+    playerDisconnected(gameId: string, playerId: string) {
+        const game = this.getGame(gameId);
+
+        this.emitter.gameEnd(gameId, game.actions.getOpponentId(playerId));
+
+        this.removeGame(gameId);
+    }
+
     startMatch(gameId: string, player1Id: string, player2Id: string) {
         const game = this.getGame(gameId);
 
@@ -187,14 +199,10 @@ export class GamesService {
 
         const player = game.actions.getPlayerState(playerId);
         game.actions.endTurn(player.socketId);
+
+        game.actions.startTurn();
     }
 
-    startTurn(gameId: string, playerId: string) {
-        const game = this.getGame(gameId);
-        const player = game.actions.getPlayerState(playerId);
-
-        game.actions.startTurn(player.socketId);
-    }
 
     attackUnit(gameId: string, playerId: string, dto: AttackUnitDto) {
         const game = this.getGame(gameId);
