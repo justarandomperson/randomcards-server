@@ -2,8 +2,13 @@ import { SpellInstance, UnitInstance } from "../cards/cards.types"
 
 
 export type Deck = {
-  units: UnitInstance[]
+  units: UnitInstance[],
   spells: SpellInstance[]
+}
+
+export type Storage = {
+  units: UnitInstance[],
+  spells: Map<string, { data: SpellInstance, amount: number }> 
 }
 
 export type DeckIds = {

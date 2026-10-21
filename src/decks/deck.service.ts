@@ -5,6 +5,7 @@ import { CardInstance, CardType, CardZone, SpellInstance, UnitInstance } from ".
 import { WsException } from "@nestjs/websockets";
 import { unitsMap } from "../cards/definitions/units";
 import { spellsMap } from "../cards/definitions/spells";
+import { Storage } from "./decks.types";
 
 
 @Injectable()
@@ -13,13 +14,13 @@ export class DecksService {
 
 
     // services
-    getStorage(): Deck {
+    getStorage(): Storage {
         const units: UnitInstance[] = [...unitsMap.values()]
 
-        const spells: SpellInstance[] = [];
-        for (const spell of spellsMap.values()) { // add each spell twice
-            spells.push({ ...spell });
-            spells.push({ ...spell });
+        const spells = new Map<string, { data: SpellInstance, amount: number }>;
+
+        for (const spell of spellsMap.values()) { 
+            spells.set(spell.id, { data: spell, amount : 2 })
         }
 
         return {
