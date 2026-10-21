@@ -8,7 +8,7 @@ export class DecksController {
     constructor (private readonly decksService: DecksService) {}
 
     @Get()
-    storage(): Deck {
+     storage(): Deck {
         return this.decksService.getStorage();
     }
 }
