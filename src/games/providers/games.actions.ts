@@ -2,7 +2,7 @@ import { WsException } from "@nestjs/websockets";
 import { EffectsService } from "../../effects/effects.service";
 import { CurrentEffectData, GamePhase, GameState, PlayerState } from "../shared/games.types";
 import { CardLocation, CardZone, SpellInstance, UnitInstance } from "../../cards/cards.types";
-import { AnyInstance, EFFECT_TRIGGERS, EffectTrigger } from "../../effects/effects.types";
+import { AnyInstance, EFFECT_TRIGGERS, EffectTrigger, Status } from "../../effects/effects.types";
 import { MAX_HAND_SIZE, MINIMUM_MONEY, STARTING_SPELLS_IN_HAND } from "../shared/games.constants";
 import { ArtifactInstance, ArtifactLocation, ArtifactZone } from "../../artifacts/artifacts.types";
 import { CardsService } from "../../cards/cards.service";
@@ -329,6 +329,26 @@ export class GameActions {
         return card.cooldown;
     }
 
+    addUnitStatus(card: UnitInstance, status: Status): boolean {
+        if (card.statuses.includes(status)) {
+            return false;
+        }
+
+        card.statuses.push(status);
+        return true;
+    }
+
+    removeUnitStatus(card: UnitInstance, status: Status): boolean {
+        const statusIndex = card.statuses.indexOf(status);
+
+        if (statusIndex) {
+            card.statuses.splice(statusIndex, 1);
+            return true;
+        }
+
+        return false;
+    }
+
     // change player data
     decreasePlayerHealth(player: PlayerState, amount: number): number {
         player.hp -= amount;
@@ -418,26 +438,31 @@ export class GameActions {
     attackUnit(playerId: string, card: UnitInstance, amount: number) {
         const player = this.getPlayerState(playerId);
 
-        const isUnitDead = this.decreaseUnitHealth(card, amount);
+        if (card.statuses.includes(Status.DODGE)) {
+            this.removeUnitStatus(card, Status.DODGE);
+        }
+        else {
+            const isUnitDead = this.decreaseUnitHealth(card, amount);
 
-        this.runTriggerEffects(player.socketId, EFFECT_TRIGGERS.DAMAGED, card);
-        this.runTriggerEffects(player.socketId, EFFECT_TRIGGERS.ANY_DAMAGED);
+            this.runTriggerEffects(player.socketId, EFFECT_TRIGGERS.DAMAGED, card);
+            this.runTriggerEffects(player.socketId, EFFECT_TRIGGERS.ANY_DAMAGED);
 
-        if (isUnitDead) {
-            if (card.assignedBenchSlot) {
-                this.moveUnitFromBoardToBench(player, card);
+            if (isUnitDead) {
+                if (card.assignedBenchSlot) {
+                    this.moveUnitFromBoardToBench(player, card);
 
-                this.resetUnitData(card);
-                this.emitter.updateCard(this.cards.getCardOwnerId(card), card, this.cards.getCardLocation(card));
+                    this.resetUnitData(card);
+                    this.emitter.updateCard(this.cards.getCardOwnerId(card), card, this.cards.getCardLocation(card));
+                }
+                else {
+                    this.removeUnitFromBoard(player, card);
+                }
+
+                this.increaseUnitCooldown(card, +1);
+
+                this.runTriggerEffects(player.socketId, EFFECT_TRIGGERS.DEATH, card);
+                this.runTriggerEffects(player.socketId, EFFECT_TRIGGERS.ANY_DIED);
             }
-            else {
-                this.removeUnitFromBoard(player, card);
-            }
-
-            this.increaseUnitCooldown(card, +1);
-
-            this.runTriggerEffects(player.socketId, EFFECT_TRIGGERS.DEATH, card);
-            this.runTriggerEffects(player.socketId, EFFECT_TRIGGERS.ANY_DIED);
         }
     }
 

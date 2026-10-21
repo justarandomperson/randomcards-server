@@ -19,6 +19,7 @@ import { Server } from 'socket.io';
 import { GamesEmitter } from './games.emitter';
 import { fillShop } from '../logic/serviceHelpers';
 import { artifactsMap } from '../../artifacts/artifacts';
+import { Status } from '../../effects/effects.types';
 
 
 @Injectable()
@@ -218,6 +219,9 @@ export class GamesService {
         const attacker = this.cards.findCardInstance(dto.attackerId, game.state.board);
         if (attacker.ownerId != player.socketId) {
             throw new WsException("Invalid attacker");
+        }
+        if (attacker.statuses.includes(Status.PARALYZED)) {
+            throw new WsException("attacker is paralyzed");
         }
 
         const target = this.cards.findCardInstance(dto.targetId, game.state.board);
