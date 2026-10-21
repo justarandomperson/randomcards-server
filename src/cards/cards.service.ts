@@ -1,17 +1,17 @@
 import { WsException } from '@nestjs/websockets';
 import { UnitInstance, SpellInstance, CardInstance, CardLocation } from './cards.types';
-import { unitCards } from './definitions/units';
-import { spellCards } from './definitions/spells';
+import { unitsMap } from './definitions/units';
+import { spellsMap } from './definitions/spells';
 
 
 export class CardsService {
     // initializers, getters, setters
     createUnitInstance = (unitId: string, ownerId: string): UnitInstance => {
-        return this.createCardInstance(unitCards, unitId, ownerId) as UnitInstance;
+        return this.createCardInstance(unitsMap, unitId, ownerId) as UnitInstance;
     }
 
     createSpellInstance(spellId: string, ownerId: string): SpellInstance{
-        return this.createCardInstance(spellCards, spellId, ownerId) as SpellInstance;
+        return this.createCardInstance(spellsMap, spellId, ownerId) as SpellInstance;
     }
 
     private createCardInstance(cardList: Map<string, CardInstance>, cardId: string, ownerId: string): CardInstance {
@@ -69,7 +69,7 @@ export class CardsService {
 
     // services
     getDefaultUnitById(cardId: string): UnitInstance {
-        const unit = unitCards.get(cardId);
+        const unit = unitsMap.get(cardId);
 
         if (!unit) {
             throw new WsException("card with this id does not exist.");

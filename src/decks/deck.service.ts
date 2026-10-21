@@ -3,7 +3,7 @@ import { Deck, DeckIds } from "./decks.types";
 import { CardsService } from "../cards/cards.service";
 import { CardInstance, CardType, CardZone, SpellInstance, UnitInstance } from "../cards/cards.types";
 import { WsException } from "@nestjs/websockets";
-import { unitCards } from "../cards/definitions/units";
+import { unitsMap } from "../cards/definitions/units";
 
 
 @Injectable()
@@ -13,7 +13,7 @@ export class DecksService {
 
     // services
     getStorage(): Deck {
-        const units: UnitInstance[] = [...unitCards.values()]
+        const units: UnitInstance[] = [...unitsMap.values()]
 
         const spells: SpellInstance[] = [];
         for (const spell of spells) { // add each spell twice
