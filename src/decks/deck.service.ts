@@ -1,11 +1,10 @@
 import { Injectable } from "@nestjs/common";
-import { Deck, DeckIds } from "./decks.types";
+import { Deck, DeckIds, Storage } from "./decks.types";
 import { CardsService } from "../cards/cards.service";
 import { CardInstance, CardType, CardZone, SpellInstance, UnitInstance } from "../cards/cards.types";
 import { WsException } from "@nestjs/websockets";
 import { unitsMap } from "../cards/definitions/units";
 import { spellsMap } from "../cards/definitions/spells";
-import { Storage } from "./decks.types";
 
 
 @Injectable()
@@ -16,11 +15,10 @@ export class DecksService {
     // services
     getStorage(): Storage {
         const units: UnitInstance[] = [...unitsMap.values()]
-
-        const spells = new Map<string, { data: SpellInstance, amount: number }>;
+        const spells: [string, { data: SpellInstance, amount: number }][] = [];
 
         for (const spell of spellsMap.values()) { 
-            spells.set(spell.id, { data: spell, amount : 2 })
+            spells.push([spell.id, { data: spell, amount : 2 }]);
         }
 
         return {

@@ -8,15 +8,7 @@ export type Deck = {
 
 export type Storage = {
   units: UnitInstance[],
-  spells: Map<string, { data: SpellInstance, amount: number }> 
-}
-
-export type StorageObject = {
-    units: UnitInstance[],
-    spells: [string, {
-        data: SpellInstance;
-        amount: number;
-    }][];
+  spells: [string, { data: SpellInstance, amount: number }][];
 }
 
 export type DeckIds = {
