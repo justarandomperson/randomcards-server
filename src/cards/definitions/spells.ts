@@ -83,6 +83,23 @@ const spellList: SpellInstance[] = [
         ],
         cost: 4,
     },
+    {
+        id: "S_6",
+        name: "Flex",
+        type: CardType.SPELL,
+        effectDesc: "Give an ally monster +2 ATK",
+        effects: [
+            {
+                trigger: [EFFECT_TRIGGERS.SUMMONED],
+                execute: (ctx: EffectContext) => {
+                    if (ctx.target) {
+                        ctx.actions.increaseUnitAttack(ctx.target, 2);
+                    }
+                }
+            }
+        ],
+        cost: 2,
+    },
 ];
 
 export const spellsMap = new Map<string, SpellInstance>(

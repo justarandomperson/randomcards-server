@@ -11,6 +11,14 @@ export type Storage = {
   spells: Map<string, { data: SpellInstance, amount: number }> 
 }
 
+export type StorageObject = {
+    units: UnitInstance[],
+    spells: [string, {
+        data: SpellInstance;
+        amount: number;
+    }][];
+}
+
 export type DeckIds = {
   unitIds: string[]
   spellIds: string[]

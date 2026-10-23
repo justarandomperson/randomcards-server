@@ -157,6 +157,26 @@ const unitList: UnitInstance[] = [
         hp: 3,
         atk: 4,
         cooldown: 0   
+    },
+    {
+        id: "U_8",
+        name: "Cooldown Hater 2.0",
+        type: CardType.UNIT,
+        effectDesc: "Turn End & Death: Add a Cooldown Hating Spell to your hand.",
+        effects: [
+            {
+                trigger: [EFFECT_TRIGGERS.TURN_END, EFFECT_TRIGGERS.DEATH],
+                execute: (ctx: EffectContext) => {
+                    const cooldownHatingSpell = ctx.cards.createSpellInstance("S_4", ctx.playerId);
+                    ctx.actions.addSpellToHand(ctx.actions.getPlayerState(ctx.playerId), cooldownHatingSpell);
+                }
+            }
+        ],
+        statuses: [],
+        cost: 4,
+        hp: 3,
+        atk: 4,
+        cooldown: 0
     }
 ];
 
