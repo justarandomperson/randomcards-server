@@ -313,18 +313,21 @@ export class GameActions {
         return card.hp;
     }
 
-    decreaseUnitCooldown(card: UnitInstance, amount: number): number {
-        card.cooldown -= amount;
+    decreaseUnitCooldown(playerId: string, card: UnitInstance, amount: number): number {
+        if (card.cooldown > 0) {
+            card.cooldown -= amount;
 
-        this.emitter.updateCardBoth(this.state.gameId, card, this.cards.getCardLocation(card));
+            this.emitter.updateCard(playerId, card, this.cards.getCardLocation(card));
+        }
 
         return card.cooldown;
+
     }
 
-    increaseUnitCooldown(card: UnitInstance, amount: number): number {
+    increaseUnitCooldown(playerId: string, card: UnitInstance, amount: number): number {
         card.cooldown += amount;
 
-        this.emitter.updateCardBoth(this.state.gameId, card, this.cards.getCardLocation(card));
+        this.emitter.updateCard(playerId, card, this.cards.getCardLocation(card));
 
         return card.cooldown;
     }
@@ -458,7 +461,7 @@ export class GameActions {
                     this.removeUnitFromBoard(player, card);
                 }
 
-                this.increaseUnitCooldown(card, +1);
+                this.increaseUnitCooldown(playerId, card, +1);
 
                 this.runTriggerEffects(player.socketId, EFFECT_TRIGGERS.DEATH, card);
                 this.runTriggerEffects(player.socketId, EFFECT_TRIGGERS.ANY_DIED);
@@ -503,7 +506,7 @@ export class GameActions {
     private decrementBenchCooldown(player: PlayerState) {
         player.bench.map((unit) => {
             if (unit) {
-                this.decreaseUnitCooldown(unit, 1);
+                this.decreaseUnitCooldown(player.socketId, unit, 1);
             }
         })
     }

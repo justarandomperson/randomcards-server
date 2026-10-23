@@ -32,7 +32,7 @@ export class GamesEmitter {
 
     // SERVICES
     // match start
-    allMatchStartEvents(gameState: GameState, player1Id: string, player2Id: string ): boolean {
+    allMatchStartEvents(gameState: GameState, player1Id: string, player2Id: string): boolean {
         const player1State = gameState.players.get(player1Id);
         const player2State = gameState.players.get(player2Id);
         if (!player1State || !player2State) {
@@ -42,7 +42,7 @@ export class GamesEmitter {
         const isPlayer1First = gameState.playerTurnId === player1Id;
 
         const player1Socket = this.playerIdToSocket(player1Id);
-        const player2Socket = this.playerIdToSocket(player2Id)
+        const player2Socket = this.playerIdToSocket(player2Id);
 
         this.matchStart(player1Socket, player1State, player2State, isPlayer1First);
         this.matchStart(player2Socket, player2State, player1State, !isPlayer1First);
@@ -69,7 +69,7 @@ export class GamesEmitter {
         client.emit(SOCKET_EVENT_NAMES.MATCH_START, payload);
     }
 
-     private allCardEvents(client, player: PlayerState, board: (UnitInstance | null)[]) {
+    private allCardEvents(client: Socket, player: PlayerState, board: (UnitInstance | null)[]) {
         this.updateHand(client, player.hand);
         this.updateBench(client, player.bench);
         this.updateBoard(client, board);
