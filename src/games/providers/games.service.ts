@@ -17,7 +17,7 @@ import { ArtifactsService } from '../../artifacts/artifacts.service';
 import { GameActions } from './games.actions';
 import { Server } from 'socket.io';
 import { GamesEmitter } from './games.emitter';
-import { fillShop } from '../logic/serviceHelpers';
+import { fillShop, translateBoardIndex } from '../logic/serviceHelpers';
 import { artifactsMap } from '../../artifacts/artifacts';
 import { Status } from '../../effects/effects.types';
 
@@ -112,13 +112,14 @@ export class GamesService {
         const game = this.getGame(gameId);
         const player = game.actions.getPlayerState(playerId);
 
-        const { card, destination } = this.validatePlayUnit(game, player, dto);
+        const card = this.validatePlayUnit(game, player, dto);
 
-        game.actions.summonUnit(player.socketId, card, destination);
+        game.actions.summonUnit(player.socketId, card, dto.boardIndex);
         game.actions.decreasePlayerMoney(player, card.cost);
+
     }
 
-    private validatePlayUnit(game: Game, player: PlayerState, dto: PlayUnitDto): { card: UnitInstance, destination: number } {
+    private validatePlayUnit(game: Game, player: PlayerState, dto: PlayUnitDto): UnitInstance {
         if (player.socketId !== game.state.playerTurnId) {
             throw new WsException("Not players turn");
         }
@@ -130,8 +131,7 @@ export class GamesService {
         }
 
         const isPlayer1 = game.actions.isPlayer1(player.socketId);
-        const destination = isPlayer1 ? 
-            dto.boardIndex : game.state.board.length - 1 - dto.boardIndex;
+        const destination = translateBoardIndex(dto.boardIndex, isPlayer1)
 
         if (destination > game.state.board.length || destination < 0) {
             throw new WsException('out of bounds');
@@ -140,7 +140,7 @@ export class GamesService {
             throw new WsException ('slot taken');
         }
 
-        return { card, destination };
+        return card
     }
 
     playSpell(gameId: string, playerId: string, dto: PlaySpellDto) {
@@ -211,12 +211,13 @@ export class GamesService {
 
         const { attacker, target } = this.validateAttackUnit(game, player, dto);
 
+
         game.actions.attackUnit(player.socketId, target, attacker.atk);
         game.actions.attackUnit(player.socketId, attacker, target.atk);
     }
 
     private validateAttackUnit(game: Game, player: PlayerState, dto: AttackUnitDto): { attacker: UnitInstance, target: UnitInstance } {
-        const attacker = this.cards.findCardInstance(dto.attackerId, game.state.board);
+        const attacker = this.cards.findCardInstance(dto.instanceId, game.state.board);
         if (attacker.ownerId != player.socketId) {
             throw new WsException("Invalid attacker");
         }

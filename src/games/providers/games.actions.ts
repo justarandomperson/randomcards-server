@@ -8,7 +8,8 @@ import { ArtifactInstance, ArtifactLocation, ArtifactZone } from "../../artifact
 import { CardsService } from "../../cards/cards.service";
 import { GamesEmitter } from "./games.emitter";
 import { ArtifactsService } from "../../artifacts/artifacts.service";
-import { calculateTurnStartMoney, fillShop, shouldSwitchPhase, translateBoardIndex } from "../logic/serviceHelpers";
+import { calculateTurnStartMoney, fillShop, shouldSwitchPhase, translateBoardIndex, unTranslateBoardIndex } from "../logic/serviceHelpers";
+import PlayUnitDto from "../dto/play-unit.dto";
 
 
 export class GameActions { 
@@ -100,25 +101,35 @@ export class GameActions {
         return boardUnits;
     }
 
-    private getClientBoardLocation(clientId: string, actionPlayerId: string, location: CardLocation): CardLocation {
-        if (location.insideOf !== CardZone.BOARD) {
+    //to get the client board location, the only things the server is concerned about are 2 things:
+    //1. the card board index
+    //2. whether the player who needs the index is the one who owns it
+    //if the player owns it, it means it's on their side of their board => no need to adjust index
+    //otherwise, index needs to be adjusted to be on the opposite site of the board
+    //therefore it doesn't matter who is player1 or player2
+    private getClientBoardLocation(clientId: string,actionPlayerId: string,location: CardLocation): CardLocation {
+         if (location.insideOf !== CardZone.BOARD) {
             throw new WsException('cardLocation is not in board');
         }
 
         const isActionPlayer1 = this.isPlayer1(actionPlayerId);
 
+
         if (isActionPlayer1) {
             if (actionPlayerId !== clientId) {
-                return { insideOf: location.insideOf, index: translateBoardIndex(location.index, isActionPlayer1) }
+                return { insideOf: location.insideOf, index: unTranslateBoardIndex(location.index, isActionPlayer1) }
             }
         }
         else {
-            if (actionPlayerId === clientId) {
+            if (actionPlayerId == clientId) {
+                return { insideOf: location.insideOf, index: unTranslateBoardIndex(location.index, isActionPlayer1) }
+            } else 
+            {
                 return { insideOf: location.insideOf, index: translateBoardIndex(location.index, isActionPlayer1) }
             }
         }
 
-        return location;
+        return location
     }
 
     private runTriggerEffects(playerId: string, trigger: EffectTrigger, sourceInstance?: AnyInstance) {
@@ -153,10 +164,9 @@ export class GameActions {
     // helpers (for emitting and running effects)
     private emitTwoDifferentUpdateCard(playerId: string, card: UnitInstance | SpellInstance) {
         const cardLocation = this.cards.getCardLocation(card);
-        const playerCardLocation = this.getClientBoardLocation(playerId, playerId, cardLocation);
-        this.emitter.updateCard(playerId, card, playerCardLocation);
-
-        const opponentCardLocation = this.getClientBoardLocation(this.getOpponentId(playerId), playerId, cardLocation);
+        const clientCardLocation = this.getClientBoardLocation(playerId, playerId, cardLocation);
+        this.emitter.updateCard(playerId, card, clientCardLocation);
+        const opponentCardLocation = this.getClientBoardLocation(playerId, this.getOpponentId(playerId), cardLocation);
         this.emitter.updateCard(this.getOpponentId(playerId), card, opponentCardLocation);
     }
 
@@ -169,8 +179,6 @@ export class GameActions {
         }
 
         card.location = { insideOf: CardZone.BOARD, index: boardIndex };
-
-        this.emitTwoDifferentUpdateCard(player.socketId, card);
 
         return card.location;
     }
@@ -424,6 +432,7 @@ export class GameActions {
 
     summonUnit(playerId: string, card: UnitInstance, boardIndex?: number) {
         const player = this.getPlayerState(playerId);
+        const isPlayer1 = this.isPlayer1(playerId)
 
         if (!boardIndex) {
             boardIndex = this.getPlayerBoard(playerId).findIndex((slot) => !slot);
@@ -431,8 +440,13 @@ export class GameActions {
                 return; // no place left to summon
             }
         }
+        else 
+        {
+            boardIndex = translateBoardIndex(boardIndex, isPlayer1)
+        }
 
         this.moveUnitFromBenchToBoard(player, card, boardIndex);
+        this.emitTwoDifferentUpdateCard(player.socketId, card);
 
         this.runTriggerEffects(player.socketId, EFFECT_TRIGGERS.SUMMONED, card);
         this.runTriggerEffects(player.socketId, EFFECT_TRIGGERS.ANY_SUMMONED);

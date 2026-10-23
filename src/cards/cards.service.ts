@@ -82,7 +82,7 @@ export class CardsService {
         const index = cardList.findIndex(
             (card) => card?.instanceId === instanceId
         );
-    
+        
         if (index === -1) {
             throw new WsException('target not found');
         }

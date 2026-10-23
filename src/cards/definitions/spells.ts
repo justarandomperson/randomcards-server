@@ -59,7 +59,7 @@ const spellList: SpellInstance[] = [
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
                 execute: (ctx: EffectContext) => {
                     if (ctx.target) {
-                        ctx.actions.increaseUnitCooldown(ctx.target, -1);
+                        ctx.actions.increaseUnitCooldown(ctx.playerId,ctx.target, -1);
                     }   
                 }
             }
