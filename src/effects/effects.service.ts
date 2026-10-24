@@ -5,6 +5,7 @@ import { CurrentEffectData, GameState } from "../games/shared/games.types";
 import { AnyInstance, Effect, EFFECT_TRIGGERS, EffectContext, EffectTrigger } from "./effects.types";
 import { ArtifactsService } from "../artifacts/artifacts.service";
 import { GameActions } from "../games/providers/games.actions";
+import { ArtifactInstance } from "../artifacts/artifacts.types";
 
 
 export class EffectsService {
@@ -18,14 +19,14 @@ export class EffectsService {
 
 
     // initializers, getters and setters etc
-    private getEffectContext(playerId: string, sourceId: string, target?: UnitInstance): EffectContext {
+    private getEffectContext(playerId: string, source: AnyInstance, target?: UnitInstance): EffectContext {
         return {
             state: this.state,
             actions: this.actions,
             cards: this.cards,
             artifacts: this.artifacts,
             playerId,
-            sourceId,
+            source,
             target
         };
     }
@@ -42,8 +43,8 @@ export class EffectsService {
 
 
     // services
-    runEffect(effect: Effect, playerId: string, sourceId: string, targetId?: UnitInstance) {
-        const context = this.getEffectContext(playerId, sourceId, targetId);
+    runEffect(effect: Effect, playerId: string, source: AnyInstance, targetId?: UnitInstance) {
+        const context = this.getEffectContext(playerId, source, targetId);
         effect.execute(context);
     }
 
@@ -79,14 +80,12 @@ export class EffectsService {
         playersSummonedUnits.map((unit) => {
             unit.effects.map((effect) => {
                 if (effect.trigger.includes(trigger)) {
-                    const instanceId = this.cards.getCardInstanceId(unit);
-
-                    if (this.checkEffectNeedsTarget(effect, playerId, instanceId)) {
+                    if (this.checkEffectNeedsTarget(effect, playerId, unit)) {
                         needsTarget = true;
                     }
 
                     else {
-                        this.runEffect(effect, playerId, instanceId);
+                        this.runEffect(effect, playerId, unit);
                     }
                 }
             })
@@ -97,14 +96,12 @@ export class EffectsService {
         playersArtifacts.map((artifact) => {
             artifact.effects.map((effect) => {
               if (effect.trigger.includes(trigger)) {
-                    const instanceId = this.artifacts.getArtifactInstanceId(artifact);
-
-                    if (this.checkEffectNeedsTarget(effect, playerId, instanceId)) {
+                    if (this.checkEffectNeedsTarget(effect, playerId, artifact)) {
                         needsTarget = true;
                     }
 
                     else {
-                        this.runEffect(effect, playerId, instanceId);
+                        this.runEffect(effect, playerId, artifact);
                     }
 
                 }  
@@ -115,17 +112,16 @@ export class EffectsService {
     }
 
     private runInstanceSpecificEffectsForTrigger(playerId: string, trigger: EffectTrigger, sourceInstance: AnyInstance): boolean {
-        const instanceId = this.getAnyInstanceId(sourceInstance);
         let needsTarget = false;
 
         sourceInstance.effects.map((effect) => {
             if (effect.trigger.includes(trigger)) {
-                if (this.checkEffectNeedsTarget(effect, playerId, instanceId)) {
+                if (this.checkEffectNeedsTarget(effect, playerId, sourceInstance)) {
                     needsTarget = true;
                 }
 
                 else {
-                    this.runEffect(effect, playerId, instanceId);
+                    this.runEffect(effect, playerId, sourceInstance);
                 }
             }  
         });
@@ -133,9 +129,9 @@ export class EffectsService {
         return needsTarget;
     }
 
-    private checkEffectNeedsTarget(effect: Effect, playerId: string, sourceId: string): boolean {
+    private checkEffectNeedsTarget(effect: Effect, playerId: string, source: AnyInstance): boolean {
         if (effect.hasTarget) {
-            const newEffectData: CurrentEffectData = { effect, sourceId };
+            const newEffectData: CurrentEffectData = { effect, source };
             this.actions.pushPlayerCurrentEffect(this.actions.getPlayerState(playerId), newEffectData);
             
             return true;

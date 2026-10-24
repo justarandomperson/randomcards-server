@@ -1,6 +1,6 @@
 import { ArtifactInstance, ArtifactLocation, ClientArtifactData } from "../../artifacts/artifacts.types";
 import { UnitInstance, SpellInstance, ClientUnitData, ClientSpellData, CardLocation } from "../../cards/cards.types"; 
-import { Effect } from "../../effects/effects.types";
+import { AnyInstance, Effect } from "../../effects/effects.types";
 import { GameActions } from "../providers/games.actions";
 
 
@@ -39,7 +39,7 @@ export enum GamePhase {
 
 export type CurrentEffectData = {
   effect: Effect,
-  sourceId: string
+  source: AnyInstance
 }
 
 

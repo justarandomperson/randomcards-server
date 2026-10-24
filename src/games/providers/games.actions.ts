@@ -9,7 +9,6 @@ import { CardsService } from "../../cards/cards.service";
 import { GamesEmitter } from "./games.emitter";
 import { ArtifactsService } from "../../artifacts/artifacts.service";
 import { calculateTurnStartMoney, fillShop, shouldSwitchPhase, translateBoardIndex, unTranslateBoardIndex } from "../logic/serviceHelpers";
-import PlayUnitDto from "../dto/play-unit.dto";
 
 
 export class GameActions { 
@@ -170,6 +169,10 @@ export class GameActions {
         this.emitter.updateCard(this.getOpponentId(playerId), card, opponentCardLocation);
     }
 
+    endGame(playerId: string) {
+        this.emitter.gameEnd(this.state.gameId, playerId);
+    }
+
 
     // moving stuff
     moveUnitFromBenchToBoard(player: PlayerState, card: UnitInstance, boardIndex: number): CardLocation {
@@ -184,10 +187,12 @@ export class GameActions {
     }
 
     moveUnitFromBoardToBench(card: UnitInstance): CardLocation {
-        if (!card.ownerId) throw new WsException("card has no owner")
+        if (!card.ownerId) {
+            throw new WsException("card has no owner");
+        }
 
-        const ownerId = card.ownerId    
-        const ownerState = this.getPlayerState(ownerId)
+        const ownerId = card.ownerId;
+        const ownerState = this.getPlayerState(ownerId);
         if (!card.assignedBenchSlot) {
             throw new WsException("card does not have an assigned bench slot"); 
         }
@@ -326,6 +331,15 @@ export class GameActions {
 
         return card.hp;
     }
+
+    increaseCardCost(card: UnitInstance | SpellInstance, amount: number): number {
+        card.cost += amount;
+
+        this.emitter.updateCardBoth(this.state.gameId, card, this.cards.getCardLocation(card));
+
+        return card.cost;
+    }
+
 
     decreaseUnitCooldown(playerId: string, card: UnitInstance, amount: number): number {
         if (card.cooldown > 0) {
@@ -511,8 +525,11 @@ export class GameActions {
     attackPlayer(playerId: string, amount: number) {
         const player = this.getPlayerState(playerId);
 
-        this.decreasePlayerHealth(player, amount);
-        // this function will probably grow
+        const hp = this.decreasePlayerHealth(player, amount);
+
+        if (hp <= 0) {
+            this.endGame(this.getOpponentId(playerId));
+        }
     }
 
     endTurn(playerId: string) {
@@ -591,9 +608,9 @@ export class GameActions {
             return; //? or do we need to throw an error
         }
 
-        const { effect, sourceId } = player.currentEffects[0];
+        const { effect, source } = player.currentEffects[0];
 
-        this.effects.runEffect(effect, player.socketId, sourceId);
+        this.effects.runEffect(effect, player.socketId, source);
         
         this.shiftPlayerCurrentEffect(player);
     }

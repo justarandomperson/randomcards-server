@@ -92,7 +92,7 @@ export class GamesService {
     playerDisconnected(gameId: string, playerId: string) {
         const game = this.getGame(gameId);
 
-        this.emitter.gameEnd(gameId, game.actions.getOpponentId(playerId));
+        game.actions.endGame(game.actions.getOpponentId(playerId));
 
         this.removeGame(gameId);
     }

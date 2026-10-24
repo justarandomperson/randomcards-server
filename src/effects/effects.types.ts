@@ -12,7 +12,7 @@ export type EffectContext = {
   cards: CardsService
   artifacts: ArtifactsService
   playerId: string
-  sourceId: string
+  source: AnyInstance
   target?: UnitInstance
 };
 
