@@ -183,7 +183,11 @@ export class GameActions {
         return card.location;
     }
 
-    moveUnitFromBoardToBench(player: PlayerState, card: UnitInstance): CardLocation {
+    moveUnitFromBoardToBench(card: UnitInstance): CardLocation {
+        if (!card.ownerId) throw new WsException("card has no owner")
+
+        const ownerId = card.ownerId    
+        const ownerState = this.getPlayerState(ownerId)
         if (!card.assignedBenchSlot) {
             throw new WsException("card does not have an assigned bench slot"); 
         }
@@ -193,12 +197,13 @@ export class GameActions {
             throw new WsException("card is not in play");
         }
 
-        player.bench[card.assignedBenchSlot] = card;
+        ownerState.bench[card.assignedBenchSlot] = card;
         this.state.board[location.index] = null;
 
         card.location = { insideOf: CardZone.BENCH, index: card.assignedBenchSlot };
 
-        this.emitTwoDifferentUpdateCard(player.socketId, card);
+        this.emitter.updateCard(ownerId, card, card.location);
+        this.emitter.updateCard(this.getOpponentId(ownerId), card, {insideOf: CardZone.NONE});
 
         return card.location;
     }
@@ -294,9 +299,10 @@ export class GameActions {
     }
 
     decreaseUnitHealth(card: UnitInstance, amount: number): boolean {
+        if (!card.ownerId) throw new WsException("Card does not have owner")
         card.hp -= amount;
 
-        this.emitter.updateCardBoth(this.state.gameId, card, this.cards.getCardLocation(card));
+        this.emitTwoDifferentUpdateCard(card.ownerId, card);
 
         if (card.hp <= 0) {
             return true; // as in unit died
@@ -332,10 +338,11 @@ export class GameActions {
 
     }
 
-    increaseUnitCooldown(playerId: string, card: UnitInstance, amount: number): number {
+    increaseUnitCooldown(card: UnitInstance, amount: number): number {
+        if (!card.ownerId) throw new WsException("card has no owner")
         card.cooldown += amount;
 
-        this.emitter.updateCard(playerId, card, this.cards.getCardLocation(card));
+        this.emitter.updateCard(card.ownerId, card, this.cards.getCardLocation(card));
 
         return card.cooldown;
     }
@@ -466,16 +473,15 @@ export class GameActions {
 
             if (isUnitDead) {
                 if (card.assignedBenchSlot) {
-                    this.moveUnitFromBoardToBench(player, card);
+                    this.moveUnitFromBoardToBench(card);
 
                     this.resetUnitData(card);
-                    this.emitter.updateCard(this.cards.getCardOwnerId(card), card, this.cards.getCardLocation(card));
                 }
                 else {
                     this.removeUnitFromBoard(player, card);
                 }
 
-                this.increaseUnitCooldown(playerId, card, +1);
+                this.increaseUnitCooldown(card, +1);
 
                 this.runTriggerEffects(player.socketId, EFFECT_TRIGGERS.DEATH, card);
                 this.runTriggerEffects(player.socketId, EFFECT_TRIGGERS.ANY_DIED);
