@@ -62,6 +62,8 @@ export const EFFECT_TRIGGERS = {
   DAMAGED: 'damaged',
   COOLDOWN_END: 'cooldown_end',
 
+  PLAYER_DAMAGED: 'player_damaged',
+
   ANY_SUMMONED: 'any_summoned',
   ANY_SPELL_PLAYED: 'any_spell_played',
   ANY_DIED: 'any_died',
