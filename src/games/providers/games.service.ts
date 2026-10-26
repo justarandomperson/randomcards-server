@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { SpellInstance, UnitInstance } from '../../cards/cards.types';
-import { CardsService } from '../../cards/cards.service';
+import { ArtifactInstance, SpellInstance, UnitInstance } from '../../instances/shared/instances.types';
 import { Game, GamePhase, GameState, PlayerState } from '../shared/games.types';
 import { Match } from '../../matchmaking/matchmaking.types';
 import { initPlayerState } from '../logic/gameSetup';
@@ -9,17 +8,16 @@ import { WsException } from '@nestjs/websockets';
 import PlayUnitDto from '../dto/play-unit.dto';
 import PlaySpellDto from '../dto/play-spell.dto';
 import BuyArtifactDto from '../dto/buy-artifact.dto';
-import { ArtifactInstance } from '../../artifacts/artifacts.types';
 import AttackPlayerDto from '../dto/attack-player.dto';
 import AttackUnitDto from '../dto/attack-unit.dto';
 import { Deck } from '../../decks/decks.types';
-import { ArtifactsService } from '../../artifacts/artifacts.service';
 import { GameActions } from './games.actions';
 import { Server } from 'socket.io';
 import { GamesEmitter } from './games.emitter';
 import { fillShop, translateBoardIndex } from '../logic/serviceHelpers';
-import { artifactsMap } from '../../artifacts/artifacts';
 import { Status } from '../../effects/effects.types';
+import { InstancesService } from '../../instances/instances.service';
+import { artifactsMap } from '../../instances/definitions/artifacts';
 
 
 @Injectable()
@@ -28,8 +26,7 @@ export class GamesService {
 
     constructor(
         public readonly emitter: GamesEmitter,
-        private readonly cards: CardsService,
-        private readonly artifacts: ArtifactsService
+        private readonly instances: InstancesService,
     ) {}
 
 
@@ -53,7 +50,7 @@ export class GamesService {
             playerTurnId: player1.socketId,
             possibleShopPool
         };
-        const actions = new GameActions(state, this.emitter, this.cards, this.artifacts);
+        const actions = new GameActions(state, this.emitter, this.instances);
         const game: Game = { state, actions };
 
         this._games.set(state.gameId, game);
@@ -124,7 +121,7 @@ export class GamesService {
             throw new WsException("Not players turn");
         }
 
-        const card = this.cards.findCardInstance(dto.instanceId, player.bench);
+        const card = this.instances.findInstance(dto.instanceId, player.bench);
 
         if (player.money < card.cost) {
             throw new WsException('insufficient money');
@@ -158,7 +155,7 @@ export class GamesService {
             throw new WsException("Not players turn");
         }
 
-        const card = this.cards.findCardInstance(dto.instanceId, player.hand);
+        const card = this.instances.findInstance(dto.instanceId, player.hand);
 
         if (player.money < card.cost) {
             throw new WsException('insufficient money');
@@ -182,7 +179,7 @@ export class GamesService {
             throw new WsException("Not players turn");
         } 
 
-        const { artifact } = this.artifacts.findArtifactInstance(dto.instanceId, game.state.shop);
+        const artifact = this.instances.findInstance(dto.instanceId, game.state.shop);
 
         if (player.money < artifact.cost) {
             throw new WsException('insufficient money');
@@ -217,7 +214,7 @@ export class GamesService {
     }
 
     private validateAttackUnit(game: Game, player: PlayerState, dto: AttackUnitDto): { attacker: UnitInstance, target: UnitInstance } {
-        const attacker = this.cards.findCardInstance(dto.instanceId, game.state.board);
+        const attacker = this.instances.findInstance(dto.instanceId, game.state.board);
         if (attacker.ownerId != player.socketId) {
             throw new WsException("Invalid attacker");
         }
@@ -225,7 +222,7 @@ export class GamesService {
             throw new WsException("attacker is paralyzed");
         }
 
-        const target = this.cards.findCardInstance(dto.targetId, game.state.board);
+        const target = this.instances.findInstance(dto.targetId, game.state.board);
         
         return { attacker, target }
     }
@@ -241,7 +238,7 @@ export class GamesService {
     }
 
     private validateAttackPlayer(game: Game, player: PlayerState, dto: AttackPlayerDto): UnitInstance {
-        const attacker = this.cards.findCardInstance(dto.attackerId, game.state.board);
+        const attacker = this.instances.findInstance(dto.attackerId, game.state.board);
         if (attacker.ownerId != player.socketId) {
             throw new WsException("Invalid attacker");
         }

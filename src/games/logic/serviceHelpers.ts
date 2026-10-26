@@ -1,4 +1,4 @@
-import { ArtifactInstance } from "../../artifacts/artifacts.types";
+import { ArtifactInstance } from "../../instances/shared/instances.types";
 import { PLAY_TURNS_PER_CYCLE, TURNS_PER_CYCLE } from "../shared/games.constants";
 import { GamePhase } from "../shared/games.types";
 

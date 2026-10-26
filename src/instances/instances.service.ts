@@ -1,10 +1,10 @@
 import { WsException } from '@nestjs/websockets';
-import { UnitInstance, SpellInstance, CardInstance, CardLocation } from './cards.types';
-import { unitsMap } from './definitions/units';
+import { UnitInstance, SpellInstance, CardInstance, AnyInstance, InstanceLocation, InstanceZone } from './shared/instances.types';
 import { spellsMap } from './definitions/spells';
+import { unitsMap } from './definitions/units';
 
 
-export class CardsService {
+export class InstancesService {
     // initializers, getters, setters
     createUnitInstance = (unitId: string, ownerId: string): UnitInstance => {
         return this.createCardInstance(unitsMap, unitId, ownerId) as UnitInstance;
@@ -29,28 +29,42 @@ export class CardsService {
         return cardInstance;
     }
 
-    getCardOwnerId(card: UnitInstance | SpellInstance): string {
-        if (!card.ownerId) {
-            throw new WsException('card has no ownerId');
+    getOwnerId(instance: AnyInstance): string {
+        if (!instance.ownerId) {
+            throw new WsException('instance has no ownerId');
         }
 
-        return card.ownerId;
+        return instance.ownerId;
     }
 
-    getCardInstanceId(card: UnitInstance | SpellInstance): string {
-        if (!card.instanceId) {
-            throw new WsException('card has no instanceId');
+    getInstanceId(instance: AnyInstance): string {
+        if (!instance.instanceId) {
+            throw new WsException('instance has no instanceId');
         }
 
-        return card.instanceId;  
+        return instance.instanceId;  
     }
 
-    getCardLocation(card: UnitInstance | SpellInstance): CardLocation {
-        if (!card.location) {
-            throw new WsException('card has no location');
+    getLocation(instance: AnyInstance): InstanceLocation {
+        if (!instance.location) {
+            throw new WsException('instance has no location'); 
         }
 
-        return card.location;
+        return instance.location;
+    }
+
+    getLocationIndex(instance: AnyInstance, expectedInsideOf?: InstanceZone): number {
+        const location = this.getLocation(instance);
+
+        if (expectedInsideOf && expectedInsideOf !== location.insideOf) {
+            throw new WsException('card is not in the expected location');
+        }
+
+        if (location.insideOf === InstanceZone.NONE) {
+            throw new WsException('cardZone is NONE');
+        }
+
+        return location.index;
     }
 
     getUnitBenchSlot(card: UnitInstance): number {
@@ -61,7 +75,9 @@ export class CardsService {
 
         return card.assignedBenchSlot;
     }
- 
+
+    
+    // helpers
     private generateInstanceId(): string {
         return Math.random().toString(36).substring(2, 8);
     }
@@ -78,16 +94,16 @@ export class CardsService {
         return unit;
     }
 
-    findCardInstance<T extends UnitInstance | SpellInstance>(instanceId: string, cardList: (T | null)[]): T {
-        const index = cardList.findIndex(
-            (card) => card?.instanceId === instanceId
+    findInstance<T extends AnyInstance>(instanceId: string, list: (T | null)[]): T {
+        const index = list.findIndex(
+            (instance) => instance?.instanceId === instanceId
         );
         
         if (index === -1) {
             throw new WsException('target not found');
         }
     
-        return cardList[index]!;
+        return list[index]!;
     }
 
     findEmptySlot(cardList: (CardInstance | null)[]): number {

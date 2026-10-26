@@ -1,16 +1,13 @@
-import { ArtifactsService } from '../artifacts/artifacts.service';
-import { ArtifactInstance } from '../artifacts/artifacts.types';
-import { CardsService } from '../cards/cards.service'
-import { SpellInstance, UnitInstance } from '../cards/cards.types';
+import { AnyInstance, UnitInstance } from '../instances/shared/instances.types';
 import { GameActions } from '../games/providers/games.actions';
 import { GameState } from '../games/shared/games.types'
+import { InstancesService } from '../instances/instances.service';
 
 
 export type EffectContext = {
   state: GameState
   actions: GameActions
-  cards: CardsService
-  artifacts: ArtifactsService
+  instances: InstancesService
   playerId: string
   source: AnyInstance
   target?: UnitInstance
@@ -23,7 +20,6 @@ export type Effect = {
   value?: number
 };
 
-
 export type EffectTrigger = typeof EFFECT_TRIGGERS[keyof typeof EFFECT_TRIGGERS]
 
 export enum Status {
@@ -34,8 +30,6 @@ export enum Status {
   DODGE = 'dodge',
 };
 
-export type UnitOrArtifact = UnitInstance | ArtifactInstance
-export type AnyInstance = UnitInstance | ArtifactInstance | SpellInstance
 
 // lists
 export const EFFECTS = {

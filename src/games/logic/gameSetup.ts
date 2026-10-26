@@ -1,5 +1,3 @@
-import { randomUUID } from "crypto";
-import { ArtifactInstance, ArtifactZone } from "../../artifacts/artifacts.types";
 import { BasicPlayerData } from "../../matchmaking/matchmaking.types";
 import { PlayerState } from "../shared/games.types";
 import { STARTING_HEALTH, STARTING_MONEY, STARTING_TURN } from "../shared/games.constants";

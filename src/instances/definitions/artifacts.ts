@@ -1,11 +1,12 @@
-import { EFFECT_TRIGGERS, EffectContext } from "../effects/effects.types";
-import { ArtifactInstance } from "./artifacts.types";
+import { EFFECT_TRIGGERS, EffectContext } from "../../effects/effects.types";
+import { ArtifactInstance, InstanceType } from "../shared/instances.types";
 
 
 const ArtifactList: ArtifactInstance[] = [
     {
         id: "A_1",
         name: "random ball",
+        type: InstanceType.ARTIFACT,
         effectDesc: "a chance it deals an unspecified amount of damage to an opponent or their unit, in an unspecified manner.",
         effects: [
             {
@@ -45,6 +46,7 @@ const ArtifactList: ArtifactInstance[] = [
     {
         id: "A_2",
         name: "Vampire Survivor",
+        type: InstanceType.ARTIFACT,
         effectDesc: "Every time a unit dies, heal 2 HP.",
         effects: [
             {
@@ -59,6 +61,7 @@ const ArtifactList: ArtifactInstance[] = [
     {
         id: "A_3",
         name: "Vampire Destructor",
+        type: InstanceType.ARTIFACT,
         effectDesc: "Every time a unit is summoned, deal 1 damage to a random opponent's unit.",
         effects: [
             {
@@ -71,6 +74,52 @@ const ArtifactList: ArtifactInstance[] = [
             }
         ],
         cost: 15, 
+    },
+    {
+        id: "A_4",
+        name: "Tal's Idea (not really)",
+        type: InstanceType.ARTIFACT,
+        effectDesc: "Win the game.",
+        effects: [
+            {
+                trigger: [EFFECT_TRIGGERS.SUMMONED],
+                execute: (ctx: EffectContext) => {
+                    ctx.actions.endGame(ctx.playerId);
+                }
+            }
+        ],
+        cost: 500,     
+    },
+    {
+        id: "A_5",
+        name: "Infused Core",
+        type: InstanceType.ARTIFACT,
+        effectDesc: "Add 3 Lightning Orbs to your hand. \n" +
+                    "Lightning Orbs deal 1 additional damage.",
+        effects: [
+            {
+                trigger: [EFFECT_TRIGGERS.SUMMONED],
+                execute: (ctx: EffectContext) => {
+                    // TODO: this
+                }
+            }
+        ],
+        cost: 10,     
+    },
+    {
+        id: "A_6",
+        name: "Hype moments & aura",
+        type: InstanceType.ARTIFACT,
+        effectDesc: "If you reach exactly 1 HP, you deal 10 damage to all off the opponent's units.",
+        effects: [
+            {
+                trigger: [EFFECT_TRIGGERS.PLAYER_DAMAGED],
+                execute: (ctx: EffectContext) => {
+                    // TODO: this
+                }
+            }
+        ],
+        cost: 11,     
     }
 ];
 

@@ -1,14 +1,12 @@
 import { WsException } from "@nestjs/websockets";
 import { EffectsService } from "../../effects/effects.service";
 import { CurrentEffectData, GamePhase, GameState, PlayerState } from "../shared/games.types";
-import { CardLocation, CardZone, SpellInstance, UnitInstance } from "../../cards/cards.types";
-import { AnyInstance, EFFECT_TRIGGERS, EffectTrigger, Status } from "../../effects/effects.types";
+import { AnyInstance, ArtifactInstance, InstanceLocation, SpellInstance, UnitInstance, InstanceZone } from "../../instances/shared/instances.types";
+import { EFFECT_TRIGGERS, EffectTrigger, Status } from "../../effects/effects.types";
 import { MAX_HAND_SIZE, MINIMUM_MONEY, STARTING_SPELLS_IN_HAND } from "../shared/games.constants";
-import { ArtifactInstance, ArtifactLocation, ArtifactZone } from "../../artifacts/artifacts.types";
-import { CardsService } from "../../cards/cards.service";
 import { GamesEmitter } from "./games.emitter";
-import { ArtifactsService } from "../../artifacts/artifacts.service";
 import { calculateTurnStartMoney, fillShop, shouldSwitchPhase, translateBoardIndex, unTranslateBoardIndex } from "../logic/serviceHelpers";
+import { InstancesService } from "../../instances/instances.service";
 
 
 export class GameActions { 
@@ -17,10 +15,9 @@ export class GameActions {
     constructor(
         public readonly state: GameState,
         private readonly emitter: GamesEmitter,
-        private readonly cards: CardsService,
-        private readonly artifacts: ArtifactsService
+        private readonly instances: InstancesService
     ) {
-        this.effects = new EffectsService(this.state, this, this.cards, this.artifacts);
+        this.effects = new EffectsService(this.state, this, this.instances);
     }
 
 
@@ -100,35 +97,47 @@ export class GameActions {
         return boardUnits;
     }
 
+    getMonsterInfront(boardIndex: number): UnitInstance | null {
+        if (boardIndex < 0) {
+            throw new WsException("boardIndex doesnt exist");
+        }
+
+        if (boardIndex < 4) {
+            return this.state.board[boardIndex + 4];
+        }
+
+        return this.state.board[boardIndex - 4];
+    }
+
+
     //to get the client board location, the only things the server is concerned about are 2 things:
     //1. the card board index
     //2. whether the player who needs the index is the one who owns it
     //if the player owns it, it means it's on their side of their board => no need to adjust index
     //otherwise, index needs to be adjusted to be on the opposite site of the board
     //therefore it doesn't matter who is player1 or player2
-    private getClientBoardLocation(clientId: string,actionPlayerId: string,location: CardLocation): CardLocation {
-         if (location.insideOf !== CardZone.BOARD) {
+    private getClientBoardLocation(clientId: string, actionPlayerId: string, location: InstanceLocation): InstanceLocation {
+        if (location.insideOf !== InstanceZone.BOARD) {
             throw new WsException('cardLocation is not in board');
         }
 
         const isActionPlayer1 = this.isPlayer1(actionPlayerId);
 
-
         if (isActionPlayer1) {
             if (actionPlayerId !== clientId) {
-                return { insideOf: location.insideOf, index: unTranslateBoardIndex(location.index, isActionPlayer1) }
+                return { insideOf: location.insideOf, index: unTranslateBoardIndex(location.index, isActionPlayer1) };
             }
         }
         else {
             if (actionPlayerId == clientId) {
-                return { insideOf: location.insideOf, index: unTranslateBoardIndex(location.index, isActionPlayer1) }
-            } else 
-            {
-                return { insideOf: location.insideOf, index: translateBoardIndex(location.index, isActionPlayer1) }
+                return { insideOf: location.insideOf, index: unTranslateBoardIndex(location.index, isActionPlayer1) };
+            } 
+            else {
+                return { insideOf: location.insideOf, index: translateBoardIndex(location.index, isActionPlayer1) };
             }
         }
 
-        return location
+        return location;
     }
 
     private runTriggerEffects(playerId: string, trigger: EffectTrigger, sourceInstance?: AnyInstance) {
@@ -162,9 +171,11 @@ export class GameActions {
 
     // helpers (for emitting and running effects)
     private emitTwoDifferentUpdateCard(playerId: string, card: UnitInstance | SpellInstance) {
-        const cardLocation = this.cards.getCardLocation(card);
+        const cardLocation = this.instances.getLocation(card);
+
         const clientCardLocation = this.getClientBoardLocation(playerId, playerId, cardLocation);
         this.emitter.updateCard(playerId, card, clientCardLocation);
+
         const opponentCardLocation = this.getClientBoardLocation(playerId, this.getOpponentId(playerId), cardLocation);
         this.emitter.updateCard(this.getOpponentId(playerId), card, opponentCardLocation);
     }
@@ -175,18 +186,18 @@ export class GameActions {
 
 
     // moving stuff
-    moveUnitFromBenchToBoard(player: PlayerState, card: UnitInstance, boardIndex: number): CardLocation {
+    moveUnitFromBenchToBoard(player: PlayerState, card: UnitInstance, boardIndex: number): InstanceLocation {
         this.state.board[boardIndex] = card;
         if (card.assignedBenchSlot) {
             player.bench[card.assignedBenchSlot] = null;
         }
 
-        card.location = { insideOf: CardZone.BOARD, index: boardIndex };
+        card.location = { insideOf: InstanceZone.BOARD, index: boardIndex };
 
         return card.location;
     }
 
-    moveUnitFromBoardToBench(card: UnitInstance): CardLocation {
+    moveUnitFromBoardToBench(card: UnitInstance): InstanceLocation {
         if (!card.ownerId) {
             throw new WsException("card has no owner");
         }
@@ -197,62 +208,62 @@ export class GameActions {
             throw new WsException("card does not have an assigned bench slot"); 
         }
 
-        const location = this.cards.getCardLocation(card);
-        if (location.insideOf !== CardZone.BOARD) {
+        const location = this.instances.getLocation(card);
+        if (location.insideOf !== InstanceZone.BOARD) {
             throw new WsException("card is not in play");
         }
 
         ownerState.bench[card.assignedBenchSlot] = card;
         this.state.board[location.index] = null;
 
-        card.location = { insideOf: CardZone.BENCH, index: card.assignedBenchSlot };
+        card.location = { insideOf: InstanceZone.BENCH, index: card.assignedBenchSlot };
 
         this.emitter.updateCard(ownerId, card, card.location);
-        this.emitter.updateCard(this.getOpponentId(ownerId), card, {insideOf: CardZone.NONE});
+        this.emitter.updateCard(this.getOpponentId(ownerId), card, {insideOf: InstanceZone.NONE});
 
         return card.location;
     }
 
     removeUnitFromBoard(player: PlayerState, card: UnitInstance) {
-        const location = this.cards.getCardLocation(card);
-        if (location.insideOf !== CardZone.BOARD) {
+        const location = this.instances.getLocation(card);
+        if (location.insideOf !== InstanceZone.BOARD) {
             throw new WsException("card is not in play");
         }
 
         this.state.board[location.index] = null;
 
-        card.location = { insideOf: CardZone.NONE }
+        card.location = { insideOf: InstanceZone.NONE }
 
         this.emitTwoDifferentUpdateCard(player.socketId, card);
 
         //? should i delete the card or something? set it to null if possible?
     }
 
-    moveSpellFromHandToDrawpile(player: PlayerState, card: SpellInstance): CardLocation {   
-        const location = this.cards.getCardLocation(card);     
-        if (location.insideOf !== CardZone.HAND) {
+    moveSpellFromHandToDrawpile(player: PlayerState, card: SpellInstance): InstanceLocation {   
+        const location = this.instances.getLocation(card);     
+        if (location.insideOf !== InstanceZone.HAND) {
             throw new WsException("card is not in hand");
         }
 
         player.hand.splice(location.index, 1);
         player.drawpile.push(card);
 
-        card.location = { insideOf: CardZone.NONE };
+        card.location = { insideOf: InstanceZone.NONE };
 
-        this.emitter.updateCard(player.socketId, card, { insideOf: CardZone.NONE });
+        this.emitter.updateCard(player.socketId, card, { insideOf: InstanceZone.NONE });
         this.emitter.opponentPlayedSpell(this.getOpponentId(player.socketId), card);
 
         return card.location;
     }
 
-    addSpellToHand(player: PlayerState, card: SpellInstance): CardLocation | null {
+    addSpellToHand(player: PlayerState, card: SpellInstance): InstanceLocation | null {
         if (player.hand.length === MAX_HAND_SIZE) {
             return null;
         }
 
         player.hand.push(card);
 
-        card.location = { insideOf: CardZone.HAND, index: player.hand.length - 1 };
+        card.location = { insideOf: InstanceZone.HAND, index: player.hand.length - 1 };
 
         this.emitter.updateCard(player.socketId, card, card.location);
 
@@ -273,9 +284,9 @@ export class GameActions {
         return spell;
     }
 
-    moveArtifactFromShopToInventory(player: PlayerState, artifact: ArtifactInstance): ArtifactLocation {
-        const location = this.artifacts.getArtifactLocation(artifact);
-        if (location.insideOf !== ArtifactZone.SHOP) {
+    moveArtifactFromShopToInventory(player: PlayerState, artifact: ArtifactInstance): InstanceLocation {
+        const location = this.instances.getLocation(artifact);
+        if (location.insideOf !== InstanceZone.SHOP) {
             throw new WsException("artifact not in shop");
         }
 
@@ -283,7 +294,7 @@ export class GameActions {
         player.artifacts.push(artifact);
         this.state.possibleShopPool.splice(this.state.possibleShopPool.indexOf(artifact), 1);
 
-        artifact.location = { insideOf: ArtifactZone.PLAYER, index: player.artifacts.length - 1 };
+        artifact.location = { insideOf: InstanceZone.PLAYER, index: player.artifacts.length - 1 };
 
         this.emitter.updateArtifact(player.socketId, artifact, artifact.location);
 
@@ -294,7 +305,7 @@ export class GameActions {
     resetUnitData(unit: UnitInstance) {
         // Note: doesnt emit because sometimes this will be emitted to both users and sometimes only to one
         // Note: the functions that call this will do that
-        const defaultUnit = this.cards.getDefaultUnitById(unit.id);
+        const defaultUnit = this.instances.getDefaultUnitById(unit.id);
 
         unit.hp = defaultUnit.hp;
         unit.atk = defaultUnit.atk;
@@ -319,7 +330,7 @@ export class GameActions {
     increaseUnitAttack(card: UnitInstance, amount: number): number {
         card.atk += amount;
 
-        this.emitter.updateCardBoth(this.state.gameId, card, this.cards.getCardLocation(card));
+        this.emitTwoDifferentUpdateCard(this.state.gameId, card);
 
         return card.atk;
     }
@@ -327,7 +338,7 @@ export class GameActions {
     increaseUnitHealth(card: UnitInstance, amount: number): number {
         card.hp += amount;
 
-        this.emitter.updateCardBoth(this.state.gameId, card, this.cards.getCardLocation(card));
+        this.emitTwoDifferentUpdateCard(this.state.gameId, card);
 
         return card.hp;
     }
@@ -335,7 +346,7 @@ export class GameActions {
     increaseCardCost(card: UnitInstance | SpellInstance, amount: number): number {
         card.cost += amount;
 
-        this.emitter.updateCardBoth(this.state.gameId, card, this.cards.getCardLocation(card));
+        this.emitTwoDifferentUpdateCard(this.state.gameId, card);
 
         return card.cost;
     }
@@ -345,7 +356,7 @@ export class GameActions {
         if (card.cooldown > 0) {
             card.cooldown -= amount;
 
-            this.emitter.updateCard(playerId, card, this.cards.getCardLocation(card));
+            this.emitter.updateCard(playerId, card, this.instances.getLocation(card));
         }
 
         return card.cooldown;
@@ -356,7 +367,7 @@ export class GameActions {
         if (!card.ownerId) throw new WsException("card has no owner")
         card.cooldown += amount;
 
-        this.emitter.updateCard(card.ownerId, card, this.cards.getCardLocation(card));
+        this.emitter.updateCard(card.ownerId, card, this.instances.getLocation(card));
 
         return card.cooldown;
     }

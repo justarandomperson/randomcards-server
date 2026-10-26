@@ -1,6 +1,5 @@
-import { ArtifactInstance, ArtifactLocation, ClientArtifactData } from "../../artifacts/artifacts.types";
-import { UnitInstance, SpellInstance, ClientUnitData, ClientSpellData, CardLocation } from "../../cards/cards.types"; 
-import { AnyInstance, Effect } from "../../effects/effects.types";
+import { UnitInstance, SpellInstance, ClientUnitData, ClientSpellData, ArtifactInstance, AnyInstance, ClientArtifactData, InstanceLocation } from "../../instances/shared/instances.types"; 
+import { Effect } from "../../effects/effects.types";
 import { GameActions } from "../providers/games.actions";
 
 
@@ -72,14 +71,15 @@ export type UpdateTurnPayload = {
 
 export type UpdateCardPayload = {
   card: ClientUnitData | ClientSpellData,
-  location: CardLocation
+  location: InstanceLocation
 }
 
 export type UpdateArtifactPayload = { 
   artifact: ClientArtifactData,
-  location: ArtifactLocation,
+  location: InstanceLocation,
   playerId?: string 
 }
+
 
 // Note: these are types sent to the client, used only for that
 // they contain only what the client should get

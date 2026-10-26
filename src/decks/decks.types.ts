@@ -1,4 +1,4 @@
-import { SpellInstance, UnitInstance } from "../cards/cards.types"
+import { SpellInstance, UnitInstance } from "../instances/shared/instances.types"
 
 
 export type Deck = {

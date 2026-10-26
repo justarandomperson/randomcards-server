@@ -1,11 +1,9 @@
 import { WsException } from "@nestjs/websockets";
-import { CardsService } from "../cards/cards.service";
-import { UnitInstance } from "../cards/cards.types";
+import { AnyInstance, UnitInstance } from "../instances/shared/instances.types";
 import { CurrentEffectData, GameState } from "../games/shared/games.types";
-import { AnyInstance, Effect, EFFECT_TRIGGERS, EffectContext, EffectTrigger } from "./effects.types";
-import { ArtifactsService } from "../artifacts/artifacts.service";
+import { Effect, EFFECT_TRIGGERS, EffectContext, EffectTrigger } from "./effects.types";
 import { GameActions } from "../games/providers/games.actions";
-import { ArtifactInstance } from "../artifacts/artifacts.types";
+import { InstancesService } from "../instances/instances.service";
 
 
 export class EffectsService {
@@ -13,8 +11,7 @@ export class EffectsService {
     constructor(
         private readonly state: GameState,
         private readonly actions: GameActions,
-        private readonly cards: CardsService,
-        private readonly artifacts: ArtifactsService,
+        private readonly instances: InstancesService
     ) {}
 
 
@@ -23,22 +20,11 @@ export class EffectsService {
         return {
             state: this.state,
             actions: this.actions,
-            cards: this.cards,
-            artifacts: this.artifacts,
+            instances: this.instances,
             playerId,
             source,
             target
         };
-    }
-
-    private getAnyInstanceId(instance: AnyInstance): string {
-        const instanceId = instance.instanceId;
-
-        if (!instanceId) {
-            throw new WsException(`${instance.name} has no instanceId.`);
-        }
-
-        return instanceId;
     }
 
 

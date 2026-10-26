@@ -1,15 +1,15 @@
 import { Injectable } from "@nestjs/common";
 import { Deck, DeckIds, Storage } from "./decks.types";
-import { CardsService } from "../cards/cards.service";
-import { CardInstance, CardType, CardZone, SpellInstance, UnitInstance } from "../cards/cards.types";
+import { CardInstance, InstanceType, InstanceZone, SpellInstance, UnitInstance } from "../instances/shared/instances.types";
 import { WsException } from "@nestjs/websockets";
-import { unitsMap } from "../cards/definitions/units";
-import { spellsMap } from "../cards/definitions/spells";
+import { spellsMap } from "../instances/definitions/spells";
+import { InstancesService } from "../instances/instances.service";
+import { unitsMap } from "../instances/definitions/units";
 
 
 @Injectable()
 export class DecksService {
-    constructor(private readonly cardsService: CardsService) {}
+    constructor(private readonly instances: InstancesService) {}
 
 
     // services
@@ -29,8 +29,8 @@ export class DecksService {
 
 
     deckIdsToDeck(deckIds: DeckIds, ownerId: string): Deck {
-        const units = this.cardIdsToCardList(deckIds.unitIds, CardType.UNIT, ownerId);
-        const spells = this.cardIdsToCardList(deckIds.spellIds, CardType.SPELL,  ownerId);
+        const units = this.cardIdsToCardList(deckIds.unitIds, InstanceType.UNIT, ownerId);
+        const spells = this.cardIdsToCardList(deckIds.spellIds, InstanceType.SPELL,  ownerId);
 
         const deck: Deck = {
             units,
@@ -40,20 +40,20 @@ export class DecksService {
         return deck;
     }
 
-    private cardIdsToCardList(cardIds: string[], cardType: CardType.UNIT, ownerId: string): UnitInstance[];
-    private cardIdsToCardList(cardIds: string[], cardType: CardType.SPELL, ownerId: string): SpellInstance[];
-    private cardIdsToCardList(cardIds: string[], cardType: CardType, ownerId: string): CardInstance[] {
+    private cardIdsToCardList(cardIds: string[], cardType: InstanceType.UNIT, ownerId: string): UnitInstance[];
+    private cardIdsToCardList(cardIds: string[], cardType: InstanceType.SPELL, ownerId: string): SpellInstance[];
+    private cardIdsToCardList(cardIds: string[], cardType: InstanceType, ownerId: string): CardInstance[] {
         return cardIds.map((id, index) => {
-            const card = (cardType === CardType.UNIT) ? 
-                this.cardsService.createUnitInstance(id, ownerId) : this.cardsService.createSpellInstance(id,  ownerId);
+            const card = (cardType === InstanceType.UNIT) ? 
+                this.instances.createUnitInstance(id, ownerId) : this.instances.createSpellInstance(id,  ownerId);
 
             if (!card || card.type !== cardType) {
                 throw new WsException(`Card with Id ${id} does not exist`);
             }
             
-            if (card.type === CardType.UNIT) {
+            if (card.type === InstanceType.UNIT) {
                 card.assignedBenchSlot = index;
-                card.location = { insideOf: CardZone.BENCH, index: index };
+                card.location = { insideOf: InstanceZone.BENCH, index: index };
             }
 
             return card;

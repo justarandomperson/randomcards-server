@@ -2,8 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
 import { GameState, MatchStartPayload, PlayerState, UpdateArtifactPayload, UpdateCardPayload, UpdateDrawpileCountPayload, UpdateHealthPayload, UpdateMoneyPayload, UpdateTurnPayload } from '../shared/games.types';
 import { artifactInstanceToClient, playerStateToClient, spellInstanceToClient, unitInstanceToClient } from '../logic/typeConverters';
-import { CardLocation, CardType, SpellInstance, UnitInstance } from '../../cards/cards.types';
-import { ArtifactInstance, ArtifactLocation } from '../../artifacts/artifacts.types';
+import { ArtifactInstance, InstanceLocation, InstanceType, SpellInstance, UnitInstance } from '../../instances/shared/instances.types';
 import { WsException } from '@nestjs/websockets';
 import { SOCKET_EVENT_NAMES } from '../shared/games.constants';
 
@@ -108,22 +107,10 @@ export class GamesEmitter {
         client.emit(SOCKET_EVENT_NAMES.START_TURN);
     }
 
-    updateCardBoth(gameId: string, card: UnitInstance | SpellInstance, cardLocation: CardLocation) {
-        const clientCardData = (card.type == CardType.UNIT) 
-            ? unitInstanceToClient(card) : spellInstanceToClient(card);
-
-        const payload: UpdateCardPayload = {
-            card: clientCardData,
-            location: cardLocation
-        };
-
-        this.server.to(gameId).emit(SOCKET_EVENT_NAMES.UPDATE_CARD, payload);
-    }
-
-    updateCard(clientId: string, card: UnitInstance | SpellInstance, cardLocation: CardLocation) {
+    updateCard(clientId: string, card: UnitInstance | SpellInstance, cardLocation: InstanceLocation) {
         const client = this.playerIdToSocket(clientId);
 
-        const clientCardData = (card.type == CardType.UNIT) 
+        const clientCardData = (card.type == InstanceType.UNIT) 
             ? unitInstanceToClient(card) : spellInstanceToClient(card);
 
         const payload: UpdateCardPayload = {
@@ -134,7 +121,7 @@ export class GamesEmitter {
        client.emit(SOCKET_EVENT_NAMES.UPDATE_CARD, payload);
     }
 
-    updateArtifactBoth(gameId: string, artifact: ArtifactInstance, artifactLocation: ArtifactLocation) {
+    updateArtifactBoth(gameId: string, artifact: ArtifactInstance, artifactLocation: InstanceLocation) {
         const clientArtifactData = artifactInstanceToClient(artifact);
 
         const payload: UpdateArtifactPayload = {
@@ -145,7 +132,7 @@ export class GamesEmitter {
         this.server.to(gameId).emit(SOCKET_EVENT_NAMES.UPDATE_ARTIFACT, payload);
     }
     
-    updateArtifact(clientId: string, artifact: ArtifactInstance, artifactLocation: ArtifactLocation, playerId?: string) {
+    updateArtifact(clientId: string, artifact: ArtifactInstance, artifactLocation: InstanceLocation, playerId?: string) {
         const client = this.playerIdToSocket(clientId);
         const clientArtifactData = artifactInstanceToClient(artifact);
 
