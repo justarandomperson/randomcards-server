@@ -56,6 +56,11 @@ export class DecksService {
                 card.location = { insideOf: InstanceZone.BENCH, index: index };
             }
 
+            else if (card.type === InstanceType.SPELL) {
+                card.inDeck = true;
+                card.location = { insideOf: InstanceZone.NONE };
+            }
+
             return card;
         });
     }

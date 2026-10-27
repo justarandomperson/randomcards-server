@@ -113,9 +113,9 @@ const spellList: SpellInstance[] = [
                     }
 
                     // Note: do silent's effect of giving any of your silents +1 ATK
-                    const playersBoardUnits = ctx.actions.getPlayerBoardUnits(ctx.playerId);
-                    for (const slot of playersBoardUnits) {
-                        if (slot.unit.id === 'U_8') {
+                    const playersBoard = ctx.actions.getPlayerBoard(ctx.playerId);
+                    for (const slot of playersBoard) {
+                        if (slot.unit && slot.unit.id === 'U_8') {
                             ctx.actions.increaseUnitAttack(slot.unit, 1);
                         }
                     }
@@ -176,14 +176,18 @@ const spellList: SpellInstance[] = [
                         }
                     }
 
-                    const opponentBoardUnits = ctx.actions.getPlayerBoardUnits(ctx.playerId);
+                    const opponentBoard = ctx.actions.getPlayerBoard(ctx.playerId);
                     let unitToAttack: UnitInstance | null = null;
-                    for (const unitData of opponentBoardUnits) {
-                        if (!unitToAttack) {
-                            unitToAttack = unitData.unit;
+                    for (const slot of opponentBoard) {
+                        if (!slot.unit) {
+                            continue;
                         }
-                        else if (unitToAttack.hp > unitData.unit.hp) {
-                            unitToAttack = unitData.unit;
+
+                        if (!unitToAttack) {
+                            unitToAttack = slot.unit;
+                        }
+                        else if (unitToAttack.hp > slot.unit.hp) {
+                            unitToAttack = slot.unit;
                         }
                     }
 
@@ -208,6 +212,98 @@ const spellList: SpellInstance[] = [
                         const darkOrb = ctx.instances.createSpellInstance("S_10", ctx.playerId);
                         ctx.actions.increaseCardCost(darkOrb, 1);
                         ctx.actions.addSpellToHand(ctx.actions.getPlayerState(ctx.playerId), darkOrb);
+                    }
+                }
+            }
+        ],
+        cost: 3,
+    },
+        {
+        id: "S_12",
+        name: "/kill",
+        type: InstanceType.SPELL,
+        effectDesc: "Kill a unit.",
+        effects: [
+            {
+                trigger: [EFFECT_TRIGGERS.SUMMONED],
+                execute: (ctx: EffectContext) => {
+                    if (ctx.target) {
+                        ctx.actions.attackUnit(ctx.playerId, ctx.target, ctx.target.hp);
+                    }
+                }
+            }
+        ],
+        cost: 5,
+    },
+    {
+        id: "S_13",
+        name: "/mute",
+        type: InstanceType.SPELL,
+        effectDesc: "Silence and paralyze a unit.",
+        effects: [
+            {
+                trigger: [EFFECT_TRIGGERS.SUMMONED],
+                execute: (ctx: EffectContext) => {
+                    if (ctx.target) {
+                        //! how do we handle the statuses
+                    }
+                }
+            }
+        ],
+        cost: 5,
+    },
+    {
+        id: "S_14",
+        name: "Skeleton Army",
+        type: InstanceType.SPELL,
+        effectDesc: "Fill your board with skeletons.",
+        effects: [
+            {
+                trigger: [EFFECT_TRIGGERS.SUMMONED],
+                execute: (ctx: EffectContext) => {
+                    const skeleton = ctx.instances.createUnitInstance("U_16", ctx.playerId);
+                    const playerBoard = ctx.actions.getPlayerBoard(ctx.playerId);
+
+                    for (const slot of playerBoard) {
+                        if (!slot.unit) {
+                            ctx.actions.summonUnit(ctx.playerId, skeleton, slot.index);
+                        }
+                    }
+                }
+            }
+        ],
+        cost: 4,
+    },
+    {
+        id: "S_15",
+        name: "Offering",
+        type: InstanceType.SPELL,
+        effectDesc: "Lose 6 HP, Gain 6$ and draw 2 cards.",
+        effects: [
+            {
+                trigger: [EFFECT_TRIGGERS.SUMMONED],
+                execute: (ctx: EffectContext) => {
+                    ctx.actions.decreasePlayerHealth(ctx.actions.getPlayerState(ctx.playerId), 6);
+                    ctx.actions.increasePlayerMoney(ctx.actions.getPlayerState(ctx.playerId), 6);
+
+                    ctx.actions.drawSpell(ctx.playerId);
+                    ctx.actions.drawSpell(ctx.playerId);
+                }
+            }
+        ],
+        cost: 0,
+    },
+    {
+        id: "S_16",
+        name: "i need more bullets",
+        type: InstanceType.SPELL,
+        effectDesc: "give a unit of yours +2 ATK",
+        effects: [
+            {
+                trigger: [EFFECT_TRIGGERS.SUMMONED],
+                execute: (ctx: EffectContext) => {
+                    if (ctx.target) {
+                        ctx.actions.increaseUnitAttack(ctx.target, 2);
                     }
                 }
             }

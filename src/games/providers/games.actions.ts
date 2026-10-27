@@ -49,52 +49,30 @@ export class GameActions {
         return [...this.state.players.keys()][0] === playerId;
     }
 
-    getPlayerBoard(playerId: string) {
+    getPlayerBoard(playerId: string): ({ unit: UnitInstance | null, index: number })[] {
+        let board: (UnitInstance | null)[] = [];
         if (this.isPlayer1(playerId)) {
-            return this.state.board.slice(0, 4);
+            board = this.state.board.slice(0, 4);
+        }
+        else {
+            board = this.state.board.slice(4, 8);
         }
 
-        return this.state.board.slice(4, 8);
+        const boardWithIndexes: ({ unit: UnitInstance | null, index: number })[] = []
+        for (let i = 0; i < board.length; i++) {
+            if (this.isPlayer1(playerId)) {
+                boardWithIndexes.push({ unit: board[i], index: i });
+            }
+            else {
+                boardWithIndexes.push({ unit: board[i], index: i + 4 });
+            }
+        }
+
+        return boardWithIndexes;
     }
 
     getOpponentBoard(playerId: string) {
-        if (this.isPlayer1(playerId)) {
-            return this.state.board.slice(4, 8);
-        }
-        
-        return this.state.board.slice(0, 4);
-    }
-
-    getPlayerBoardUnits(playerId: string): { unit: UnitInstance, index: number}[] {
-        const playerBoard = this.getPlayerBoard(playerId);
-
-        const boardUnits: { unit: UnitInstance, index: number}[] = []
-
-        for (let i = 0; i < playerBoard.length; i++) {
-            const slot = playerBoard[i];
-
-            if (slot) {
-                boardUnits.push({ unit: slot, index: i })
-            }
-        }
-
-        return boardUnits;
-    }
-
-    getOpponentBoardUnits(playerId: string): { unit: UnitInstance, index: number}[] {
-        const playerBoard = this.getOpponentBoard(playerId);
-
-        const boardUnits: { unit: UnitInstance, index: number}[] = []
-
-        for (let i = 0; i < playerBoard.length; i++) {
-            const slot = playerBoard[i];
-
-            if (slot) {
-                boardUnits.push({ unit: slot, index: i })
-            }
-        }
-
-        return boardUnits;
+        return this.getPlayerBoard(this.getOpponentId(playerId));
     }
 
     getMonsterInfront(boardIndex: number): UnitInstance | null {
@@ -110,6 +88,27 @@ export class GameActions {
     }
 
 
+    // setters
+    setPlayerTurnId(playerId: string) {
+        this.getPlayerState(playerId); // just to check if player exists
+
+        this.state.playerTurnId = playerId;
+    }
+
+    setGamePhase(gamePhase: GamePhase) {
+        this.state.gamePhase = gamePhase
+    }
+
+    setShop(shop: (ArtifactInstance | null)[]) {
+        this.state.shop = shop;
+    }
+
+    refillShop() {
+        this.setShop(fillShop(this.state.shop, this.state.possibleShopPool));
+    }
+
+
+    // helpers (for emitting and running effects)
     //to get the client board location, the only things the server is concerned about are 2 things:
     //1. the card board index
     //2. whether the player who needs the index is the one who owns it
@@ -148,28 +147,6 @@ export class GameActions {
         }
     }
 
-
-    // setters
-    setPlayerTurnId(playerId: string) {
-        this.getPlayerState(playerId); // just to check if player exists
-
-        this.state.playerTurnId = playerId;
-    }
-
-    setGamePhase(gamePhase: GamePhase) {
-        this.state.gamePhase = gamePhase
-    }
-
-    setShop(shop: (ArtifactInstance | null)[]) {
-        this.state.shop = shop;
-    }
-
-    refillShop() {
-        this.setShop(fillShop(this.state.shop, this.state.possibleShopPool));
-    }
-
-
-    // helpers (for emitting and running effects)
     private emitTwoDifferentUpdateCard(playerId: string, card: UnitInstance | SpellInstance) {
         const cardLocation = this.instances.getLocation(card);
 
@@ -246,7 +223,10 @@ export class GameActions {
         }
 
         player.hand.splice(location.index, 1);
-        player.drawpile.push(card);
+
+        if (card.inDeck) {
+            player.drawpile.push(card); // does not add card to drawpile if card is a token card
+        }
 
         card.location = { insideOf: InstanceZone.NONE };
 
@@ -519,8 +499,8 @@ export class GameActions {
 
         this.runTriggerEffects(player.socketId, EFFECT_TRIGGERS.SUMMONED, card);
         
-        this.moveSpellFromHandToDrawpile(player, card);
-        
+        this.moveSpellFromHandToDrawpile(player, card); // also checks for token
+
         this.emitter.opponentPlayedSpell(this.getOpponentId(playerId), card);
 
         this.runTriggerEffects(player.socketId, EFFECT_TRIGGERS.ANY_SPELL_PLAYED);
@@ -537,6 +517,8 @@ export class GameActions {
         const player = this.getPlayerState(playerId);
 
         const hp = this.decreasePlayerHealth(player, amount);
+
+        this.effects.runTriggerEffects(playerId, EFFECT_TRIGGERS.PLAYER_DAMAGED);
 
         if (hp <= 0) {
             this.endGame(this.getOpponentId(playerId));

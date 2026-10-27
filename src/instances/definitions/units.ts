@@ -92,8 +92,8 @@ const unitList: UnitInstance[] = [
                     const playerBoard = ctx.actions.getPlayerBoard(ctx.playerId);
 
                     for (const unit of playerBoard) {
-                        if (unit && unit.id === "U_2") {
-                            ctx.actions.attackUnit(ctx.playerId, unit, unit.hp);
+                        if (unit.unit && unit.unit.id === "U_2") {
+                            ctx.actions.attackUnit(ctx.playerId, unit.unit, unit.unit.hp);
                         }
                     }
                 }
@@ -335,7 +335,122 @@ const unitList: UnitInstance[] = [
         atk: 3,
         cooldown: 0   
     },
+    {
+        id: "U_16",
+        name: "MR BEAST",
+        type: InstanceType.UNIT,
+        effectDesc: "Turn Start: Gain 3$.",
+        effects: [
+             {
+                trigger: [EFFECT_TRIGGERS.TURN_START, EFFECT_TRIGGERS.TURN_END],
+                execute: (ctx: EffectContext) => {
+                    ctx.actions.increasePlayerMoney(ctx.actions.getPlayerState(ctx.playerId), 3);
+                }
+            },
+        ],
+        statuses: [],
+        cost: 6,
+        hp: 5,
+        atk: 5,
+        cooldown: 0   
+    },
+    {
+        id: "U_16",
+        name: "Clash Royale Skeleton",
+        type: InstanceType.UNIT,
+        effectDesc: "",
+        effects: [
+             {
+                trigger: [],
+                execute: (ctx: EffectContext) => {
+
+                }
+            },
+        ],
+        statuses: [],
+        cost: 1,
+        hp: 1,
+        atk: 1,
+        cooldown: 0   
+    },
+    {
+        id: "U_17",
+        name: "Clash Royale Witch",
+        type: InstanceType.UNIT,
+        effectDesc: "Turn Start: Summon a skeleton.",
+        effects: [
+             {
+                trigger: [EFFECT_TRIGGERS.TURN_START],
+                execute: (ctx: EffectContext) => {
+                    const skeleton = ctx.instances.createUnitInstance("U_16", ctx.playerId);
+                    const playerBoard = ctx.actions.getPlayerBoard(ctx.playerId);
+
+                    for (const unit of playerBoard) {
+                        if (!unit.unit) {
+                            ctx.actions.summonUnit(ctx.playerId, skeleton, unit.index);
+                        }
+                    }
+                }
+            },
+        ],
+        statuses: [],
+        cost: 1,
+        hp: 1,
+        atk: 1,
+        cooldown: 0   
+    },
+    {
+        id: "U_18",
+        name: "Dracula",
+        type: InstanceType.UNIT,
+        effectDesc: "Any Died: Gain 2 HP.",
+        effects: [
+             {
+                trigger: [EFFECT_TRIGGERS.ANY_DIED],
+                execute: (ctx: EffectContext) => {
+                    ctx.actions.increaseUnitHealth(ctx.source as UnitInstance, 2);
+                }
+            },
+        ],
+        statuses: [],
+        cost: 7,
+        hp: 3,
+        atk: 6,
+        cooldown: 0   
+    },
+    {
+        id: "U_19",
+        name: "Dio",
+        type: InstanceType.UNIT,
+        effectDesc: "Turn End: Decrease all benched unit cooldowns by 1.",
+        effects: [
+             {
+                trigger: [EFFECT_TRIGGERS.ANY_DIED],
+                execute: (ctx: EffectContext) => {
+                    const bench = ctx.actions.getPlayerState(ctx.playerId).bench;
+
+                    for (let i = 0; i < bench.length; i++) {
+                        const unit = bench[i];
+
+                        if (unit) {
+                            const cooldown = unit?.cooldown;
+
+                            if (cooldown && cooldown >= 1) {
+                                ctx.actions.decreaseUnitCooldown(ctx.playerId, unit, 1);
+                            }
+                        }
+                    }
+                }
+            },
+        ],
+        statuses: [],
+        cost: 6,
+        hp: 5,
+        atk: 5,
+        cooldown: 0   
+    },
 ];
+
 
 export const unitsMap = new Map<string, UnitInstance>(
     unitList.map((spell) => [spell.id, spell])

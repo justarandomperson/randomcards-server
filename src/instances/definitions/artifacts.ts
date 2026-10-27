@@ -34,7 +34,7 @@ const ArtifactList: ArtifactInstance[] = [
                         }
 
                         // rng target
-                        const opponentPlayedUnits = ctx.actions.getOpponentBoardUnits(ctx.playerId);
+                        const opponentBoard = ctx.actions.getOpponentBoard(ctx.playerId);
                         // TODO: randomly choose target
                         // TODO: deal damage to it
                     }
@@ -67,7 +67,7 @@ const ArtifactList: ArtifactInstance[] = [
             {
                 trigger: [EFFECT_TRIGGERS.ANY_SUMMONED],
                 execute: (ctx: EffectContext) => {
-                    const opponentPlayedUnits = ctx.actions.getOpponentBoardUnits(ctx.playerId);
+                    const opponentBoard = ctx.actions.getOpponentBoard(ctx.playerId);
                     // TODO: randomly choose target
                     // TODO: deal damage to it
                 }
@@ -120,7 +120,23 @@ const ArtifactList: ArtifactInstance[] = [
             }
         ],
         cost: 11,     
+    },
+    {
+        id: "A_7",
+        name: "Vitaly's magic machine",
+        type: InstanceType.ARTIFACT,
+        effectDesc: "U forgot about me right? anyway Turn End: Gain 1$.",
+        effects: [
+            {
+                trigger: [EFFECT_TRIGGERS.TURN_END],
+                execute: (ctx: EffectContext) => {
+                    // TODO: this
+                }
+            }
+        ],
+        cost: 9,     
     }
+    
 ];
 
 export const artifactsMap = new Map<string, ArtifactInstance>(
