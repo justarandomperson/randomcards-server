@@ -310,6 +310,22 @@ const spellList: SpellInstance[] = [
         ],
         cost: 3,
     },
+    {
+        id: "S_17",
+        name: "Pot of Greed",
+        type: InstanceType.SPELL,
+        effectDesc: "Draw 2 cards.",
+        effects: [
+            {
+                trigger: [EFFECT_TRIGGERS.SUMMONED],
+                execute: (ctx: EffectContext) => {
+                    ctx.actions.drawSpell(ctx.playerId);
+                    ctx.actions.drawSpell(ctx.playerId);
+                }
+            }
+        ],
+        cost: 2,
+    },
 ];
 
 export const spellsMap = new Map<string, SpellInstance>(

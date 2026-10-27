@@ -54,6 +54,7 @@ export const EFFECT_TRIGGERS = {
   DEATH: 'death',
   KILL: 'kill',
   DAMAGED: 'damaged',
+  ATTACKED: 'attacked',
   COOLDOWN_END: 'cooldown_end',
 
   PLAYER_DAMAGED: 'player_damaged',

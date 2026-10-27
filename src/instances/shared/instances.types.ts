@@ -16,11 +16,18 @@ export type UnitInstance = {
   type: InstanceType.UNIT
   effectDesc: string
   effects: Effect[]
-  statuses: Status[]
+    statuses: {
+    haste: boolean
+    taunt: boolean
+    paralyzed: boolean
+    silenced: boolean
+    dodge: number
+  }
   cost: number
   atk: number
   hp: number
   cooldown: number
+  canAttack?: boolean
   location?: InstanceLocation
   assignedBenchSlot?: number
 };

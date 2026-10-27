@@ -1,5 +1,5 @@
 import { WsException } from '@nestjs/websockets';
-import { UnitInstance, SpellInstance, CardInstance, AnyInstance, InstanceLocation, InstanceZone } from './shared/instances.types';
+import { UnitInstance, SpellInstance, CardInstance, AnyInstance, InstanceLocation, InstanceZone, InstanceType, ArtifactInstance } from './shared/instances.types';
 import { spellsMap } from './definitions/spells';
 import { unitsMap } from './definitions/units';
 
@@ -27,6 +27,20 @@ export class InstancesService {
         };
 
         return cardInstance;
+    }
+
+    typeInstance(instance: AnyInstance): UnitInstance;
+    typeInstance(instance: AnyInstance): SpellInstance;
+    typeInstance(instance: AnyInstance): ArtifactInstance;
+    typeInstance(instance: AnyInstance): AnyInstance {
+        if (instance.type === InstanceType.UNIT) {
+            return instance as UnitInstance;
+        }
+        if (instance.type === InstanceType.SPELL) {
+            return instance as SpellInstance;
+        }
+
+        return instance as ArtifactInstance;
     }
 
     getOwnerId(instance: AnyInstance): string {

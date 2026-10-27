@@ -3,7 +3,7 @@ import { IsString } from "class-validator";
 
 export default class AttackUnitDto {
     @IsString()
-    instanceId: string;
+    attackerId: string;
 
     @IsString()
     targetId: string;

@@ -95,7 +95,7 @@ const ArtifactList: ArtifactInstance[] = [
         name: "Infused Core",
         type: InstanceType.ARTIFACT,
         effectDesc: "Add 3 Lightning Orbs to your hand. \n" +
-                    "Lightning Orbs deal 1 additional damage.",
+                    "Lightning Orbs deal 1 additional damage.", //! i dont think we can do that part now. do it? or nah?
         effects: [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
@@ -113,13 +113,25 @@ const ArtifactList: ArtifactInstance[] = [
         effectDesc: "If you reach exactly 1 HP, you deal 10 damage to all off the opponent's units.",
         effects: [
             {
-                trigger: [EFFECT_TRIGGERS.PLAYER_DAMAGED],
+                trigger: [EFFECT_TRIGGERS.PLAYER_DAMAGED], // TODO: integrate PLAYER_DAMAGED and make it work
                 execute: (ctx: EffectContext) => {
-                    // TODO: this
+                    const playerHp = ctx.actions.getPlayerState(ctx.playerId).hp;
+
+                    if (playerHp === 1) {
+                        const playerBoard = ctx.actions.getOpponentBoard(ctx.playerId);
+
+                        for (let i = 0; i < playerBoard.length; i++) {
+                            const slot = playerBoard[i];
+
+                            if (slot.unit) {
+                                ctx.actions.attackUnit(ctx.playerId, slot.unit, 10);
+                            }
+                        }
+                    }
                 }
             }
         ],
-        cost: 11,     
+        cost: 9,     
     },
     {
         id: "A_7",
@@ -130,11 +142,26 @@ const ArtifactList: ArtifactInstance[] = [
             {
                 trigger: [EFFECT_TRIGGERS.TURN_END],
                 execute: (ctx: EffectContext) => {
-                    // TODO: this
+                    ctx.actions.increasePlayerMoney(ctx.actions.getPlayerState(ctx.playerId), 1);
                 }
             }
         ],
         cost: 9,     
+    },
+    {
+        id: "A_8",
+        name: "Armor kind of",
+        type: InstanceType.ARTIFACT,
+        effectDesc: "Every time you get hit, heal 2 HP.",
+        effects: [
+            {
+                trigger: [EFFECT_TRIGGERS.PLAYER_DAMAGED],
+                execute: (ctx: EffectContext) => {
+                    ctx.actions.increasePlayerHealth(ctx.actions.getPlayerState(ctx.playerId), 2);
+                }
+            }
+        ],
+        cost: 10,     
     }
     
 ];

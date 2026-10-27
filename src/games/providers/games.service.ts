@@ -208,18 +208,33 @@ export class GamesService {
 
         const { attacker, target } = this.validateAttackUnit(game, player, dto);
 
-
-        game.actions.attackUnit(player.socketId, target, attacker.atk);
-        game.actions.attackUnit(player.socketId, attacker, target.atk);
+        game.actions.attackUnit(playerId, target, attacker.atk);
+        game.actions.attackUnit(game.actions.getOpponentState(playerId).socketId, attacker, target.atk);
     }
 
     private validateAttackUnit(game: Game, player: PlayerState, dto: AttackUnitDto): { attacker: UnitInstance, target: UnitInstance } {
-        const attacker = this.instances.findInstance(dto.instanceId, game.state.board);
+        const attacker = this.instances.findInstance(dto.attackerId, game.state.board);
         if (attacker.ownerId != player.socketId) {
             throw new WsException("Invalid attacker");
         }
-        if (attacker.statuses.includes(Status.PARALYZED)) {
+
+        //? paralyzed units can still attack if they are ordered to through effects right?
+        if (attacker.statuses.paralyzed) {
             throw new WsException("attacker is paralyzed");
+        }
+
+        if (!attacker.canAttack && !attacker.statuses.haste) {
+            throw new WsException("attacker cant attack");
+        }
+
+        //? units can still attack enemy units without taunt when they have a taunt unit on board through effects right?
+        const opponentBoard = game.actions.getOpponentBoard(player.socketId);
+        for (const slot of opponentBoard) {
+            const unit = slot.unit;
+
+            if (unit && unit.statuses.taunt && this.instances.getInstanceId(unit) !== dto.targetId) {
+                throw new WsException("another enemy unit has taunt"); 
+            }
         }
 
         const target = this.instances.findInstance(dto.targetId, game.state.board);
@@ -234,13 +249,32 @@ export class GamesService {
         const attacker = this.validateAttackPlayer(game, player, dto);
         const target = (dto.isAttackOpponent) ? this.getOpponentState(gameId, playerId) : player;
 
-        game.actions.attackPlayer(target.socketId, attacker.atk);
+        game.actions.attackPlayer(target.socketId, attacker.atk, attacker);
     }
 
     private validateAttackPlayer(game: Game, player: PlayerState, dto: AttackPlayerDto): UnitInstance {
         const attacker = this.instances.findInstance(dto.attackerId, game.state.board);
         if (attacker.ownerId != player.socketId) {
             throw new WsException("Invalid attacker");
+        }
+
+        //? paralyzed units can still attack if they are ordered to through effects right?
+        if (attacker.statuses.paralyzed) {
+            throw new WsException("attacker is paralyzed");
+        }
+
+        if (!attacker.canAttack && !attacker.statuses.haste) {
+            throw new WsException("attacker cant attack");
+        }
+
+        //? units can still attack enemy units without taunt when they have a taunt unit on board through effects right?
+        const opponentBoard = game.actions.getOpponentBoard(player.socketId);
+        for (const slot of opponentBoard) {
+            const unit = slot.unit;
+
+            if (unit && unit.statuses.taunt) {
+                throw new WsException("an enemy unit has taunt"); 
+            }
         }
 
         return attacker; 

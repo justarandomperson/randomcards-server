@@ -75,7 +75,7 @@ export class GameActions {
         return this.getPlayerBoard(this.getOpponentId(playerId));
     }
 
-    getMonsterInfront(boardIndex: number): UnitInstance | null {
+    getUnitInfront(boardIndex: number): UnitInstance | null {
         if (boardIndex < 0) {
             throw new WsException("boardIndex doesnt exist");
         }
@@ -352,25 +352,60 @@ export class GameActions {
         return card.cooldown;
     }
 
-    addUnitStatus(card: UnitInstance, status: Status): boolean {
-        if (card.statuses.includes(status)) {
-            return false;
-        }
+    addUnitStatus(card: UnitInstance, status: Status) {
+        switch (status) {
+            case Status.HASTE:
+                card.statuses.haste = true;
+                break;
 
-        card.statuses.push(status);
-        return true;
+            case Status.TAUNT:
+                card.statuses.taunt = true;
+                break;
+
+            case Status.PARALYZED:
+                card.statuses.paralyzed = true;
+                break;
+
+            case Status.SILENCED:
+                card.statuses.silenced = true;
+                break;
+
+            case Status.DODGE:
+                card.statuses.dodge += 1;
+                break;
+        }
     }
 
-    removeUnitStatus(card: UnitInstance, status: Status): boolean {
-        const statusIndex = card.statuses.indexOf(status);
+    removeUnitStatus(card: UnitInstance, status: Status) {
+        switch (status) {
+            case Status.HASTE:
+                card.statuses.haste = false;
+                break;
 
-        if (statusIndex) {
-            card.statuses.splice(statusIndex, 1);
-            return true;
+            case Status.TAUNT:
+                card.statuses.taunt = false;
+                break;
+
+            case Status.PARALYZED:
+                card.statuses.paralyzed = false;
+                break;
+
+            case Status.SILENCED:
+                card.statuses.silenced = false;
+                break;
+
+            case Status.DODGE: {
+                card.statuses.dodge -= 1;
+
+                if (card.statuses.dodge < 0) {
+                    card.statuses.dodge = 0;
+                }
+
+                break;
+            }
         }
-
-        return false;
     }
+
 
     // change player data
     decreasePlayerHealth(player: PlayerState, amount: number): number {
@@ -452,10 +487,11 @@ export class GameActions {
                 return; // no place left to summon
             }
         }
-        else 
-        {
+        else {
             boardIndex = translateBoardIndex(boardIndex, isPlayer1)
         }
+
+        card.canAttack = false; // just summoned to board so cannot attack.
 
         this.moveUnitFromBenchToBoard(player, card, boardIndex);
         this.emitTwoDifferentUpdateCard(player.socketId, card);
@@ -464,10 +500,17 @@ export class GameActions {
         this.runTriggerEffects(player.socketId, EFFECT_TRIGGERS.ANY_SUMMONED);
     }
 
-    attackUnit(playerId: string, card: UnitInstance, amount: number) {
+    attackUnit(playerId: string, card: UnitInstance, amount: number, attacker?: UnitInstance) {
         const player = this.getPlayerState(playerId);
 
-        if (card.statuses.includes(Status.DODGE)) {
+        if (attacker) {
+            this.removeUnitStatus(attacker, Status.HASTE);
+            attacker.canAttack = false;
+
+            this.runTriggerEffects(this.instances.getOwnerId(attacker), EFFECT_TRIGGERS.ATTACKED, attacker);
+        }
+
+        if (card.statuses.dodge > 0) {
             this.removeUnitStatus(card, Status.DODGE);
         }
         else {
@@ -513,8 +556,15 @@ export class GameActions {
         this.addSpellToHand(player, spell);
     }
 
-    attackPlayer(playerId: string, amount: number) {
+    attackPlayer(playerId: string, amount: number, attacker?: UnitInstance) {
         const player = this.getPlayerState(playerId);
+
+        if (attacker) {
+            this.removeUnitStatus(attacker, Status.HASTE);
+            attacker.canAttack = false;
+
+            this.runTriggerEffects(this.instances.getOwnerId(attacker), EFFECT_TRIGGERS.ATTACKED, attacker);
+        }
 
         const hp = this.decreasePlayerHealth(player, amount);
 
@@ -544,11 +594,13 @@ export class GameActions {
     startTurn() {
         const players = [...this.state.players.values()]
 
+        // change phase is needed
         const phaseChanged = shouldSwitchPhase(this.state.gamePhase, players[0].turn, players[1].turn);
         if (phaseChanged) {
             this.changeGamePhase();
         }
 
+        // set player id (different algorithm depending on the phase)
         if (this.state.gamePhase === GamePhase.PLAY || !phaseChanged) { // dont run for if shopPhase just started
             const opponent = this.getOpponentState(this.state.playerTurnId);
             this.setPlayerTurnId(opponent.socketId);
@@ -558,6 +610,7 @@ export class GameActions {
             this.setPlayerTurnId(lessHpId);
         }
 
+        // start of turn stuff
         switch(this.state.gamePhase) {
             case GamePhase.PLAY: {
                 const player = this.getPlayerState(this.state.playerTurnId);
@@ -569,7 +622,7 @@ export class GameActions {
             }
 
             case GamePhase.SHOP:
-                this.startTurnShop();
+                this.refillShop();
                 break;
         }
 
@@ -590,10 +643,13 @@ export class GameActions {
 
         const newMoney = calculateTurnStartMoney(player.turn);
         this.increasePlayerMoney(player, newMoney);
-    }
 
-    private startTurnShop() {
-        this.refillShop();
+        const playerBoard = this.getPlayerBoard(player.socketId);
+        for (const slot of playerBoard) {
+            if (slot.unit) {
+                slot.unit.canAttack = true;
+            }
+        }
     }
 
     runCurrentEffect(player: PlayerState) {

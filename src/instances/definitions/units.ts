@@ -9,7 +9,13 @@ const unitList: UnitInstance[] = [
         type: InstanceType.UNIT,
         effectDesc: "im dog",
         effects: [],
-        statuses: [],
+        statuses: {
+            haste: false,
+            taunt: false,
+            paralyzed: false,
+            silenced: false,
+            dodge: 0
+        },
         cost: 2,
         hp: 1,
         atk: 2,
@@ -21,7 +27,13 @@ const unitList: UnitInstance[] = [
         type: InstanceType.UNIT,
         effectDesc: "although i may look like it, im not dog. have a wonderful rest of your day!",
         effects: [],
-        statuses: [],
+        statuses: {
+            haste: false,
+            taunt: false,
+            paralyzed: false,
+            silenced: false,
+            dodge: 0
+        },
         cost: 2, 
         hp: 2,
         atk: 1,
@@ -41,7 +53,13 @@ const unitList: UnitInstance[] = [
                 }
             }
         ],
-        statuses: [],
+        statuses: {
+            haste: false,
+            taunt: false,
+            paralyzed: false,
+            silenced: false,
+            dodge: 0
+        },
         cost: 6,
         hp: 1,
         atk: 1,
@@ -62,7 +80,13 @@ const unitList: UnitInstance[] = [
                 }            
             }
         ],
-        statuses: [],
+        statuses: {
+            haste: false,
+            taunt: false,
+            paralyzed: false,
+            silenced: false,
+            dodge: 0
+        },
         cost: 6,
         hp: 6,
         atk: 6,
@@ -99,7 +123,13 @@ const unitList: UnitInstance[] = [
                 }
             }
         ],
-        statuses: [],
+        statuses: {
+            haste: false,
+            taunt: false,
+            paralyzed: false,
+            silenced: false,
+            dodge: 0
+        },
         cost: 6,
         hp: 4,
         atk: 1,
@@ -109,31 +139,43 @@ const unitList: UnitInstance[] = [
        id: "U_6",
         name: "Silverfish",
         type: InstanceType.UNIT,
-        effectDesc: "Haste and Dodge.", //? maybe should i turn it to an effect, Summon: gain haste and dodge?
+        effectDesc: "Dodge (1). Haste.",
         effects: [],
-        statuses: [Status.HASTE, Status.DODGE],
-        cost: 6,
-        hp: 4,
-        atk: 1,
+        statuses: {
+            haste: true,
+            taunt: false,
+            paralyzed: false,
+            silenced: false,
+            dodge: 1
+        },
+        cost: 2,
+        hp: 2,
+        atk: 2,
         cooldown: 0  
     },
     {
         id: "U_7",
         name: "Endermite",
         type: InstanceType.UNIT,
-        effectDesc: "Damaged: paralyze the attacker.",
+        effectDesc: "Taunt. Damaged: paralyze the attacker.",
         effects: [
             {
                 trigger: [EFFECT_TRIGGERS.DAMAGED],
                 execute: (ctx: EffectContext) => {
-                    // TODO: idk how to get the attacker we need to do that too
+                    //! we cant get the attacker now. either delete this card or make it work
                 }
             }
         ],
-        statuses: [Status.TAUNT],
-        cost: 4,
+        statuses: {
+            haste: false,
+            taunt: true,
+            paralyzed: false,
+            silenced: false,
+            dodge: 0
+        },
+        cost: 3,
         hp: 3,
-        atk: 4,
+        atk: 3,
         cooldown: 0   
     },
     {
@@ -150,7 +192,13 @@ const unitList: UnitInstance[] = [
                 }
             }
         ],
-        statuses: [],
+        statuses: {
+            haste: false,
+            taunt: false,
+            paralyzed: false,
+            silenced: false,
+            dodge: 0
+        },
         cost: 4,
         hp: 3,
         atk: 4,
@@ -173,7 +221,13 @@ const unitList: UnitInstance[] = [
                 }
             }
         ],
-        statuses: [Status.HASTE],
+        statuses: {
+            haste: false,
+            taunt: false,
+            paralyzed: false,
+            silenced: false,
+            dodge: 0
+        },        
         cost: 6,
         hp: 6,
         atk: 3,
@@ -192,7 +246,13 @@ const unitList: UnitInstance[] = [
                 }
             }
         ],
-        statuses: [Status.HASTE],
+        statuses: {
+            haste: true,
+            taunt: false,
+            paralyzed: false,
+            silenced: false,
+            dodge: 0
+        },   
         cost: 6,
         hp: 8,
         atk: 2,
@@ -226,7 +286,13 @@ const unitList: UnitInstance[] = [
             },
 
         ],
-        statuses: [],
+        statuses: {
+            haste: false,
+            taunt: false,
+            paralyzed: false,
+            silenced: false,
+            dodge: 0
+        },
         cost: 5,
         hp: 4,
         atk: 4,
@@ -246,7 +312,13 @@ const unitList: UnitInstance[] = [
                 }
             },
         ],
-        statuses: [],
+        statuses: {
+            haste: false,
+            taunt: false,
+            paralyzed: false,
+            silenced: false,
+            dodge: 0
+        },
         cost: 3,
         hp: 5,
         atk: 0,
@@ -266,7 +338,13 @@ const unitList: UnitInstance[] = [
                 }
             },
         ],
-        statuses: [],
+        statuses: {
+            haste: false,
+            taunt: false,
+            paralyzed: false,
+            silenced: false,
+            dodge: 0
+        },
         cost: 3,
         hp: 5,
         atk: 0,
@@ -286,7 +364,13 @@ const unitList: UnitInstance[] = [
                 }
             },
         ],
-        statuses: [],
+        statuses: {
+            haste: false,
+            taunt: false,
+            paralyzed: false,
+            silenced: false,
+            dodge: 0
+        },
         cost: 4,
         hp: 5,
         atk: 3,
@@ -301,11 +385,33 @@ const unitList: UnitInstance[] = [
              {
                 trigger: [EFFECT_TRIGGERS.TURN_END],
                 execute: (ctx: EffectContext) => {
-                   // TODO: this
+                    // TODO: add silencing
+                    const opponentBoard = ctx.actions.getOpponentBoard(ctx.playerId);
+
+                    let leftmostSlot: { unit: UnitInstance | null; index: number; } | null = null;
+                    for (let i = 0; i < opponentBoard.length; i++) {
+                        if (opponentBoard) {
+                            leftmostSlot = opponentBoard[i];
+                        }
+                    }
+
+                    const unitToAttack = leftmostSlot?.unit;
+                    if (leftmostSlot && unitToAttack) {
+                        ctx.actions.attackUnit(ctx.playerId, unitToAttack, unitToAttack.hp);
+
+                        const defaultUnit = ctx.instances.createUnitInstance(unitToAttack.id, ctx.actions.getOpponentId(ctx.playerId));
+                        ctx.actions.summonUnit(ctx.playerId, defaultUnit, leftmostSlot.index);
+                    }
                 }
             },
         ],
-        statuses: [],
+        statuses: {
+            haste: false,
+            taunt: false,
+            paralyzed: false,
+            silenced: false,
+            dodge: 0
+        },
         cost: 10,
         hp: 10,
         atk: 8,
@@ -320,7 +426,7 @@ const unitList: UnitInstance[] = [
              {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
                 execute: (ctx: EffectContext) => {
-                    const monsterInfront = ctx.actions.getMonsterInfront(ctx.instances.getLocationIndex(ctx.source, InstanceZone.BOARD));
+                    const monsterInfront = ctx.actions.getUnitInfront(ctx.instances.getLocationIndex(ctx.source, InstanceZone.BOARD));
 
                     if (monsterInfront) {
                         ctx.source.effects = monsterInfront.effects;
@@ -329,8 +435,14 @@ const unitList: UnitInstance[] = [
                 }
             },
         ],
-        statuses: [],
-        cost: 7,
+        statuses: {
+            haste: false,
+            taunt: false,
+            paralyzed: false,
+            silenced: false,
+            dodge: 0
+        },
+        cost: 6,
         hp: 3,
         atk: 3,
         cooldown: 0   
@@ -348,7 +460,13 @@ const unitList: UnitInstance[] = [
                 }
             },
         ],
-        statuses: [],
+        statuses: {
+            haste: false,
+            taunt: false,
+            paralyzed: false,
+            silenced: false,
+            dodge: 0
+        },
         cost: 6,
         hp: 5,
         atk: 5,
@@ -359,15 +477,14 @@ const unitList: UnitInstance[] = [
         name: "Clash Royale Skeleton",
         type: InstanceType.UNIT,
         effectDesc: "",
-        effects: [
-             {
-                trigger: [],
-                execute: (ctx: EffectContext) => {
-
-                }
-            },
-        ],
-        statuses: [],
+        effects: [],
+        statuses: {
+            haste: false,
+            taunt: false,
+            paralyzed: false,
+            silenced: false,
+            dodge: 0
+        },
         cost: 1,
         hp: 1,
         atk: 1,
@@ -393,7 +510,13 @@ const unitList: UnitInstance[] = [
                 }
             },
         ],
-        statuses: [],
+        statuses: {
+            haste: false,
+            taunt: false,
+            paralyzed: false,
+            silenced: false,
+            dodge: 0
+        },
         cost: 1,
         hp: 1,
         atk: 1,
@@ -412,7 +535,13 @@ const unitList: UnitInstance[] = [
                 }
             },
         ],
-        statuses: [],
+        statuses: {
+            haste: false,
+            taunt: false,
+            paralyzed: false,
+            silenced: false,
+            dodge: 0
+        },
         cost: 7,
         hp: 3,
         atk: 6,
@@ -443,10 +572,51 @@ const unitList: UnitInstance[] = [
                 }
             },
         ],
-        statuses: [],
+        statuses: {
+            haste: false,
+            taunt: false,
+            paralyzed: false,
+            silenced: false,
+            dodge: 0
+        },
         cost: 6,
         hp: 5,
         atk: 5,
+        cooldown: 0   
+    },
+    {
+        id: "U_20",
+        name: "Random!Sans",
+        type: InstanceType.UNIT,
+        effectDesc: "Dodge (3). Turn End: Gain +1 ATK. \n " + 
+                    "Turn Start: If at 8 ATK or more, Gaster Blast 3 random enemies (including opponent), and reset ATK to 1.",
+        effects: [
+            {
+                trigger: [EFFECT_TRIGGERS.TURN_END],
+                execute: (ctx: EffectContext) => {
+                    ctx.actions.increaseUnitAttack(ctx.source as UnitInstance, 1);
+                }
+            },
+            {
+                trigger: [EFFECT_TRIGGERS.TURN_START],
+                execute: (ctx: EffectContext) => {
+                    const source = ctx.source as UnitInstance;
+                    if (source.atk >= 7) {
+                        // TODO: randomly choose enemies
+                    }
+                }
+            }
+        ],
+        statuses: {
+            haste: false,
+            taunt: false,
+            paralyzed: false,
+            silenced: false,
+            dodge: 3
+        },
+        cost: 4,
+        hp: 1,
+        atk: 1,
         cooldown: 0   
     },
 ];

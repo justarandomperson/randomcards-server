@@ -44,7 +44,7 @@ export class EffectsService {
             case EFFECT_TRIGGERS.ANY_KILLED:
             case EFFECT_TRIGGERS.ANY_SPELL_PLAYED:
             case EFFECT_TRIGGERS.ANY_SUMMONED:
-                return this.runTurnStartEndEffects(playerId, trigger);
+                return this.runUnspecificEffects(playerId, trigger);
 
             default:
                 if (!sourceInstance) {
@@ -56,7 +56,7 @@ export class EffectsService {
         }
     }
 
-    private runTurnStartEndEffects(playerId: string, trigger: EffectTrigger): boolean {
+    private runUnspecificEffects(playerId: string, trigger: EffectTrigger): boolean {
         let needsTarget = false;
 
         const playersSummonedUnits = this.state.board.filter(
