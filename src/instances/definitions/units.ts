@@ -73,9 +73,10 @@ const unitList: UnitInstance[] = [
         effects: [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
+                hasTarget: true,
                 execute: (ctx: EffectContext) => {
                     if (ctx.target) {
-                        ctx.actions.attackUnit(ctx.playerId, ctx.target, 1);
+                        ctx.actions.decreaseUnitHealth(ctx.target, 1);
                     }          
                 }            
             }

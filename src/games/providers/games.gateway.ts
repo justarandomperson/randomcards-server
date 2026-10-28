@@ -189,7 +189,7 @@ export class GamesGateway implements OnGatewayInit, OnGatewayDisconnect {
 	}
 
 	
-	@SubscribeMessage(SOCKET_EVENT_NAMES.SELECT_TARGET)
+	@SubscribeMessage(SOCKET_EVENT_NAMES.SELECTED_TARGET)
 	selectTarget(@ConnectedSocket() client: Socket, @MessageBody() selectedTargetDto: SelectedTargetDto) {
 		const gameId = this.getClientGameId(client)
 		

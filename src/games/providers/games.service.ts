@@ -213,7 +213,7 @@ export class GamesService {
     }
 
     private validateAttackUnit(game: Game, player: PlayerState, dto: AttackUnitDto): { attacker: UnitInstance, target: UnitInstance } {
-        const attacker = this.instances.findInstance(dto.attackerId, game.state.board);
+        const attacker = this.instances.findInstance(dto.instanceId, game.state.board);
         if (attacker.ownerId != player.socketId) {
             throw new WsException("Invalid attacker");
         }
@@ -284,6 +284,7 @@ export class GamesService {
         const game = this.getGame(gameId)
         const player = game.actions.getPlayerState(playerId);
 
-        game.actions.runCurrentEffect(player);
+
+        game.actions.runCurrentEffect(player, targetId);
     }
 }

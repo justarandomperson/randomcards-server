@@ -652,14 +652,17 @@ export class GameActions {
         }
     }
 
-    runCurrentEffect(player: PlayerState) {
+    runCurrentEffect(player: PlayerState, targetId: string) {
         if (!player.currentEffects[0]) {
             return; //? or do we need to throw an error
         }
 
         const { effect, source } = player.currentEffects[0];
 
-        this.effects.runEffect(effect, player.socketId, source);
+        //TODO: find target instance by target id
+        const target = undefined
+
+        this.effects.runEffect(effect, player.socketId, source, target);
         
         this.shiftPlayerCurrentEffect(player);
     }

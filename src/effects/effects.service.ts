@@ -29,8 +29,8 @@ export class EffectsService {
 
 
     // services
-    runEffect(effect: Effect, playerId: string, source: AnyInstance, targetId?: UnitInstance) {
-        const context = this.getEffectContext(playerId, source, targetId);
+    runEffect(effect: Effect, playerId: string, source: AnyInstance, target?: UnitInstance) {
+        const context = this.getEffectContext(playerId, source, target);
         effect.execute(context);
     }
 

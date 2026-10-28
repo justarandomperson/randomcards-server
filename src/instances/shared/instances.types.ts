@@ -93,7 +93,13 @@ export type ClientUnitData = {
   name: string
   type: InstanceType.UNIT
   effectDesc: string
-  statuses: Status[]
+  statuses:   
+  {haste: boolean
+    taunt: boolean
+    paralyzed: boolean
+    silenced: boolean
+    dodge: number
+  }
   cost: number
   hp: number
   atk: number

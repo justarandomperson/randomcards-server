@@ -39,10 +39,11 @@ export const SOCKET_EVENT_NAMES = { // this is used both on 'emit' and on 'on'
   END_TURN: 'end_turn',
   ATTACK_UNIT: 'attack_unit',
   ATTACK_PLAYER: 'attack_player',
-  SELECT_TARGET: 'select_target',
+  SELECTED_TARGET: 'selected_target',
 
   MATCH_START: 'match_start',
   START_TURN: 'start_turn',
+  SELECT_TARGET: 'select_target',
   UPDATE_GAME_PHASE: 'update_game_phase',
   UPDATE_MONEY: 'update_money',
   UPDATE_HEALTH: 'update_health',
