@@ -15,9 +15,9 @@ import { GameActions } from './games.actions';
 import { Server } from 'socket.io';
 import { GamesEmitter } from './games.emitter';
 import { fillShop, translateBoardIndex } from '../logic/serviceHelpers';
-import { Status } from '../../effects/effects.types';
 import { InstancesService } from '../../instances/instances.service';
 import { artifactsMap } from '../../instances/definitions/artifacts';
+import SelectedTargetDto from '../dto/selected-target.dto';
 
 
 @Injectable()
@@ -213,7 +213,7 @@ export class GamesService {
     }
 
     private validateAttackUnit(game: Game, player: PlayerState, dto: AttackUnitDto): { attacker: UnitInstance, target: UnitInstance } {
-        const attacker = this.instances.findInstance(dto.instanceId, game.state.board);
+        const attacker = this.instances.findInstance(dto.attackerId, game.state.board);
         if (attacker.ownerId != player.socketId) {
             throw new WsException("Invalid attacker");
         }
@@ -253,19 +253,7 @@ export class GamesService {
     }
 
     private validateAttackPlayer(game: Game, player: PlayerState, dto: AttackPlayerDto): UnitInstance {
-        const attacker = this.instances.findInstance(dto.attackerId, game.state.board);
-        if (attacker.ownerId != player.socketId) {
-            throw new WsException("Invalid attacker");
-        }
-
-        //? paralyzed units can still attack if they are ordered to through effects right?
-        if (attacker.statuses.paralyzed) {
-            throw new WsException("attacker is paralyzed");
-        }
-
-        if (!attacker.canAttack && !attacker.statuses.haste) {
-            throw new WsException("attacker cant attack");
-        }
+        const attacker = this.validateAttackAny(game, player, dto);
 
         //? units can still attack enemy units without taunt when they have a taunt unit on board through effects right?
         const opponentBoard = game.actions.getOpponentBoard(player.socketId);
@@ -280,11 +268,56 @@ export class GamesService {
         return attacker; 
     }
 
-    runCurrentEffect(gameId: string, playerId: string, targetId) {
-        const game = this.getGame(gameId)
+    private validateAttackAny(game: Game, player: PlayerState, dto: AttackUnitDto | AttackPlayerDto): UnitInstance {
+        const attacker = this.instances.findInstance(dto.attackerId, game.state.board);
+        if (attacker.ownerId != player.socketId) {
+            throw new WsException("Invalid attacker");
+        }
+
+        //? paralyzed units can still attack if they are ordered to through effects right?
+        if (attacker.statuses.paralyzed) {
+            throw new WsException("attacker is paralyzed");
+        }
+
+        if (!attacker.canAttack && !attacker.statuses.haste) {
+            throw new WsException("attacker cant attack");
+        }
+
+        return attacker;
+    }
+
+    runCurrentEffect(gameId: string, playerId: string, dto: SelectedTargetDto) {
+        const game = this.getGame(gameId);
         const player = game.actions.getPlayerState(playerId);
 
+        const { targetUnit, targetPlayerId } = this.validateRunCurrentEffect(game, dto);
 
-        game.actions.runCurrentEffect(player, targetId);
+        game.actions.runCurrentEffect(player, targetUnit, targetPlayerId);
+    }
+
+    private validateRunCurrentEffect(game: Game, dto: SelectedTargetDto): { targetUnit?: UnitInstance, targetPlayerId?: string } {
+        if (dto.isPlayer) {
+            const playerKeys = [...game.state.players.keys()];
+
+            for (let i = 0; playerKeys; i++) {
+                if (dto.id === playerKeys[i]) {
+                    return { targetPlayerId: playerKeys[i] };
+                }
+            }
+
+            throw new WsException('target is marked as player but id does not fit any player in game');
+        }
+        else {
+            const board = game.state.board;
+
+            for (let i = 0; i < board.length; i++) {
+                const slot = board[i];
+                if (slot && dto.id === slot.instanceId) {
+                    return { targetUnit: slot };
+                }
+            }
+
+            throw new WsException('target is marked as unit but id does not fit any unit on board');
+        }
     }
 }

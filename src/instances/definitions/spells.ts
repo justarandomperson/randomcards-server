@@ -1,4 +1,4 @@
-import { EFFECT_TRIGGERS, EffectContext } from "../../effects/effects.types";
+import { EFFECT_TRIGGERS, EffectContext, Status } from "../../effects/effects.types";
 import { InstanceType, SpellInstance, UnitInstance } from "../shared/instances.types";
 
 
@@ -22,8 +22,8 @@ const spellList: SpellInstance[] = [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
                 execute: (ctx: EffectContext) => {
-                    if (ctx.target) {
-                        ctx.actions.increaseUnitAttack(ctx.target, 2);
+                    if (ctx.data.targetUnit) {
+                        ctx.actions.increaseUnitAttack(ctx.data.targetUnit, 2);
                     }
                 }
             }
@@ -39,9 +39,9 @@ const spellList: SpellInstance[] = [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
                 execute: (ctx: EffectContext) => {
-                    if (ctx.target) {
-                        ctx.actions.attackPlayer(ctx.playerId, 3);
-                        ctx.actions.increaseUnitHealth(ctx.target, 3);
+                    if (ctx.data.targetUnit) {
+                        ctx.actions.attackPlayer(ctx.data.playerId, 3);
+                        ctx.actions.increaseUnitHealth(ctx.data.targetUnit, 3);
                     }
                 }
             }
@@ -57,8 +57,8 @@ const spellList: SpellInstance[] = [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
                 execute: (ctx: EffectContext) => {
-                    if (ctx.target) {
-                        ctx.actions.increaseUnitCooldown(ctx.target, -1);
+                    if (ctx.data.targetUnit) {
+                        ctx.actions.increaseUnitCooldown(ctx.data.targetUnit, -1);
                     }   
                 }
             }
@@ -74,8 +74,8 @@ const spellList: SpellInstance[] = [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
                 execute: (ctx: EffectContext) => {
-                    if (ctx.target) {
-                        ctx.actions.attackUnit(ctx.playerId, ctx.target, 8);
+                    if (ctx.data.targetUnit) {
+                        ctx.actions.attackUnit(ctx.data.playerId, ctx.data.targetUnit, 8);
                     }
                 }
             }
@@ -91,8 +91,8 @@ const spellList: SpellInstance[] = [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
                 execute: (ctx: EffectContext) => {
-                    if (ctx.target) {
-                        ctx.actions.increaseUnitAttack(ctx.target, 2);
+                    if (ctx.data.targetUnit) {
+                        ctx.actions.increaseUnitAttack(ctx.data.targetUnit, 2);
                     }
                 }
             }
@@ -108,12 +108,12 @@ const spellList: SpellInstance[] = [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
                 execute: (ctx: EffectContext) => {
-                    if (ctx.target) {
-                        ctx.actions.attackUnit(ctx.playerId, ctx.target, 3);
+                    if (ctx.data.targetUnit) {
+                        ctx.actions.attackUnit(ctx.data.playerId, ctx.data.targetUnit, 3);
                     }
 
                     // Note: do silent's effect of giving any of your silents +1 ATK
-                    const playersBoard = ctx.actions.getPlayerBoard(ctx.playerId);
+                    const playersBoard = ctx.actions.getPlayerBoard(ctx.data.playerId);
                     for (const slot of playersBoard) {
                         if (slot.unit && slot.unit.id === 'U_8') {
                             ctx.actions.increaseUnitAttack(slot.unit, 1);
@@ -148,8 +148,8 @@ const spellList: SpellInstance[] = [
             {
                 trigger: [EFFECT_TRIGGERS.ANY_SUMMONED],
                 execute: (ctx: EffectContext) => {
-                    if (ctx.target) {
-                        ctx.actions.increaseUnitHealth(ctx.target, 2);
+                    if (ctx.data.targetUnit) {
+                        ctx.actions.increaseUnitHealth(ctx.data.targetUnit, 2);
                     }
                     
                     // TODO: heal player
@@ -168,7 +168,7 @@ const spellList: SpellInstance[] = [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
                 execute: (ctx: EffectContext) => {
-                    const playerHand = ctx.actions.getOpponentState(ctx.playerId).hand;
+                    const playerHand = ctx.actions.getOpponentState(ctx.data.playerId).hand;
                     let damage = 0; // spell effect runs before its removed from hand
                     for (const spell of playerHand) {
                         if (spell.id === "S_10") {
@@ -176,7 +176,7 @@ const spellList: SpellInstance[] = [
                         }
                     }
 
-                    const opponentBoard = ctx.actions.getPlayerBoard(ctx.playerId);
+                    const opponentBoard = ctx.actions.getPlayerBoard(ctx.data.playerId);
                     let unitToAttack: UnitInstance | null = null;
                     for (const slot of opponentBoard) {
                         if (!slot.unit) {
@@ -192,7 +192,7 @@ const spellList: SpellInstance[] = [
                     }
 
                     if (unitToAttack) {
-                        ctx.actions.attackUnit(ctx.playerId, unitToAttack, damage);
+                        ctx.actions.attackUnit(ctx.data.playerId, unitToAttack, damage);
                     }
                 }
             }
@@ -209,9 +209,9 @@ const spellList: SpellInstance[] = [
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
                 execute: (ctx: EffectContext) => {
                     for (let i = 0; i < 2; i++) {
-                        const darkOrb = ctx.instances.createSpellInstance("S_10", ctx.playerId);
+                        const darkOrb = ctx.instances.createSpellInstance("S_10", ctx.data.playerId);
                         ctx.actions.increaseCardCost(darkOrb, 1);
-                        ctx.actions.addSpellToHand(ctx.actions.getPlayerState(ctx.playerId), darkOrb);
+                        ctx.actions.addSpellToHand(ctx.actions.getPlayerState(ctx.data.playerId), darkOrb);
                     }
                 }
             }
@@ -227,8 +227,8 @@ const spellList: SpellInstance[] = [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
                 execute: (ctx: EffectContext) => {
-                    if (ctx.target) {
-                        ctx.actions.attackUnit(ctx.playerId, ctx.target, ctx.target.hp);
+                    if (ctx.data.targetUnit) {
+                        ctx.actions.attackUnit(ctx.data.playerId, ctx.data.targetUnit, ctx.data.targetUnit.hp);
                     }
                 }
             }
@@ -244,8 +244,9 @@ const spellList: SpellInstance[] = [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
                 execute: (ctx: EffectContext) => {
-                    if (ctx.target) {
-                        //! how do we handle the statuses
+                    if (ctx.data.targetUnit) {
+                        ctx.actions.addUnitStatus(ctx.data.targetUnit, Status.SILENCED);
+                        ctx.actions.addUnitStatus(ctx.data.targetUnit, Status.PARALYZED);
                     }
                 }
             }
@@ -261,12 +262,12 @@ const spellList: SpellInstance[] = [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
                 execute: (ctx: EffectContext) => {
-                    const skeleton = ctx.instances.createUnitInstance("U_16", ctx.playerId);
-                    const playerBoard = ctx.actions.getPlayerBoard(ctx.playerId);
+                    const skeleton = ctx.instances.createUnitInstance("U_16", ctx.data.playerId);
+                    const playerBoard = ctx.actions.getPlayerBoard(ctx.data.playerId);
 
                     for (const slot of playerBoard) {
                         if (!slot.unit) {
-                            ctx.actions.summonUnit(ctx.playerId, skeleton, slot.index);
+                            ctx.actions.summonUnit(ctx.data.playerId, skeleton, slot.index);
                         }
                     }
                 }
@@ -283,11 +284,11 @@ const spellList: SpellInstance[] = [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
                 execute: (ctx: EffectContext) => {
-                    ctx.actions.decreasePlayerHealth(ctx.actions.getPlayerState(ctx.playerId), 6);
-                    ctx.actions.increasePlayerMoney(ctx.actions.getPlayerState(ctx.playerId), 6);
+                    ctx.actions.decreasePlayerHealth(ctx.actions.getPlayerState(ctx.data.playerId), 6);
+                    ctx.actions.increasePlayerMoney(ctx.actions.getPlayerState(ctx.data.playerId), 6);
 
-                    ctx.actions.drawSpell(ctx.playerId);
-                    ctx.actions.drawSpell(ctx.playerId);
+                    ctx.actions.drawSpell(ctx.data.playerId);
+                    ctx.actions.drawSpell(ctx.data.playerId);
                 }
             }
         ],
@@ -302,8 +303,8 @@ const spellList: SpellInstance[] = [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
                 execute: (ctx: EffectContext) => {
-                    if (ctx.target) {
-                        ctx.actions.increaseUnitAttack(ctx.target, 2);
+                    if (ctx.data.targetUnit) {
+                        ctx.actions.increaseUnitAttack(ctx.data.targetUnit, 2);
                     }
                 }
             }
@@ -319,8 +320,8 @@ const spellList: SpellInstance[] = [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
                 execute: (ctx: EffectContext) => {
-                    ctx.actions.drawSpell(ctx.playerId);
-                    ctx.actions.drawSpell(ctx.playerId);
+                    ctx.actions.drawSpell(ctx.data.playerId);
+                    ctx.actions.drawSpell(ctx.data.playerId);
                 }
             }
         ],

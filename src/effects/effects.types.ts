@@ -8,10 +8,17 @@ export type EffectContext = {
   state: GameState
   actions: GameActions
   instances: InstancesService
+  data: EffectContextData
+};
+
+export type EffectContextData = {
   playerId: string
   source: AnyInstance
-  target?: UnitInstance
-};
+  targetUnit?: UnitInstance
+  targetPlayerId?: string
+  attacker?: UnitInstance
+  attacked?: UnitInstance
+}
 
 export type Effect = {
   trigger: EffectTrigger[]
@@ -30,6 +37,13 @@ export enum Status {
   DODGE = 'dodge',
 };
 
+export type TriggerData = {
+  playerId: string,
+  source?: AnyInstance,
+  attacker?: UnitInstance
+  attacked?: UnitInstance
+  referenced?: AnyInstance
+};
 
 // lists
 export const EFFECTS = {

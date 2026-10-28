@@ -1,7 +1,10 @@
-import { IsInt, IsString, Max, Min } from "class-validator";
+import { IsBoolean, IsString } from "class-validator";
 
 
 export default class SelectedTargetDto {
     @IsString()
-    instanceId: string;
+    id: string;
+
+    @IsBoolean()
+    isPlayer: boolean;
 }

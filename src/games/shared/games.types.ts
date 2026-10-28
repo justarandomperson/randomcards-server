@@ -1,5 +1,5 @@
-import { UnitInstance, SpellInstance, ClientUnitData, ClientSpellData, ArtifactInstance, AnyInstance, ClientArtifactData, InstanceLocation } from "../../instances/shared/instances.types"; 
-import { Effect } from "../../effects/effects.types";
+import { UnitInstance, SpellInstance, ClientUnitData, ClientSpellData, ArtifactInstance, ClientArtifactData, InstanceLocation } from "../../instances/shared/instances.types"; 
+import { Effect, EffectContextData } from "../../effects/effects.types";
 import { GameActions } from "../providers/games.actions";
 
 
@@ -38,7 +38,7 @@ export enum GamePhase {
 
 export type CurrentEffectData = {
   effect: Effect,
-  source: AnyInstance
+  data: EffectContextData
 }
 
 

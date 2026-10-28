@@ -1,4 +1,5 @@
 import { EFFECT_TRIGGERS, EffectContext, Status } from '../../effects/effects.types';
+import { MAX_CARDS_PER_BOARD_ROW } from '../../games/shared/games.constants';
 import { InstanceType, InstanceZone, UnitInstance } from '../shared/instances.types';
 
 
@@ -43,13 +44,13 @@ const unitList: UnitInstance[] = [
         id: "U_3",
         name: "sans the skeleton",
         type: InstanceType.UNIT,
-        effectDesc: "Summon & Turn Start: Add a Gaster Blaster to your hand.",
+        effectDesc: "Dodge (3). Summon & Turn Start: Add a Gaster Blaster to your hand.",
         effects: [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED, EFFECT_TRIGGERS.TURN_START],
                 execute: (ctx: EffectContext) => {
-                    const gasterBlaster = ctx.instances.createSpellInstance("S_666", ctx.playerId);
-                    ctx.actions.addSpellToHand(ctx.actions.getPlayerState(ctx.playerId), gasterBlaster);
+                    const gasterBlaster = ctx.instances.createSpellInstance("S_666", ctx.data.playerId);
+                    ctx.actions.addSpellToHand(ctx.actions.getPlayerState(ctx.data.playerId), gasterBlaster);
                 }
             }
         ],
@@ -58,7 +59,7 @@ const unitList: UnitInstance[] = [
             taunt: false,
             paralyzed: false,
             silenced: false,
-            dodge: 0
+            dodge: 3
         },
         cost: 6,
         hp: 1,
@@ -74,11 +75,11 @@ const unitList: UnitInstance[] = [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
                 hasTarget: true,
-                execute: (ctx: EffectContext) => {
-                    if (ctx.target) {
-                        ctx.actions.decreaseUnitHealth(ctx.target, 1);
-                    }          
-                }            
+                execute: (ctx: EffectContext) => {;
+                    if (ctx.data.targetUnit) {
+                        ctx.actions.attackUnit(ctx.data.playerId, ctx.data.targetUnit, 1);
+                    }      
+                }             
             }
         ],
         statuses: {
@@ -102,23 +103,20 @@ const unitList: UnitInstance[] = [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
                 execute: (ctx: EffectContext) => {
-                    const cat = ctx.instances.createUnitInstance("U_2", ctx.playerId);
-
-                    // Note: we just try to fill the whole board, the action finds a slot
-                    ctx.actions.summonUnit(ctx.playerId, cat);
-                    ctx.actions.summonUnit(ctx.playerId, cat);
-                    ctx.actions.summonUnit(ctx.playerId, cat);
-                    ctx.actions.summonUnit(ctx.playerId, cat);
+                    for (let i = 0; i < MAX_CARDS_PER_BOARD_ROW; i++) {
+                        const cat = ctx.instances.createUnitInstance("U_2", ctx.data.playerId);
+                        ctx.actions.summonUnit(ctx.data.playerId, cat);
+                    }
                 }
             },
             {
                 trigger: [EFFECT_TRIGGERS.DEATH],
                 execute: (ctx: EffectContext) => {
-                    const playerBoard = ctx.actions.getPlayerBoard(ctx.playerId);
+                    const playerBoard = ctx.actions.getPlayerBoard(ctx.data.playerId);
 
                     for (const unit of playerBoard) {
                         if (unit.unit && unit.unit.id === "U_2") {
-                            ctx.actions.attackUnit(ctx.playerId, unit.unit, unit.unit.hp);
+                            ctx.actions.attackUnit(ctx.data.playerId, unit.unit, unit.unit.hp);
                         }
                     }
                 }
@@ -188,8 +186,8 @@ const unitList: UnitInstance[] = [
             {
                 trigger: [EFFECT_TRIGGERS.TURN_END, EFFECT_TRIGGERS.DEATH],
                 execute: (ctx: EffectContext) => {
-                    const cooldownHatingSpell = ctx.instances.createSpellInstance("S_4", ctx.playerId);
-                    ctx.actions.addSpellToHand(ctx.actions.getPlayerState(ctx.playerId), cooldownHatingSpell);
+                    const cooldownHatingSpell = ctx.instances.createSpellInstance("S_4", ctx.data.playerId);
+                    ctx.actions.addSpellToHand(ctx.actions.getPlayerState(ctx.data.playerId), cooldownHatingSpell);
                 }
             }
         ],
@@ -215,8 +213,8 @@ const unitList: UnitInstance[] = [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED, EFFECT_TRIGGERS.TURN_START],
                 execute: (ctx: EffectContext) => {
-                    const cooldownHatingSpell = ctx.instances.createSpellInstance("S_4", ctx.playerId);
-                    ctx.actions.addSpellToHand(ctx.actions.getPlayerState(ctx.playerId), cooldownHatingSpell);
+                    const shiv = ctx.instances.createSpellInstance("S_7", ctx.data.playerId);
+                    ctx.actions.addSpellToHand(ctx.actions.getPlayerState(ctx.data.playerId), shiv);
 
                     // Note: buff effect happens on shiv
                 }
@@ -229,8 +227,8 @@ const unitList: UnitInstance[] = [
             silenced: false,
             dodge: 0
         },        
-        cost: 6,
-        hp: 6,
+        cost: 5,
+        hp: 5,
         atk: 3,
         cooldown: 0   
     },
@@ -243,7 +241,8 @@ const unitList: UnitInstance[] = [
             {
                 trigger: [EFFECT_TRIGGERS.DAMAGED],
                 execute: (ctx: EffectContext) => {
-                    ctx.actions.increaseUnitAttack(ctx.source as UnitInstance, 2);
+                    const source = ctx.instances.typeInstance(ctx.data.source);
+                    ctx.actions.increaseUnitAttack(source, 2);
                 }
             }
         ],
@@ -269,18 +268,19 @@ const unitList: UnitInstance[] = [
              {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
                 execute: (ctx: EffectContext) => {
-                    const lightningOrb = ctx.instances.createSpellInstance("S_8", ctx.playerId);
-                    ctx.actions.addSpellToHand(ctx.actions.getPlayerState(ctx.playerId), lightningOrb);
+                    const lightningOrb = ctx.instances.createSpellInstance("S_8", ctx.data.playerId);
+                    ctx.actions.addSpellToHand(ctx.actions.getPlayerState(ctx.data.playerId), lightningOrb);
                 }
             },
             {
                 trigger: [EFFECT_TRIGGERS.TURN_END],
                 execute: (ctx: EffectContext) => {
-                    const playerHand = ctx.actions.getPlayerState(ctx.playerId).hand;
+                    const playerHand = ctx.actions.getPlayerState(ctx.data.playerId).hand;
 
                     for (const spell of playerHand) {
                         if (["S_8", "S_9", "S_10"].includes(spell.id)) {
-                            ctx.actions.useSpell(ctx.playerId, spell);
+                            ctx.actions.useSpell(ctx.data.playerId, spell);
+                            break;
                         }
                     }
                 }
@@ -308,8 +308,8 @@ const unitList: UnitInstance[] = [
              {
                 trigger: [EFFECT_TRIGGERS.TURN_START],
                 execute: (ctx: EffectContext) => {
-                    const lightningOrb = ctx.instances.createSpellInstance("S_8", ctx.playerId);
-                    ctx.actions.addSpellToHand(ctx.actions.getPlayerState(ctx.playerId), lightningOrb);
+                    const lightningOrb = ctx.instances.createSpellInstance("S_8", ctx.data.playerId);
+                    ctx.actions.addSpellToHand(ctx.actions.getPlayerState(ctx.data.playerId), lightningOrb);
                 }
             },
         ],
@@ -334,8 +334,8 @@ const unitList: UnitInstance[] = [
              {
                 trigger: [EFFECT_TRIGGERS.TURN_START],
                 execute: (ctx: EffectContext) => {
-                    const frostOrb = ctx.instances.createSpellInstance("S_9", ctx.playerId);
-                    ctx.actions.addSpellToHand(ctx.actions.getPlayerState(ctx.playerId), frostOrb);
+                    const frostOrb = ctx.instances.createSpellInstance("S_9", ctx.data.playerId);
+                    ctx.actions.addSpellToHand(ctx.actions.getPlayerState(ctx.data.playerId), frostOrb);
                 }
             },
         ],
@@ -358,10 +358,10 @@ const unitList: UnitInstance[] = [
         effectDesc: "On Summon: add a Dark Orb to your hand.",
         effects: [
              {
-                trigger: [EFFECT_TRIGGERS.TURN_START],
+                trigger: [EFFECT_TRIGGERS.SUMMONED],
                 execute: (ctx: EffectContext) => {
-                    const darkOrb = ctx.instances.createSpellInstance("S_10", ctx.playerId);
-                    ctx.actions.addSpellToHand(ctx.actions.getPlayerState(ctx.playerId), darkOrb);
+                    const darkOrb = ctx.instances.createSpellInstance("S_10", ctx.data.playerId);
+                    ctx.actions.addSpellToHand(ctx.actions.getPlayerState(ctx.data.playerId), darkOrb);
                 }
             },
         ],
@@ -386,8 +386,7 @@ const unitList: UnitInstance[] = [
              {
                 trigger: [EFFECT_TRIGGERS.TURN_END],
                 execute: (ctx: EffectContext) => {
-                    // TODO: add silencing
-                    const opponentBoard = ctx.actions.getOpponentBoard(ctx.playerId);
+                    const opponentBoard = ctx.actions.getOpponentBoard(ctx.data.playerId);
 
                     let leftmostSlot: { unit: UnitInstance | null; index: number; } | null = null;
                     for (let i = 0; i < opponentBoard.length; i++) {
@@ -398,10 +397,13 @@ const unitList: UnitInstance[] = [
 
                     const unitToAttack = leftmostSlot?.unit;
                     if (leftmostSlot && unitToAttack) {
-                        ctx.actions.attackUnit(ctx.playerId, unitToAttack, unitToAttack.hp);
+                        ctx.actions.addUnitStatus(unitToAttack, Status.SILENCED);
+                        ctx.actions.attackUnit(ctx.data.playerId, unitToAttack, unitToAttack.hp);
 
-                        const defaultUnit = ctx.instances.createUnitInstance(unitToAttack.id, ctx.actions.getOpponentId(ctx.playerId));
-                        ctx.actions.summonUnit(ctx.playerId, defaultUnit, leftmostSlot.index);
+                        const defaultUnit = ctx.instances.createUnitInstance(
+                            unitToAttack.id, ctx.actions.getOpponentId(ctx.data.playerId)
+                        );
+                        ctx.actions.summonUnit(ctx.data.playerId, defaultUnit, leftmostSlot.index);
                     }
                 }
             },
@@ -427,11 +429,13 @@ const unitList: UnitInstance[] = [
              {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
                 execute: (ctx: EffectContext) => {
-                    const monsterInfront = ctx.actions.getUnitInfront(ctx.instances.getLocationIndex(ctx.source, InstanceZone.BOARD));
+                    const monsterInfront = ctx.actions.getUnitInfront(
+                        ctx.instances.getLocationIndex(ctx.data.source, InstanceZone.BOARD)
+                    );
 
                     if (monsterInfront) {
-                        ctx.source.effects = monsterInfront.effects;
-                        ctx.source.effectDesc = `Copied: ${monsterInfront.effectDesc}`;
+                        ctx.data.source.effects = monsterInfront.effects;
+                        ctx.data.source.effectDesc = `Copied: ${monsterInfront.effectDesc}`;
                     }
                 }
             },
@@ -457,7 +461,7 @@ const unitList: UnitInstance[] = [
              {
                 trigger: [EFFECT_TRIGGERS.TURN_START, EFFECT_TRIGGERS.TURN_END],
                 execute: (ctx: EffectContext) => {
-                    ctx.actions.increasePlayerMoney(ctx.actions.getPlayerState(ctx.playerId), 3);
+                    ctx.actions.increasePlayerMoney(ctx.actions.getPlayerState(ctx.data.playerId), 3);
                 }
             },
         ],
@@ -500,14 +504,8 @@ const unitList: UnitInstance[] = [
              {
                 trigger: [EFFECT_TRIGGERS.TURN_START],
                 execute: (ctx: EffectContext) => {
-                    const skeleton = ctx.instances.createUnitInstance("U_16", ctx.playerId);
-                    const playerBoard = ctx.actions.getPlayerBoard(ctx.playerId);
-
-                    for (const unit of playerBoard) {
-                        if (!unit.unit) {
-                            ctx.actions.summonUnit(ctx.playerId, skeleton, unit.index);
-                        }
-                    }
+                    const skeleton = ctx.instances.createUnitInstance("U_16", ctx.data.playerId);
+                    ctx.actions.summonUnit(ctx.data.playerId, skeleton);
                 }
             },
         ],
@@ -532,7 +530,8 @@ const unitList: UnitInstance[] = [
              {
                 trigger: [EFFECT_TRIGGERS.ANY_DIED],
                 execute: (ctx: EffectContext) => {
-                    ctx.actions.increaseUnitHealth(ctx.source as UnitInstance, 2);
+                    const source = ctx.instances.typeInstance(ctx.data.source);
+                    ctx.actions.increaseUnitHealth(source, 2);
                 }
             },
         ],
@@ -557,7 +556,7 @@ const unitList: UnitInstance[] = [
              {
                 trigger: [EFFECT_TRIGGERS.ANY_DIED],
                 execute: (ctx: EffectContext) => {
-                    const bench = ctx.actions.getPlayerState(ctx.playerId).bench;
+                    const bench = ctx.actions.getPlayerState(ctx.data.playerId).bench;
 
                     for (let i = 0; i < bench.length; i++) {
                         const unit = bench[i];
@@ -566,7 +565,7 @@ const unitList: UnitInstance[] = [
                             const cooldown = unit?.cooldown;
 
                             if (cooldown && cooldown >= 1) {
-                                ctx.actions.decreaseUnitCooldown(ctx.playerId, unit, 1);
+                                ctx.actions.decreaseUnitCooldown(ctx.data.playerId, unit, 1);
                             }
                         }
                     }
@@ -595,13 +594,14 @@ const unitList: UnitInstance[] = [
             {
                 trigger: [EFFECT_TRIGGERS.TURN_END],
                 execute: (ctx: EffectContext) => {
-                    ctx.actions.increaseUnitAttack(ctx.source as UnitInstance, 1);
+                    const source = ctx.instances.typeInstance(ctx.data.source);
+                    ctx.actions.increaseUnitAttack(source, 1);
                 }
             },
             {
                 trigger: [EFFECT_TRIGGERS.TURN_START],
                 execute: (ctx: EffectContext) => {
-                    const source = ctx.source as UnitInstance;
+                    const source = ctx.instances.typeInstance(ctx.data.source);
                     if (source.atk >= 7) {
                         // TODO: randomly choose enemies
                     }

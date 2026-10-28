@@ -1,7 +1,7 @@
 import { WsException } from "@nestjs/websockets";
-import { AnyInstance, UnitInstance } from "../instances/shared/instances.types";
+import { AnyInstance, InstanceType, UnitInstance } from "../instances/shared/instances.types";
 import { CurrentEffectData, GameState } from "../games/shared/games.types";
-import { Effect, EFFECT_TRIGGERS, EffectContext, EffectTrigger } from "./effects.types";
+import { Effect, EFFECT_TRIGGERS, EffectContext, EffectContextData, EffectTrigger, TriggerData } from "./effects.types";
 import { GameActions } from "../games/providers/games.actions";
 import { InstancesService } from "../instances/instances.service";
 
@@ -16,25 +16,30 @@ export class EffectsService {
 
 
     // initializers, getters and setters etc
-    private getEffectContext(playerId: string, source: AnyInstance, target?: UnitInstance): EffectContext {
+    private getEffectContext(data: EffectContextData): EffectContext {
         return {
             state: this.state,
             actions: this.actions,
             instances: this.instances,
-            playerId,
-            source,
-            target
+            data: {
+                playerId: data.playerId,
+                source: data.source,
+                targetUnit: data.targetUnit,
+                targetPlayerId: data.targetPlayerId,
+                attacker: data.attacker,
+                attacked: data.attacked
+            }
         };
     }
 
 
     // services
-    runEffect(effect: Effect, playerId: string, source: AnyInstance, target?: UnitInstance) {
-        const context = this.getEffectContext(playerId, source, target);
+    runEffect(effect: Effect, data: EffectContextData) {
+        const context = this.getEffectContext(data);
         effect.execute(context);
     }
 
-    runTriggerEffects(playerId: string, trigger: EffectTrigger, sourceInstance?: AnyInstance): boolean {
+    runTriggerEffects(trigger: EffectTrigger, data: TriggerData): boolean {
         switch (trigger) {
             case EFFECT_TRIGGERS.TURN_START:
             case EFFECT_TRIGGERS.TURN_END:
@@ -44,50 +49,54 @@ export class EffectsService {
             case EFFECT_TRIGGERS.ANY_KILLED:
             case EFFECT_TRIGGERS.ANY_SPELL_PLAYED:
             case EFFECT_TRIGGERS.ANY_SUMMONED:
-                return this.runUnspecificEffects(playerId, trigger);
+            case EFFECT_TRIGGERS.PLAYER_DAMAGED:
+                return this.runUnspecificEffects(trigger, data);
 
             default:
-                if (!sourceInstance) {
-                    throw new WsException("effect needs the source card/artifact id");
-                }
-
-                return this.runInstanceSpecificEffectsForTrigger(playerId, trigger, sourceInstance);
+                return this.runInstanceSpecificEffectsForTrigger(trigger, data);
 
         }
     }
 
-    private runUnspecificEffects(playerId: string, trigger: EffectTrigger): boolean {
+    private runUnspecificEffects(trigger: EffectTrigger, triggerData: TriggerData): boolean {
+        //? we can definitely refactor this function cuz its repeating. also part of this is repeating in the specifics function
         let needsTarget = false;
 
         const playersSummonedUnits = this.state.board.filter(
-            (unit): unit is UnitInstance => unit?.ownerId === playerId
+            (unit): unit is UnitInstance => unit?.ownerId === triggerData.playerId
         );
+        for (const unit of playersSummonedUnits) {
+            if (unit.statuses.silenced) {
+                continue; // silenced? THEN SHUT UP
+            }
 
-        playersSummonedUnits.map((unit) => {
-            unit.effects.map((effect) => {
-                if (effect.trigger.includes(trigger)) {
-                    if (this.checkEffectNeedsTarget(effect, playerId, unit)) {
+            for (const effect of unit.effects) {
+                if (effect.trigger.includes(trigger)) {  
+                    const effectContextData = this.createEffectContextData(triggerData, unit);
+                    
+                    if (this.checkEffectNeedsTarget(effect, effectContextData)) {
                         needsTarget = true;
                     }
 
                     else {
-                        this.runEffect(effect, playerId, unit);
+                        this.runEffect(effect, effectContextData);
                     }
                 }
-            })
-        });
+            }
+        }
 
-        const playersArtifacts = this.actions.getPlayerState(playerId).artifacts;
-
+        const playersArtifacts = this.actions.getPlayerState(triggerData.playerId).artifacts;
         playersArtifacts.map((artifact) => {
             artifact.effects.map((effect) => {
               if (effect.trigger.includes(trigger)) {
-                    if (this.checkEffectNeedsTarget(effect, playerId, artifact)) {
+                    const effectContextData = this.createEffectContextData(triggerData, artifact);
+
+                    if (this.checkEffectNeedsTarget(effect, effectContextData)) {
                         needsTarget = true;
                     }
 
                     else {
-                        this.runEffect(effect, playerId, artifact);
+                        this.runEffect(effect, effectContextData);
                     }
 
                 }  
@@ -97,17 +106,29 @@ export class EffectsService {
         return needsTarget;
     }
 
-    private runInstanceSpecificEffectsForTrigger(playerId: string, trigger: EffectTrigger, sourceInstance: AnyInstance): boolean {
-        let needsTarget = false;
+    private runInstanceSpecificEffectsForTrigger(trigger: EffectTrigger, triggerData: TriggerData): boolean {
+        const source = triggerData.source;
+        if (!source) {
+            throw new WsException("effect needs the source card/artifact id");
+        }
 
-        sourceInstance.effects.map((effect) => {
+        if (source.type === InstanceType.UNIT) {
+            if (source.statuses.silenced) {
+                return false; // didnt run effect, but also doesnt need target, so false.
+            }
+        }
+
+        let needsTarget = false;
+       source.effects.map((effect) => {
             if (effect.trigger.includes(trigger)) {
-                if (this.checkEffectNeedsTarget(effect, playerId, sourceInstance)) {
+                const effectContextData = this.createEffectContextData(triggerData, source);
+
+                if (this.checkEffectNeedsTarget(effect, effectContextData)) {
                     needsTarget = true;
                 }
 
                 else {
-                    this.runEffect(effect, playerId, sourceInstance);
+                    this.runEffect(effect, effectContextData);
                 }
             }  
         });
@@ -115,14 +136,28 @@ export class EffectsService {
         return needsTarget;
     }
 
-    private checkEffectNeedsTarget(effect: Effect, playerId: string, source: AnyInstance): boolean {
+    private checkEffectNeedsTarget(effect: Effect, data: EffectContextData): boolean {
         if (effect.hasTarget) {
-            const newEffectData: CurrentEffectData = { effect, source };
-            this.actions.pushPlayerCurrentEffect(this.actions.getPlayerState(playerId), newEffectData);
+
+
+            const newEffectData: CurrentEffectData = { effect, data };
+            this.actions.pushPlayerCurrentEffect(this.actions.getPlayerState(data.playerId), newEffectData);
             
             return true;
         }
 
         return false;
     }
+
+    private createEffectContextData(triggerData: TriggerData, source: AnyInstance): EffectContextData {
+        const effectContextData: EffectContextData = {
+            playerId: triggerData.playerId,
+            source: source,
+            attacker: triggerData.attacker,
+            attacked: triggerData.attacked
+        }
+
+        return effectContextData;
+    }
+
 }

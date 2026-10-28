@@ -191,8 +191,8 @@ export class GamesGateway implements OnGatewayInit, OnGatewayDisconnect {
 	
 	@SubscribeMessage(SOCKET_EVENT_NAMES.SELECTED_TARGET)
 	selectTarget(@ConnectedSocket() client: Socket, @MessageBody() selectedTargetDto: SelectedTargetDto) {
-		const gameId = this.getClientGameId(client)
+		const gameId = this.getClientGameId(client);
 		
-		this.gamesService.runCurrentEffect(gameId, client.id, selectedTargetDto.instanceId)
+		this.gamesService.runCurrentEffect(gameId, client.id, selectedTargetDto);
 	}
 }

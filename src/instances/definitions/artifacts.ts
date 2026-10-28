@@ -34,9 +34,8 @@ const ArtifactList: ArtifactInstance[] = [
                         }
 
                         // rng target
-                        const opponentBoard = ctx.actions.getOpponentBoard(ctx.playerId);
-                        // TODO: randomly choose target
-                        // TODO: deal damage to it
+                        const opponentBoard = ctx.actions.getOpponentBoard(ctx.data.playerId);
+                        // TODO: randomly choose target and then deal the damage
                     }
                 }
             }
@@ -52,7 +51,7 @@ const ArtifactList: ArtifactInstance[] = [
             {
                 trigger: [EFFECT_TRIGGERS.ANY_DIED],
                 execute: (ctx: EffectContext) => {
-                    ctx.actions.increasePlayerHealth(ctx.actions.getPlayerState(ctx.playerId), 2);
+                    ctx.actions.increasePlayerHealth(ctx.actions.getPlayerState(ctx.data.playerId), 2);
                 }
             }
         ],
@@ -67,9 +66,8 @@ const ArtifactList: ArtifactInstance[] = [
             {
                 trigger: [EFFECT_TRIGGERS.ANY_SUMMONED],
                 execute: (ctx: EffectContext) => {
-                    const opponentBoard = ctx.actions.getOpponentBoard(ctx.playerId);
-                    // TODO: randomly choose target
-                    // TODO: deal damage to it
+                    const opponentBoard = ctx.actions.getOpponentBoard(ctx.data.playerId);
+                    // TODO: randomly choose target and then deal damage
                 }
             }
         ],
@@ -84,7 +82,7 @@ const ArtifactList: ArtifactInstance[] = [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
                 execute: (ctx: EffectContext) => {
-                    ctx.actions.endGame(ctx.playerId);
+                    ctx.actions.endGame(ctx.data.playerId);
                 }
             }
         ],
@@ -100,7 +98,12 @@ const ArtifactList: ArtifactInstance[] = [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
                 execute: (ctx: EffectContext) => {
-                    // TODO: this
+                    for (let i = 0; i < 3; i++){
+                        const lightningOrb = ctx.instances.createSpellInstance("S_8", ctx.data.playerId);
+                        ctx.actions.addSpellToHand(ctx.actions.getPlayerState(ctx.data.playerId), lightningOrb);
+
+                        // TODO: the +1 damage part? somehow? or delete it. and add soem thing else cuz then that artifact is ass
+                    }
                 }
             }
         ],
@@ -115,16 +118,16 @@ const ArtifactList: ArtifactInstance[] = [
             {
                 trigger: [EFFECT_TRIGGERS.PLAYER_DAMAGED], // TODO: integrate PLAYER_DAMAGED and make it work
                 execute: (ctx: EffectContext) => {
-                    const playerHp = ctx.actions.getPlayerState(ctx.playerId).hp;
+                    const playerHp = ctx.actions.getPlayerState(ctx.data.playerId).hp;
 
                     if (playerHp === 1) {
-                        const playerBoard = ctx.actions.getOpponentBoard(ctx.playerId);
+                        const playerBoard = ctx.actions.getOpponentBoard(ctx.data.playerId);
 
                         for (let i = 0; i < playerBoard.length; i++) {
                             const slot = playerBoard[i];
 
                             if (slot.unit) {
-                                ctx.actions.attackUnit(ctx.playerId, slot.unit, 10);
+                                ctx.actions.attackUnit(ctx.data.playerId, slot.unit, 10);
                             }
                         }
                     }
@@ -142,7 +145,7 @@ const ArtifactList: ArtifactInstance[] = [
             {
                 trigger: [EFFECT_TRIGGERS.TURN_END],
                 execute: (ctx: EffectContext) => {
-                    ctx.actions.increasePlayerMoney(ctx.actions.getPlayerState(ctx.playerId), 1);
+                    ctx.actions.increasePlayerMoney(ctx.actions.getPlayerState(ctx.data.playerId), 1);
                 }
             }
         ],
@@ -157,7 +160,7 @@ const ArtifactList: ArtifactInstance[] = [
             {
                 trigger: [EFFECT_TRIGGERS.PLAYER_DAMAGED],
                 execute: (ctx: EffectContext) => {
-                    ctx.actions.increasePlayerHealth(ctx.actions.getPlayerState(ctx.playerId), 2);
+                    ctx.actions.increasePlayerHealth(ctx.actions.getPlayerState(ctx.data.playerId), 2);
                 }
             }
         ],

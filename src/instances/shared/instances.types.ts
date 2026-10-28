@@ -16,7 +16,7 @@ export type UnitInstance = {
   type: InstanceType.UNIT
   effectDesc: string
   effects: Effect[]
-    statuses: {
+  statuses: {
     haste: boolean
     taunt: boolean
     paralyzed: boolean
