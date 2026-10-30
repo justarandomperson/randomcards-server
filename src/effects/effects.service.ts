@@ -1,5 +1,5 @@
 import { WsException } from "@nestjs/websockets";
-import { AnyInstance, InstanceType, UnitInstance } from "../instances/shared/instances.types";
+import { AnyInstance, InstanceType } from "../instances/shared/instances.types";
 import { CurrentEffectData, GameState } from "../games/shared/games.types";
 import { Effect, EFFECT_TRIGGERS, EffectContext, EffectContextData, EffectTrigger, TriggerData } from "./effects.types";
 import { GameActions } from "../games/providers/games.actions";
@@ -32,6 +32,51 @@ export class EffectsService {
         };
     }
 
+    private createEffectContextData(triggerData: TriggerData, source: AnyInstance): EffectContextData {
+        const effectContextData: EffectContextData = {
+            playerId: triggerData.playerId,
+            source: source,
+            attacker: triggerData.attacker,
+            attacked: triggerData.attacked
+        }
+
+        return effectContextData;
+    }
+
+
+    // helpers
+    private iterateEffects(trigger: EffectTrigger, triggerData: TriggerData, source: AnyInstance): boolean {
+        let needsTarget = false;
+
+        source.effects.map((effect) => {
+            if (effect.trigger.includes(trigger)) {
+                const effectContextData = this.createEffectContextData(triggerData, source);
+
+                if (this.checkEffectNeedsTarget(effect, effectContextData)) {
+                    needsTarget = true;
+                }
+
+                else {
+                    this.runEffect(effect, effectContextData);
+                }
+            }  
+        });
+
+        return needsTarget;
+    }
+
+    private checkEffectNeedsTarget(effect: Effect, data: EffectContextData): boolean {
+        if (effect.hasTarget) {
+
+            const newEffectData: CurrentEffectData = { effect, data };
+            this.actions.pushPlayerCurrentEffect(this.actions.getPlayerState(data.playerId), newEffectData);
+            
+            return true;
+        }
+
+        return false;
+    }
+
 
     // services
     runEffect(effect: Effect, data: EffectContextData) {
@@ -59,49 +104,21 @@ export class EffectsService {
     }
 
     private runUnspecificEffects(trigger: EffectTrigger, triggerData: TriggerData): boolean {
-        //? we can definitely refactor this function cuz its repeating. also part of this is repeating in the specifics function
         let needsTarget = false;
 
-        const playersSummonedUnits = this.state.board.filter(
-            (unit): unit is UnitInstance => unit?.ownerId === triggerData.playerId
-        );
-        for (const unit of playersSummonedUnits) {
-            if (unit.statuses.silenced) {
-                continue; // silenced? THEN SHUT UP
-            }
+        const playerBoard = this.actions.getPlayerBoard(triggerData.playerId); 
+        for (const slot of playerBoard) {
+            const unit = slot.unit;
 
-            for (const effect of unit.effects) {
-                if (effect.trigger.includes(trigger)) {  
-                    const effectContextData = this.createEffectContextData(triggerData, unit);
-                    
-                    if (this.checkEffectNeedsTarget(effect, effectContextData)) {
-                        needsTarget = true;
-                    }
-
-                    else {
-                        this.runEffect(effect, effectContextData);
-                    }
-                }
+            if (unit && !unit.statuses.silenced) {
+                needsTarget = this.iterateEffects(trigger, triggerData, unit);
             }
         }
 
-        const playersArtifacts = this.actions.getPlayerState(triggerData.playerId).artifacts;
-        playersArtifacts.map((artifact) => {
-            artifact.effects.map((effect) => {
-              if (effect.trigger.includes(trigger)) {
-                    const effectContextData = this.createEffectContextData(triggerData, artifact);
-
-                    if (this.checkEffectNeedsTarget(effect, effectContextData)) {
-                        needsTarget = true;
-                    }
-
-                    else {
-                        this.runEffect(effect, effectContextData);
-                    }
-
-                }  
-            })
-        });
+        const playerArtifacts = this.actions.getPlayerState(triggerData.playerId).artifacts;
+        for (const artifact of playerArtifacts) {
+            needsTarget = this.iterateEffects(trigger, triggerData, artifact);
+        }
 
         return needsTarget;
     }
@@ -112,52 +129,10 @@ export class EffectsService {
             throw new WsException("effect needs the source card/artifact id");
         }
 
-        if (source.type === InstanceType.UNIT) {
-            if (source.statuses.silenced) {
-                return false; // didnt run effect, but also doesnt need target, so false.
-            }
+        if (source.type === InstanceType.UNIT && source.statuses.silenced) {
+            return false; // didnt run effect, but also doesnt need target, so false.
         }
 
-        let needsTarget = false;
-       source.effects.map((effect) => {
-            if (effect.trigger.includes(trigger)) {
-                const effectContextData = this.createEffectContextData(triggerData, source);
-
-                if (this.checkEffectNeedsTarget(effect, effectContextData)) {
-                    needsTarget = true;
-                }
-
-                else {
-                    this.runEffect(effect, effectContextData);
-                }
-            }  
-        });
-
-        return needsTarget;
+        return this.iterateEffects(trigger, triggerData, source);
     }
-
-    private checkEffectNeedsTarget(effect: Effect, data: EffectContextData): boolean {
-        if (effect.hasTarget) {
-
-
-            const newEffectData: CurrentEffectData = { effect, data };
-            this.actions.pushPlayerCurrentEffect(this.actions.getPlayerState(data.playerId), newEffectData);
-            
-            return true;
-        }
-
-        return false;
-    }
-
-    private createEffectContextData(triggerData: TriggerData, source: AnyInstance): EffectContextData {
-        const effectContextData: EffectContextData = {
-            playerId: triggerData.playerId,
-            source: source,
-            attacker: triggerData.attacker,
-            attacked: triggerData.attacked
-        }
-
-        return effectContextData;
-    }
-
 }
