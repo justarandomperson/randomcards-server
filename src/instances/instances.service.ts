@@ -29,10 +29,14 @@ export class InstancesService {
         return cardInstance;
     }
 
-    typeInstance(instance: AnyInstance): UnitInstance;
-    typeInstance(instance: AnyInstance): SpellInstance;
-    typeInstance(instance: AnyInstance): ArtifactInstance;
-    typeInstance(instance: AnyInstance): AnyInstance {
+    typeInstance(instance: AnyInstance, type: InstanceType.UNIT): UnitInstance;
+    typeInstance(instance: AnyInstance, type: InstanceType.SPELL): SpellInstance;
+    typeInstance(instance: AnyInstance, type: InstanceType.ARTIFACT): ArtifactInstance;
+    typeInstance(instance: AnyInstance, type: InstanceType): AnyInstance {
+        if (instance.type !== type) {
+            throw new WsException('types dont line up');
+        }
+
         if (instance.type === InstanceType.UNIT) {
             return instance as UnitInstance;
         }

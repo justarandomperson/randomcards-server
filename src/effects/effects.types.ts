@@ -18,6 +18,7 @@ export type EffectContextData = {
   targetPlayerId?: string
   attacker?: UnitInstance
   attacked?: UnitInstance
+  referenced?: AnyInstance
 }
 
 export type Effect = {

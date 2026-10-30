@@ -1,4 +1,5 @@
 import { EFFECT_TRIGGERS, EffectContext, Status } from "../../effects/effects.types";
+import { getRandomInt } from "../../games/logic/serviceHelpers";
 import { InstanceType, SpellInstance, UnitInstance } from "../shared/instances.types";
 
 
@@ -21,6 +22,7 @@ const spellList: SpellInstance[] = [
         effects: [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
+                hasTarget: true,
                 execute: (ctx: EffectContext) => {
                     if (ctx.data.targetUnit) {
                         ctx.actions.increaseUnitAttack(ctx.data.targetUnit, 2);
@@ -38,6 +40,7 @@ const spellList: SpellInstance[] = [
         effects: [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
+                hasTarget: true,
                 execute: (ctx: EffectContext) => {
                     if (ctx.data.targetUnit) {
                         ctx.actions.attackPlayer(ctx.data.playerId, 3);
@@ -56,6 +59,7 @@ const spellList: SpellInstance[] = [
         effects: [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
+                hasTarget: true,
                 execute: (ctx: EffectContext) => {
                     if (ctx.data.targetUnit) {
                         ctx.actions.increaseUnitCooldown(ctx.data.targetUnit, -1);
@@ -73,6 +77,7 @@ const spellList: SpellInstance[] = [
         effects: [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
+                hasTarget: true,
                 execute: (ctx: EffectContext) => {
                     if (ctx.data.targetUnit) {
                         ctx.actions.attackUnit(ctx.data.playerId, ctx.data.targetUnit, 8);
@@ -90,6 +95,7 @@ const spellList: SpellInstance[] = [
         effects: [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
+                hasTarget: true,
                 execute: (ctx: EffectContext) => {
                     if (ctx.data.targetUnit) {
                         ctx.actions.increaseUnitAttack(ctx.data.targetUnit, 2);
@@ -107,15 +113,16 @@ const spellList: SpellInstance[] = [
         effects: [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
+                hasTarget: true,
                 execute: (ctx: EffectContext) => {
                     if (ctx.data.targetUnit) {
                         ctx.actions.attackUnit(ctx.data.playerId, ctx.data.targetUnit, 3);
                     }
 
                     // Note: do silent's effect of giving any of your silents +1 ATK
-                    const playersBoard = ctx.actions.getPlayerBoard(ctx.data.playerId);
-                    for (const slot of playersBoard) {
-                        if (slot.unit && slot.unit.id === 'U_8') {
+                    const playerUnits = ctx.actions.getPlayerUnits(ctx.data.playerId);
+                    for (const slot of playerUnits) {
+                        if (slot.unit.id === 'U_8') {
                             ctx.actions.increaseUnitAttack(slot.unit, 1);
                         }
                     }
@@ -133,7 +140,10 @@ const spellList: SpellInstance[] = [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
                 execute: (ctx: EffectContext) => {
-                    // TODO: this
+                    const opponentUnits = ctx.actions.getOpponentUnits;
+                    const randomNumber = getRandomInt(1, opponentUnits.length);
+
+                    ctx.actions.attackUnit(ctx.data.playerId, opponentUnits[randomNumber - 1].unit, 2);
                 }
             }
         ],
@@ -143,20 +153,23 @@ const spellList: SpellInstance[] = [
         id: "S_9",
         name: "Frost Orb",
         type: InstanceType.SPELL,
-        effectDesc: "Heal yourself by 4 HP or one of your units by 2 HP.", //! we cant actually get a player with our current code
+        effectDesc: "Heal yourself by 4 HP or one of your units by 2 HP.",
         effects: [
             {
                 trigger: [EFFECT_TRIGGERS.ANY_SUMMONED],
+                hasTarget: true,
                 execute: (ctx: EffectContext) => {
                     if (ctx.data.targetUnit) {
                         ctx.actions.increaseUnitHealth(ctx.data.targetUnit, 2);
                     }
+                    else if (ctx.data.targetPlayerId) {
+                        ctx.actions.increasePlayerHealth(ctx.actions.getPlayerState(ctx.data.targetPlayerId), 4);
+                    }
                     
-                    // TODO: heal player
                 }
             }
         ],
-        cost: 1,
+        cost: 2,
     },
     {
         id: "S_10",
@@ -168,26 +181,23 @@ const spellList: SpellInstance[] = [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
                 execute: (ctx: EffectContext) => {
-                    const playerHand = ctx.actions.getOpponentState(ctx.data.playerId).hand;
+                    const playerHand = ctx.actions.getPlayerState(ctx.data.playerId).hand;
                     let damage = 0; // spell effect runs before its removed from hand
+
                     for (const spell of playerHand) {
                         if (spell.id === "S_10") {
                             damage += 3;
                         }
                     }
 
-                    const opponentBoard = ctx.actions.getPlayerBoard(ctx.data.playerId);
+                    const opponentUnits = ctx.actions.getOpponentUnits(ctx.data.playerId);
                     let unitToAttack: UnitInstance | null = null;
-                    for (const slot of opponentBoard) {
-                        if (!slot.unit) {
-                            continue;
-                        }
-
+                    for (const unit of opponentUnits) {
                         if (!unitToAttack) {
-                            unitToAttack = slot.unit;
+                            unitToAttack = unit.unit;
                         }
-                        else if (unitToAttack.hp > slot.unit.hp) {
-                            unitToAttack = slot.unit;
+                        else if (unitToAttack.hp > unit.unit.hp) {
+                            unitToAttack = unit.unit;
                         }
                     }
 
@@ -197,13 +207,13 @@ const spellList: SpellInstance[] = [
                 }
             }
         ],
-        cost: 2,
+        cost: 3,
     },
     {
         id: "S_11",
         name: "Darkness",
         type: InstanceType.SPELL,
-        effectDesc: "Add 2 Dark Orbs to your hand. They cost 2$ more.",
+        effectDesc: "Add 2 Dark Orbs to your hand. They cost 1$ more.",
         effects: [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
@@ -226,6 +236,7 @@ const spellList: SpellInstance[] = [
         effects: [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
+                hasTarget: true,
                 execute: (ctx: EffectContext) => {
                     if (ctx.data.targetUnit) {
                         ctx.actions.attackUnit(ctx.data.playerId, ctx.data.targetUnit, ctx.data.targetUnit.hp);
@@ -243,6 +254,7 @@ const spellList: SpellInstance[] = [
         effects: [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
+                hasTarget: true,
                 execute: (ctx: EffectContext) => {
                     if (ctx.data.targetUnit) {
                         ctx.actions.addUnitStatus(ctx.data.targetUnit, Status.SILENCED);
@@ -262,18 +274,18 @@ const spellList: SpellInstance[] = [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
                 execute: (ctx: EffectContext) => {
-                    const skeleton = ctx.instances.createUnitInstance("U_16", ctx.data.playerId);
                     const playerBoard = ctx.actions.getPlayerBoard(ctx.data.playerId);
 
                     for (const slot of playerBoard) {
                         if (!slot.unit) {
+                            const skeleton = ctx.instances.createUnitInstance("U_16", ctx.data.playerId);
                             ctx.actions.summonUnit(ctx.data.playerId, skeleton, slot.index);
                         }
                     }
                 }
             }
         ],
-        cost: 4,
+        cost: 3,
     },
     {
         id: "S_15",
@@ -302,6 +314,7 @@ const spellList: SpellInstance[] = [
         effects: [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
+                hasTarget: true,
                 execute: (ctx: EffectContext) => {
                     if (ctx.data.targetUnit) {
                         ctx.actions.increaseUnitAttack(ctx.data.targetUnit, 2);

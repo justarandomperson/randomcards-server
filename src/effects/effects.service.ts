@@ -27,7 +27,8 @@ export class EffectsService {
                 targetUnit: data.targetUnit,
                 targetPlayerId: data.targetPlayerId,
                 attacker: data.attacker,
-                attacked: data.attacked
+                attacked: data.attacked,
+                referenced: data.referenced
             }
         };
     }
@@ -37,7 +38,8 @@ export class EffectsService {
             playerId: triggerData.playerId,
             source: source,
             attacker: triggerData.attacker,
-            attacked: triggerData.attacked
+            attacked: triggerData.attacked,
+            referenced: triggerData.referenced
         }
 
         return effectContextData;

@@ -1,4 +1,5 @@
 import { EFFECT_TRIGGERS, EffectContext, Status } from '../../effects/effects.types';
+import { getRandomInt } from '../../games/logic/serviceHelpers';
 import { MAX_CARDS_PER_BOARD_ROW } from '../../games/shared/games.constants';
 import { InstanceType, InstanceZone, UnitInstance } from '../shared/instances.types';
 
@@ -112,10 +113,10 @@ const unitList: UnitInstance[] = [
             {
                 trigger: [EFFECT_TRIGGERS.DEATH],
                 execute: (ctx: EffectContext) => {
-                    const playerBoard = ctx.actions.getPlayerBoard(ctx.data.playerId);
+                    const playerUnits = ctx.actions.getPlayerUnits(ctx.data.playerId);
 
-                    for (const unit of playerBoard) {
-                        if (unit.unit && unit.unit.id === "U_2") {
+                    for (const unit of playerUnits) {
+                        if (unit.unit.id === "U_2") {
                             ctx.actions.attackUnit(ctx.data.playerId, unit.unit, unit.unit.hp);
                         }
                     }
@@ -161,7 +162,9 @@ const unitList: UnitInstance[] = [
             {
                 trigger: [EFFECT_TRIGGERS.DAMAGED],
                 execute: (ctx: EffectContext) => {
-                    //! we cant get the attacker now. either delete this card or make it work
+                    if (ctx.data.attacker) {
+                        ctx.actions.addUnitStatus(ctx.data.attacker, Status.PARALYZED);
+                    }
                 }
             }
         ],
@@ -241,7 +244,7 @@ const unitList: UnitInstance[] = [
             {
                 trigger: [EFFECT_TRIGGERS.DAMAGED],
                 execute: (ctx: EffectContext) => {
-                    const source = ctx.instances.typeInstance(ctx.data.source);
+                    const source = ctx.instances.typeInstance(ctx.data.source, InstanceType.UNIT);
                     ctx.actions.increaseUnitAttack(source, 2);
                 }
             }
@@ -386,24 +389,19 @@ const unitList: UnitInstance[] = [
              {
                 trigger: [EFFECT_TRIGGERS.TURN_END],
                 execute: (ctx: EffectContext) => {
-                    const opponentBoard = ctx.actions.getOpponentBoard(ctx.data.playerId);
+                    const opponentUnits = ctx.actions.getOpponentUnits(ctx.data.playerId);
 
-                    let leftmostSlot: { unit: UnitInstance | null; index: number; } | null = null;
-                    for (let i = 0; i < opponentBoard.length; i++) {
-                        if (opponentBoard) {
-                            leftmostSlot = opponentBoard[i];
-                        }
-                    }
+                    if (opponentUnits) {
+                        const slotToAttack = opponentUnits[0];
 
-                    const unitToAttack = leftmostSlot?.unit;
-                    if (leftmostSlot && unitToAttack) {
-                        ctx.actions.addUnitStatus(unitToAttack, Status.SILENCED);
-                        ctx.actions.attackUnit(ctx.data.playerId, unitToAttack, unitToAttack.hp);
+                        ctx.actions.addUnitStatus(slotToAttack.unit, Status.SILENCED);
+                        ctx.actions.attackUnit(ctx.data.playerId, slotToAttack.unit, slotToAttack.unit.hp);
 
                         const defaultUnit = ctx.instances.createUnitInstance(
-                            unitToAttack.id, ctx.actions.getOpponentId(ctx.data.playerId)
+                            slotToAttack.unit.id, ctx.actions.getOpponentId(ctx.data.playerId)
                         );
-                        ctx.actions.summonUnit(ctx.data.playerId, defaultUnit, leftmostSlot.index);
+
+                        ctx.actions.summonUnit(ctx.data.playerId, defaultUnit, slotToAttack.index);
                     }
                 }
             },
@@ -530,7 +528,7 @@ const unitList: UnitInstance[] = [
              {
                 trigger: [EFFECT_TRIGGERS.ANY_DIED],
                 execute: (ctx: EffectContext) => {
-                    const source = ctx.instances.typeInstance(ctx.data.source);
+                    const source = ctx.instances.typeInstance(ctx.data.source, InstanceType.UNIT);
                     ctx.actions.increaseUnitHealth(source, 2);
                 }
             },
@@ -589,21 +587,34 @@ const unitList: UnitInstance[] = [
         name: "Random!Sans",
         type: InstanceType.UNIT,
         effectDesc: "Dodge (3). Turn End: Gain +1 ATK. \n " + 
-                    "Turn Start: If at 8 ATK or more, Gaster Blast 3 random enemies (including opponent), and reset ATK to 1.",
+                    "Turn Start: If at 8 ATK or more, deal 5 damage to 3 random enemies (including opponent), and reset ATK to 1.",
         effects: [
             {
                 trigger: [EFFECT_TRIGGERS.TURN_END],
                 execute: (ctx: EffectContext) => {
-                    const source = ctx.instances.typeInstance(ctx.data.source);
+                    const source = ctx.instances.typeInstance(ctx.data.source, InstanceType.UNIT);
                     ctx.actions.increaseUnitAttack(source, 1);
                 }
             },
             {
                 trigger: [EFFECT_TRIGGERS.TURN_START],
                 execute: (ctx: EffectContext) => {
-                    const source = ctx.instances.typeInstance(ctx.data.source);
-                    if (source.atk >= 7) {
-                        // TODO: randomly choose enemies
+                    const source = ctx.instances.typeInstance(ctx.data.source, InstanceType.UNIT);
+
+                    if (source.atk >= 8) {
+                        for (let i = 0; i < 3; i++) {
+                            const opponentUnits = ctx.actions.getOpponentUnits(ctx.data.playerId);
+
+                            const optionsAmount = opponentUnits.length + 1; // 1 for opponent itself
+                            const randomNumber = getRandomInt(1, optionsAmount);
+
+                            if (randomNumber === optionsAmount) { // got biggest number? attack opponent
+                                ctx.actions.attackPlayer(ctx.actions.getOpponentId(ctx.data.playerId), 5);
+                            }  
+                            else {
+                                ctx.actions.attackUnit(ctx.data.playerId, opponentUnits[randomNumber - 1].unit, 5);
+                            }
+                        }
                     }
                 }
             }
@@ -615,7 +626,7 @@ const unitList: UnitInstance[] = [
             silenced: false,
             dodge: 3
         },
-        cost: 4,
+        cost: 5,
         hp: 1,
         atk: 1,
         cooldown: 0   

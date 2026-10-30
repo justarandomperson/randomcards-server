@@ -39,3 +39,7 @@ export const fillShop = (currentShop: (ArtifactInstance | null)[], pool: Artifac
     return newShop;
 }
 
+export const getRandomInt = (min: number, max: number): number => {
+    return Math.floor(Math.random() * (max + 1)) + min;
+}
+

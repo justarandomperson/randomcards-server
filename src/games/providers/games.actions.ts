@@ -75,6 +75,26 @@ export class GameActions {
         return this.getPlayerBoard(this.getOpponentId(playerId));
     }
 
+    getPlayerUnits(playerId: string): ({ unit: UnitInstance, index: number })[] {
+        const playerBoard = this.getPlayerBoard(playerId);
+
+        const playerUnits: ({ unit: UnitInstance, index: number })[] = [];
+        for (let i = 0; i < playerBoard.length; i++) {
+            if (!playerBoard[i].unit) {
+                continue;
+            }
+
+            //? didnt want to use as but for some reason it doesnt work?!!!
+            playerUnits.push(playerBoard[i] as { unit: UnitInstance, index: number });
+        }
+
+        return playerUnits;
+    }
+
+    getOpponentUnits(playerId: string) {
+        return this.getPlayerUnits(this.getOpponentId(playerId));
+    }
+
     getUnitInfront(boardIndex: number): UnitInstance | null {
         if (boardIndex < 0) {
             throw new WsException("boardIndex doesnt exist");

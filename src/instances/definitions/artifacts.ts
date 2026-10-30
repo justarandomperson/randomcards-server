@@ -1,5 +1,6 @@
 import { EFFECT_TRIGGERS, EffectContext } from "../../effects/effects.types";
-import { ArtifactInstance, InstanceType } from "../shared/instances.types";
+import { getRandomInt } from "../../games/logic/serviceHelpers";
+import { ArtifactInstance, InstanceType, SpellInstance } from "../shared/instances.types";
 
 
 const ArtifactList: ArtifactInstance[] = [
@@ -34,8 +35,17 @@ const ArtifactList: ArtifactInstance[] = [
                         }
 
                         // rng target
-                        const opponentBoard = ctx.actions.getOpponentBoard(ctx.data.playerId);
-                        // TODO: randomly choose target and then deal the damage
+                        const opponentUnits = ctx.actions.getOpponentUnits(ctx.data.playerId);
+                        const optionsAmount = opponentUnits.length + 1; // 1 for opponent itself
+                        const randomNumber = getRandomInt(1, optionsAmount);
+
+                        // attack
+                        if (randomNumber === optionsAmount) { // got biggest number? attack opponent
+                            ctx.actions.attackPlayer(ctx.actions.getOpponentId(ctx.data.playerId), damage);
+                        }  
+                        else {
+                            ctx.actions.attackUnit(ctx.data.playerId, opponentUnits[randomNumber - 1].unit, damage);
+                        }
                     }
                 }
             }
@@ -55,7 +65,7 @@ const ArtifactList: ArtifactInstance[] = [
                 }
             }
         ],
-        cost: 15, 
+        cost: 13, 
     },
     {
         id: "A_3",
@@ -66,12 +76,14 @@ const ArtifactList: ArtifactInstance[] = [
             {
                 trigger: [EFFECT_TRIGGERS.ANY_SUMMONED],
                 execute: (ctx: EffectContext) => {
-                    const opponentBoard = ctx.actions.getOpponentBoard(ctx.data.playerId);
-                    // TODO: randomly choose target and then deal damage
+                    const opponentUnits = ctx.actions.getOpponentUnits(ctx.data.playerId);
+                    const randomNumber = getRandomInt(1, opponentUnits.length);
+
+                    ctx.actions.attackUnit(ctx.data.playerId, opponentUnits[randomNumber - 1].unit, 1);
                 }
             }
         ],
-        cost: 15, 
+        cost: 13, 
     },
     {
         id: "A_4",
@@ -93,7 +105,7 @@ const ArtifactList: ArtifactInstance[] = [
         name: "Infused Core",
         type: InstanceType.ARTIFACT,
         effectDesc: "Add 3 Lightning Orbs to your hand. \n" +
-                    "Lightning Orbs deal 1 additional damage.", //! i dont think we can do that part now. do it? or nah?
+                    "Lightning Orbs activate twice.",
         effects: [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
@@ -101,9 +113,14 @@ const ArtifactList: ArtifactInstance[] = [
                     for (let i = 0; i < 3; i++){
                         const lightningOrb = ctx.instances.createSpellInstance("S_8", ctx.data.playerId);
                         ctx.actions.addSpellToHand(ctx.actions.getPlayerState(ctx.data.playerId), lightningOrb);
-
-                        // TODO: the +1 damage part? somehow? or delete it. and add soem thing else cuz then that artifact is ass
                     }
+                }
+            },
+            {
+                trigger: [EFFECT_TRIGGERS.ANY_SPELL_PLAYED],
+                execute: (ctx: EffectContext) => {
+                    const lightningOrb = ctx.instances.createSpellInstance("S_8", ctx.data.playerId);
+                    ctx.actions.useSpell(ctx.data.playerId, lightningOrb);
                 }
             }
         ],
@@ -116,19 +133,15 @@ const ArtifactList: ArtifactInstance[] = [
         effectDesc: "If you reach exactly 1 HP, you deal 10 damage to all off the opponent's units.",
         effects: [
             {
-                trigger: [EFFECT_TRIGGERS.PLAYER_DAMAGED], // TODO: integrate PLAYER_DAMAGED and make it work
+                trigger: [EFFECT_TRIGGERS.PLAYER_DAMAGED],
                 execute: (ctx: EffectContext) => {
                     const playerHp = ctx.actions.getPlayerState(ctx.data.playerId).hp;
 
                     if (playerHp === 1) {
-                        const playerBoard = ctx.actions.getOpponentBoard(ctx.data.playerId);
+                        const opponentUnits = ctx.actions.getOpponentUnits(ctx.data.playerId);
 
-                        for (let i = 0; i < playerBoard.length; i++) {
-                            const slot = playerBoard[i];
-
-                            if (slot.unit) {
-                                ctx.actions.attackUnit(ctx.data.playerId, slot.unit, 10);
-                            }
+                        for (const unit of opponentUnits) {
+                            ctx.actions.attackUnit(ctx.data.playerId, unit.unit, 10);
                         }
                     }
                 }
