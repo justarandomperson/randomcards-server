@@ -44,6 +44,7 @@ export type SpellInstance = {
   effectDesc: string
   effects: Effect[]
   cost: number
+  isToken: boolean
   inDeck?: boolean
   location?: InstanceLocation
 };

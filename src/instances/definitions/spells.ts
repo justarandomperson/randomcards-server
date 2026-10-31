@@ -13,6 +13,7 @@ const spellList: SpellInstance[] = [
                     "Farewell, and may the hours yet before you be wondrous and fair!",
         effects: [],
         cost: 0,
+        isToken: false
     },
     {
         id: "S_2",
@@ -31,6 +32,7 @@ const spellList: SpellInstance[] = [
             }
         ],
         cost: 2,
+        isToken: false
     },
     {
         id: "S_3",
@@ -50,6 +52,7 @@ const spellList: SpellInstance[] = [
             }
         ],
         cost: 2,
+        isToken: false
     },
     {
         id: "S_4",
@@ -68,6 +71,7 @@ const spellList: SpellInstance[] = [
             }
         ],
         cost: 2,
+        isToken: false
     },
     {
         id: "S_666",
@@ -86,6 +90,7 @@ const spellList: SpellInstance[] = [
             }
         ],
         cost: 4,
+        isToken: false
     },
     {
         id: "S_7",
@@ -112,6 +117,7 @@ const spellList: SpellInstance[] = [
             }
         ],
         cost: 0,
+        isToken: true
     },
         {
         id: "S_8",
@@ -130,6 +136,7 @@ const spellList: SpellInstance[] = [
             }
         ],
         cost: 1,
+        isToken: true
     },
     {
         id: "S_9",
@@ -152,6 +159,7 @@ const spellList: SpellInstance[] = [
             }
         ],
         cost: 2,
+        isToken: true
     },
     {
         id: "S_10",
@@ -190,6 +198,7 @@ const spellList: SpellInstance[] = [
             }
         ],
         cost: 3,
+        isToken: true
     },
     {
         id: "S_11",
@@ -209,6 +218,7 @@ const spellList: SpellInstance[] = [
             }
         ],
         cost: 3,
+        isToken: false
     },
         {
         id: "S_12",
@@ -227,6 +237,7 @@ const spellList: SpellInstance[] = [
             }
         ],
         cost: 5,
+        isToken: false
     },
     {
         id: "S_13",
@@ -246,6 +257,7 @@ const spellList: SpellInstance[] = [
             }
         ],
         cost: 5,
+        isToken: false
     },
     {
         id: "S_14",
@@ -268,6 +280,7 @@ const spellList: SpellInstance[] = [
             }
         ],
         cost: 3,
+        isToken: false
     },
     {
         id: "S_15",
@@ -287,6 +300,7 @@ const spellList: SpellInstance[] = [
             }
         ],
         cost: 0,
+        isToken: false
     },
     {
         id: "S_16",
@@ -305,6 +319,7 @@ const spellList: SpellInstance[] = [
             }
         ],
         cost: 3,
+        isToken: false
     },
     {
         id: "S_17",
@@ -321,6 +336,7 @@ const spellList: SpellInstance[] = [
             }
         ],
         cost: 2,
+        isToken: false
     },
 ];
 
