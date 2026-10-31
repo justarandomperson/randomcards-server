@@ -1,7 +1,7 @@
 import { AnyInstance, UnitInstance } from '../instances/shared/instances.types';
 import { GameActions } from '../games/providers/games.actions';
 import { GameState } from '../games/shared/games.types'
-import { InstancesService } from '../instances/instances.service';
+import { InstancesService } from '../instances/providers/instances.service';
 
 
 export type EffectContext = {

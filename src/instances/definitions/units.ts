@@ -181,32 +181,6 @@ const unitList: UnitInstance[] = [
         cooldown: 0   
     },
     {
-        id: "U_7",
-        name: "Cooldown Hater 1.0",
-        type: InstanceType.UNIT,
-        effectDesc: "Turn End & Death: Add a Cooldown Hating Spell to your hand.",
-        effects: [
-            {
-                trigger: [EFFECT_TRIGGERS.TURN_END, EFFECT_TRIGGERS.DEATH],
-                execute: (ctx: EffectContext) => {
-                    const cooldownHatingSpell = ctx.instances.createSpellInstance("S_4", ctx.data.playerId);
-                    ctx.actions.addSpellToHand(ctx.actions.getPlayerState(ctx.data.playerId), cooldownHatingSpell);
-                }
-            }
-        ],
-        statuses: {
-            haste: false,
-            taunt: false,
-            paralyzed: false,
-            silenced: false,
-            dodge: 0
-        },
-        cost: 4,
-        hp: 3,
-        atk: 4,
-        cooldown: 0   
-    },
-    {
         id: "U_8",
         name: "The Silent",
         type: InstanceType.UNIT,
@@ -452,31 +426,6 @@ const unitList: UnitInstance[] = [
     },
     {
         id: "U_16",
-        name: "MR BEAST",
-        type: InstanceType.UNIT,
-        effectDesc: "Turn Start: Gain 3$.",
-        effects: [
-             {
-                trigger: [EFFECT_TRIGGERS.TURN_START, EFFECT_TRIGGERS.TURN_END],
-                execute: (ctx: EffectContext) => {
-                    ctx.actions.increasePlayerMoney(ctx.actions.getPlayerState(ctx.data.playerId), 3);
-                }
-            },
-        ],
-        statuses: {
-            haste: false,
-            taunt: false,
-            paralyzed: false,
-            silenced: false,
-            dodge: 0
-        },
-        cost: 6,
-        hp: 5,
-        atk: 5,
-        cooldown: 0   
-    },
-    {
-        id: "U_16",
         name: "Clash Royale Skeleton",
         type: InstanceType.UNIT,
         effectDesc: "",
@@ -629,6 +578,57 @@ const unitList: UnitInstance[] = [
         cost: 5,
         hp: 1,
         atk: 1,
+        cooldown: 0   
+    },
+    {
+        id: "U_21",
+        name: "Cooldown Hater 1.0",
+        type: InstanceType.UNIT,
+        effectDesc: "Turn End & Death: Add a Cooldown Hating Spell to your hand.",
+        effects: [
+            {
+                trigger: [EFFECT_TRIGGERS.TURN_END, EFFECT_TRIGGERS.DEATH],
+                execute: (ctx: EffectContext) => {
+                    const cooldownHatingSpell = ctx.instances.createSpellInstance("S_4", ctx.data.playerId);
+                    ctx.actions.addSpellToHand(ctx.actions.getPlayerState(ctx.data.playerId), cooldownHatingSpell);
+                }
+            }
+        ],
+        statuses: {
+            haste: false,
+            taunt: false,
+            paralyzed: false,
+            silenced: false,
+            dodge: 0
+        },
+        cost: 4,
+        hp: 3,
+        atk: 4,
+        cooldown: 0   
+    },
+    {
+        id: "U_22",
+        name: "MR BEAST",
+        type: InstanceType.UNIT,
+        effectDesc: "Turn Start: Gain 3$.",
+        effects: [
+             {
+                trigger: [EFFECT_TRIGGERS.TURN_START, EFFECT_TRIGGERS.TURN_END],
+                execute: (ctx: EffectContext) => {
+                    ctx.actions.increasePlayerMoney(ctx.actions.getPlayerState(ctx.data.playerId), 3);
+                }
+            },
+        ],
+        statuses: {
+            haste: false,
+            taunt: false,
+            paralyzed: false,
+            silenced: false,
+            dodge: 0
+        },
+        cost: 6,
+        hp: 5,
+        atk: 5,
         cooldown: 0   
     },
 ];

@@ -1,4 +1,4 @@
-import { DeckIds } from "../decks/decks.types";
+import { DeckIds } from "../decks/shared/decks.types";
 
 
 export type Match = { 

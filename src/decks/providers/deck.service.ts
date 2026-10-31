@@ -1,10 +1,10 @@
 import { Injectable } from "@nestjs/common";
-import { Deck, DeckIds, Storage } from "./decks.types";
-import { CardInstance, InstanceType, InstanceZone, SpellInstance, UnitInstance } from "../instances/shared/instances.types";
+import { Deck, DeckIds, Storage } from "../shared/decks.types";
+import { CardInstance, InstanceType, InstanceZone, SpellInstance, UnitInstance } from "../../instances/shared/instances.types";
 import { WsException } from "@nestjs/websockets";
-import { spellsMap } from "../instances/definitions/spells";
-import { InstancesService } from "../instances/instances.service";
-import { unitsMap } from "../instances/definitions/units";
+import { spellsMap } from "../../instances/definitions/spells";
+import { InstancesService } from "../../instances/providers/instances.service";
+import { unitsMap } from "../../instances/definitions/units";
 
 
 @Injectable()

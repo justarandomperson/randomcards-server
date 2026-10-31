@@ -6,7 +6,7 @@ import { EFFECT_TRIGGERS, EffectTrigger, Status, TriggerData } from "../../effec
 import { MAX_HAND_SIZE, MINIMUM_MONEY, STARTING_SPELLS_IN_HAND } from "../shared/games.constants";
 import { GamesEmitter } from "./games.emitter";
 import { calculateTurnStartMoney, fillShop, shouldSwitchPhase, translateBoardIndex, unTranslateBoardIndex } from "../logic/serviceHelpers";
-import { InstancesService } from "../../instances/instances.service";
+import { InstancesService } from "../../instances/providers/instances.service";
 
 
 export class GameActions { 

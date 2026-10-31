@@ -1,4 +1,7 @@
-import { Effect, Status } from '../../effects/effects.types';
+import { Effect } from '../../effects/effects.types';
+
+
+export type ImagesList = [string, string][];
 
 
 // instances

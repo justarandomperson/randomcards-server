@@ -13,7 +13,7 @@ import BuyArtifactDto from '../dto/buy-artifact.dto';
 import AttackPlayerDto from '../dto/attack-player.dto';
 import AttackUnitDto from '../dto/attack-unit.dto';
 import { SOCKET_EVENT_NAMES } from '../shared/games.constants';
-import { DecksService } from '../../decks/deck.service';
+import { DecksService } from '../../decks/providers/deck.service';
 import SelectedTargetDto from '../dto/selected-target.dto';
 
 

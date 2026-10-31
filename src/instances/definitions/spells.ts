@@ -88,24 +88,6 @@ const spellList: SpellInstance[] = [
         cost: 4,
     },
     {
-        id: "S_6",
-        name: "Flex",
-        type: InstanceType.SPELL,
-        effectDesc: "Give an ally monster +2 ATK",
-        effects: [
-            {
-                trigger: [EFFECT_TRIGGERS.SUMMONED],
-                hasTarget: true,
-                execute: (ctx: EffectContext) => {
-                    if (ctx.data.targetUnit) {
-                        ctx.actions.increaseUnitAttack(ctx.data.targetUnit, 2);
-                    }
-                }
-            }
-        ],
-        cost: 2,
-    },
-    {
         id: "S_7",
         name: "Shiv",
         type: InstanceType.SPELL,

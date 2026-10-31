@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
-import { DecksService } from './deck.service';
-import { DecksController } from './decks.controller';
-import { InstancesService } from '../instances/instances.service';
+import { DecksService } from './providers/deck.service';
+import { DecksController } from './providers/decks.controller';
+import { InstancesService } from '../instances/providers/instances.service';
 
 
 @Module({

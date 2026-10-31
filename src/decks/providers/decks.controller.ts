@@ -1,6 +1,6 @@
 import { Controller, Get } from "@nestjs/common";
 import { DecksService } from "./deck.service";
-import { type Storage } from "./decks.types";
+import { type Storage } from "../shared/decks.types";
 
 
 @Controller('decks')

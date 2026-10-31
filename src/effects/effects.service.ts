@@ -3,7 +3,7 @@ import { AnyInstance, InstanceType } from "../instances/shared/instances.types";
 import { CurrentEffectData, GameState } from "../games/shared/games.types";
 import { Effect, EFFECT_TRIGGERS, EffectContext, EffectContextData, EffectTrigger, TriggerData } from "./effects.types";
 import { GameActions } from "../games/providers/games.actions";
-import { InstancesService } from "../instances/instances.service";
+import { InstancesService } from "../instances/providers/instances.service";
 
 
 export class EffectsService {

@@ -10,12 +10,12 @@ import PlaySpellDto from '../dto/play-spell.dto';
 import BuyArtifactDto from '../dto/buy-artifact.dto';
 import AttackPlayerDto from '../dto/attack-player.dto';
 import AttackUnitDto from '../dto/attack-unit.dto';
-import { Deck } from '../../decks/decks.types';
+import { Deck } from '../../decks/shared/decks.types';
 import { GameActions } from './games.actions';
 import { Server } from 'socket.io';
 import { GamesEmitter } from './games.emitter';
 import { fillShop, translateBoardIndex } from '../logic/serviceHelpers';
-import { InstancesService } from '../../instances/instances.service';
+import { InstancesService } from '../../instances/providers/instances.service';
 import { artifactsMap } from '../../instances/definitions/artifacts';
 import SelectedTargetDto from '../dto/selected-target.dto';
 

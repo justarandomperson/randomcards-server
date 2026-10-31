@@ -3,9 +3,9 @@ import { GamesService } from './providers/games.service';
 import { MatchMakingService } from '../matchmaking/matchmaking.service';
 import { GamesGateway } from './providers/games.gateway';
 import { GamesEmitter } from './providers/games.emitter';
-import { DecksService } from '../decks/deck.service';
+import { DecksService } from '../decks/providers/deck.service';
 import { Server } from 'socket.io';
-import { InstancesService } from '../instances/instances.service';
+import { InstancesService } from '../instances/providers/instances.service';
 
 
 @Module({

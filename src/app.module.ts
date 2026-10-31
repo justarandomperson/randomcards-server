@@ -7,6 +7,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { AuthModule } from './auth/auth.module';
 import { ConfigService } from '@nestjs/config';
 import { DecksModule } from './decks/decks.module';
+import { InstancesModule } from './instances/instances.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { DecksModule } from './decks/decks.module';
     GamesModule,
     AuthModule,
     DecksModule,
+    InstancesModule,
     MongooseModule.forRootAsync({
       inject: [ConfigService],
       useFactory: async (configService: ConfigService) => ({

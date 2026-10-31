@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { GamesService } from './games.service';
 import { BasicPlayerData } from '../../matchmaking/matchmaking.types';
-import { InstancesService } from '../../instances/instances.service';
+import { InstancesService } from '../../instances/providers/instances.service';
 
 
 describe('GamesService', () => {

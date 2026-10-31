@@ -1,7 +1,9 @@
 import { WsException } from '@nestjs/websockets';
-import { UnitInstance, SpellInstance, CardInstance, AnyInstance, InstanceLocation, InstanceZone, InstanceType, ArtifactInstance } from './shared/instances.types';
-import { spellsMap } from './definitions/spells';
-import { unitsMap } from './definitions/units';
+import { promises as fs } from 'fs';
+import { UnitInstance, SpellInstance, CardInstance, AnyInstance, InstanceLocation, InstanceZone, InstanceType, ArtifactInstance, ImagesList } from '../shared/instances.types';
+import { spellsMap } from '../definitions/spells';
+import { unitsMap } from '../definitions/units';
+import path from 'path';
 
 
 export class InstancesService {
@@ -132,5 +134,34 @@ export class InstancesService {
         }
 
         throw new WsException('cannot find empty slot');
-    }    
+    }
+    
+    async getImages(): Promise<ImagesList> {
+        const [artifacts, spells, units] = await Promise.all([
+            this.readDirectory(path.join('src', 'instances', 'shared', 'images', 'artifacts')),
+            this.readDirectory(path.join('src', 'instances', 'shared', 'images', 'spells')),
+            this.readDirectory(path.join('src', 'instances', 'shared', 'images', 'units')),
+        ]);
+
+        return [...artifacts, ...spells, ...units];
+    }
+
+    private async readDirectory(dirname: string): Promise<ImagesList> {
+        try {
+            const files = await fs.readdir(dirname, { withFileTypes: true });
+
+            return await Promise.all(
+                files.map(async (file): Promise<[string, string]> => {
+                    const data = await fs.readFile(path.join(dirname, file.name));
+                    const id = file.name.slice(0, file.name.length - ".png".length);
+
+                    return [id, data.toString('base64')];
+                })
+            );
+
+        } catch (err) {
+            console.log(`Failed to read directory ${dirname}`, err);
+            throw err;
+        }
+    }
 }

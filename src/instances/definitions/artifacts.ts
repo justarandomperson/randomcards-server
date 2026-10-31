@@ -128,7 +128,7 @@ const ArtifactList: ArtifactInstance[] = [
                 }
             }
         ],
-        cost: 10,     
+        cost: 12,     
     },
     {
         id: "A_6",
@@ -166,7 +166,7 @@ const ArtifactList: ArtifactInstance[] = [
                 }
             }
         ],
-        cost: 9,     
+        cost: 8,     
     },
     {
         id: "A_8",
