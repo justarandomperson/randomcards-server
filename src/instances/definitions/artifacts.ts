@@ -119,8 +119,12 @@ const ArtifactList: ArtifactInstance[] = [
             {
                 trigger: [EFFECT_TRIGGERS.ANY_SPELL_PLAYED],
                 execute: (ctx: EffectContext) => {
-                    const lightningOrb = ctx.instances.createSpellInstance("S_8", ctx.data.playerId);
-                    ctx.actions.useSpell(ctx.data.playerId, lightningOrb);
+                    const referenced = ctx.data.referenced;
+
+                    if (referenced && referenced.id === "S_8") {
+                        const lightningOrb = ctx.instances.createSpellInstance("S_8", ctx.data.playerId);
+                        ctx.actions.useSpell(ctx.data.playerId, lightningOrb);
+                    }
                 }
             }
         ],

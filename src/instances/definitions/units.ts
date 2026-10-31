@@ -514,9 +514,9 @@ const unitList: UnitInstance[] = [
             silenced: false,
             dodge: 0
         },
-        cost: 1,
-        hp: 1,
-        atk: 1,
+        cost: 5,
+        hp: 4,
+        atk: 3,
         cooldown: 0   
     },
     {

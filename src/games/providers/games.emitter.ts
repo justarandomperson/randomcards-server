@@ -96,7 +96,7 @@ export class GamesEmitter {
     // client specific
     updateShop(clientId: string, shop: (ArtifactInstance | null)[]) {
         const client = this.playerIdToSocket(clientId);
-        const payload = shop.map((artifact) => artifact ? artifactInstanceToClient(artifact) : artifact);
+        const payload = shop.map((artifact) => artifact ? artifactInstanceToClient(artifact) : null);
 
         client.emit(SOCKET_EVENT_NAMES.UPDATE_SHOP, payload);
     }
