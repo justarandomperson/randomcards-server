@@ -169,7 +169,6 @@ export class GameActions {
 
     private emitTwoDifferentUpdateCard(playerId: string, card: UnitInstance | SpellInstance) {
         const cardLocation = this.instances.getLocation(card);
-
         const clientCardLocation = this.getClientBoardLocation(playerId, playerId, cardLocation);
         this.emitter.updateCard(playerId, card, clientCardLocation);
 
@@ -498,10 +497,9 @@ export class GameActions {
 
     summonUnit(playerId: string, card: UnitInstance, boardIndex?: number) {
         const player = this.getPlayerState(playerId);
-        const isPlayer1 = this.isPlayer1(playerId)
 
-        if (!boardIndex) {
-            boardIndex = this.getPlayerBoard(playerId).findIndex((slot) => !slot);
+        if (boardIndex == undefined) {
+            boardIndex = this.getPlayerBoard(playerId).findIndex((slot) => slot.unit == undefined);
             if (!boardIndex) {
                 return; // no place left to summon
             }

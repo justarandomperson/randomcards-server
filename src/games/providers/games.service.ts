@@ -137,6 +137,7 @@ export class GamesService {
             throw new WsException ('slot taken');
         }
 
+
         return { unit: card, destination: destination }
     }
 
