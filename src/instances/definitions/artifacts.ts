@@ -1,6 +1,6 @@
 import { EFFECT_TRIGGERS, EffectContext } from "../../effects/effects.types";
 import { getRandomInt } from "../../games/logic/serviceHelpers";
-import { ArtifactInstance, InstanceType, SpellInstance } from "../shared/instances.types";
+import { ArtifactInstance, InstanceType, SpellInstance, UnitInstance } from "../shared/instances.types";
 
 
 const ArtifactList: ArtifactInstance[] = [
@@ -178,6 +178,35 @@ const ArtifactList: ArtifactInstance[] = [
                 trigger: [EFFECT_TRIGGERS.PLAYER_DAMAGED],
                 execute: (ctx: EffectContext) => {
                     ctx.actions.increasePlayerHealth(ctx.actions.getPlayerState(ctx.data.playerId), 2);
+                }
+            }
+        ],
+        cost: 10,     
+    },
+    {
+        id: "A_9",
+        name: "Justice",
+        type: InstanceType.ARTIFACT,
+        effectDesc: "Turn End: Deal 1 damage to the enemy unit with the least HP.",
+        effects: [
+            {
+                trigger: [EFFECT_TRIGGERS.TURN_END],
+                execute: (ctx: EffectContext) => {
+                    const opponentUnits = ctx.actions.getOpponentUnits(ctx.data.playerId);
+
+                    let unitToAttack: UnitInstance | null = null;
+                    for (const unit of opponentUnits) {
+                        if (!unitToAttack) {
+                            unitToAttack = unit.unit;
+                        }
+                        else if (unitToAttack.hp > unit.unit.hp) {
+                            unitToAttack = unit.unit;
+                        }
+                    }
+
+                    if (unitToAttack) {
+                        ctx.actions.attackUnit(ctx.data.playerId, unitToAttack, 1);
+                    }
                 }
             }
         ],

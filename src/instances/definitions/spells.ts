@@ -74,17 +74,41 @@ const spellList: SpellInstance[] = [
         isToken: false
     },
     {
-        id: "S_666",
-        name: "Gaster Blaster",
+        id: "S_5",
+        name: "Cast",
         type: InstanceType.SPELL,
-        effectDesc: "i will blast your glast (deal 8 damage to a unit)",
+        effectDesc: "Play the leftmost orb in your hand.",
         effects: [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
-                hasTarget: true,
                 execute: (ctx: EffectContext) => {
-                    if (ctx.data.targetUnit) {
-                        ctx.actions.attackUnit(ctx.data.playerId, ctx.data.targetUnit, 8);
+                    const playerHand = ctx.actions.getPlayerState(ctx.data.playerId).hand;
+
+                    for (const spell of playerHand) {
+                        if (["S_8", "S_9", "S_10"].includes(spell.id)) {
+                            ctx.actions.useSpell(ctx.data.playerId, spell);
+                            break;
+                        }
+                    }
+                }
+            }
+        ],
+        cost: 2,
+        isToken: false
+    },
+    {
+        id: "S_6",
+        name: "Maragi",
+        type: InstanceType.SPELL,
+        effectDesc: "Deals 2 damage to all enemies.",
+        effects: [
+            {
+                trigger: [EFFECT_TRIGGERS.SUMMONED],
+                execute: (ctx: EffectContext) => {
+                    const opponentUnits = ctx.actions.getOpponentUnits(ctx.data.playerId);
+
+                    for (const unit of opponentUnits) {
+                        ctx.actions.attackUnit(ctx.data.playerId, unit.unit, 2);
                     }
                 }
             }
@@ -336,6 +360,25 @@ const spellList: SpellInstance[] = [
             }
         ],
         cost: 2,
+        isToken: false
+    },
+    {
+        id: "S_666",
+        name: "Gaster Blaster",
+        type: InstanceType.SPELL,
+        effectDesc: "i will blast your glast (deal 8 damage to a unit)",
+        effects: [
+            {
+                trigger: [EFFECT_TRIGGERS.SUMMONED],
+                hasTarget: true,
+                execute: (ctx: EffectContext) => {
+                    if (ctx.data.targetUnit) {
+                        ctx.actions.attackUnit(ctx.data.playerId, ctx.data.targetUnit, 8);
+                    }
+                }
+            }
+        ],
+        cost: 4,
         isToken: false
     },
 ];
