@@ -506,9 +506,6 @@ export class GameActions {
                 return; // no place left to summon
             }
         }
-        else {
-            boardIndex = translateBoardIndex(boardIndex, isPlayer1)
-        }
 
         card.canAttack = false; // just summoned to board so cannot attack.
 

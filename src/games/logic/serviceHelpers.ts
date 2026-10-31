@@ -25,13 +25,9 @@ export const shouldSwitchPhase = (currentPhase: GamePhase, player1Turn: number, 
 }
 
 export const fillShop = (currentShop: (ArtifactInstance | null)[], pool: ArtifactInstance[]): ArtifactInstance[] => {
-    console.log(`pool: ${pool}`);
-
     const newShop = currentShop.map((slot) => {
         if (!slot) {
             const randomIndex = Math.floor((Math.random() * pool.length));
-
-            console.log(`got: ${pool[randomIndex]}`);
 
             slot = pool[randomIndex];
             pool.splice(randomIndex, 1);
@@ -39,8 +35,6 @@ export const fillShop = (currentShop: (ArtifactInstance | null)[], pool: Artifac
 
         return slot;
     })
-
-    console.log(newShop);
 
     return newShop;
 }

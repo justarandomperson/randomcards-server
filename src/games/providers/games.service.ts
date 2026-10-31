@@ -109,14 +109,14 @@ export class GamesService {
         const game = this.getGame(gameId);
         const player = game.actions.getPlayerState(playerId);
 
-        const card = this.validatePlayUnit(game, player, dto);
+        const { unit: card, destination } = this.validatePlayUnit(game, player, dto);
 
-        game.actions.summonUnit(player.socketId, card, dto.boardIndex);
+        game.actions.summonUnit(player.socketId, card, destination);
         game.actions.decreasePlayerMoney(player, card.cost);
 
     }
 
-    private validatePlayUnit(game: Game, player: PlayerState, dto: PlayUnitDto): UnitInstance {
+    private validatePlayUnit(game: Game, player: PlayerState, dto: PlayUnitDto): { unit: UnitInstance, destination: number } {
         if (player.socketId !== game.state.playerTurnId) {
             throw new WsException("Not players turn");
         }
@@ -137,7 +137,7 @@ export class GamesService {
             throw new WsException ('slot taken');
         }
 
-        return card
+        return { unit: card, destination: destination }
     }
 
     playSpell(gameId: string, playerId: string, dto: PlaySpellDto) {
