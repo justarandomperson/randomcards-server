@@ -18,7 +18,7 @@ export class DecksService {
         const spells: [string, { data: SpellInstance, amount: number }][] = [];
 
         for (const spell of spellsMap.values()) { 
-            if (spell.isToken) {
+            if (!spell.isToken) {
                 spells.push([spell.id, { data: spell, amount : 2 }]);
             }
         }

@@ -87,6 +87,7 @@ export class GamesService {
 
     // services
     playerDisconnected(gameId: string, playerId: string) {
+        console.log(gameId)
         const game = this.getGame(gameId);
 
         game.actions.endGame(game.actions.getOpponentId(playerId));

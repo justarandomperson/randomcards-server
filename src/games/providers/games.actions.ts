@@ -1,7 +1,7 @@
 import { WsException } from "@nestjs/websockets";
 import { EffectsService } from "../../effects/effects.service";
 import { CurrentEffectData, GamePhase, GameState, PlayerState } from "../shared/games.types";
-import { ArtifactInstance, InstanceLocation, SpellInstance, UnitInstance, InstanceZone } from "../../instances/shared/instances.types";
+import { ArtifactInstance, InstanceLocation, SpellInstance, UnitInstance, InstanceZone, InstanceType } from "../../instances/shared/instances.types";
 import { EFFECT_TRIGGERS, EffectTrigger, Status, TriggerData } from "../../effects/effects.types";
 import { MAX_HAND_SIZE, MINIMUM_MONEY, STARTING_SPELLS_IN_HAND } from "../shared/games.constants";
 import { GamesEmitter } from "./games.emitter";
@@ -159,12 +159,15 @@ export class GameActions {
         return location;
     }
 
-    private runTriggerEffects(trigger: EffectTrigger, triggerData: TriggerData) {
+    private runTriggerEffects(trigger: EffectTrigger, triggerData: TriggerData): boolean {
         const needsTarget = this.effects.runTriggerEffects(trigger, triggerData);
 
         if (needsTarget) {
             this.emitter.selectTarget(triggerData.playerId);
+            return true;
         }
+
+        return false;
     }
 
     private emitTwoDifferentUpdateCard(playerId: string, card: UnitInstance | SpellInstance) {
@@ -249,7 +252,6 @@ export class GameActions {
         card.location = { insideOf: InstanceZone.NONE };
 
         this.emitter.updateCard(player.socketId, card, { insideOf: InstanceZone.NONE });
-        this.emitter.opponentPlayedSpell(this.getOpponentId(player.socketId), card);
 
         return card.location;
     }
@@ -555,13 +557,15 @@ export class GameActions {
     useSpell(playerId: string, card: SpellInstance) {
         const player = this.getPlayerState(playerId);
 
-        this.runTriggerEffects(EFFECT_TRIGGERS.SUMMONED, { playerId, source: card });
+        const needsTarget = this.runTriggerEffects(EFFECT_TRIGGERS.SUMMONED, { playerId, source: card });
         
         this.moveSpellFromHandToDrawpile(player, card); // also checks for token
 
-        this.emitter.opponentPlayedSpell(this.getOpponentId(playerId), card);
+        if (!needsTarget){
+            this.emitter.opponentPlayedSpell(this.getOpponentId(playerId), card);
+            this.runTriggerEffects(EFFECT_TRIGGERS.ANY_SPELL_PLAYED, { playerId, referenced: card });
+        }
 
-        this.runTriggerEffects(EFFECT_TRIGGERS.ANY_SPELL_PLAYED, { playerId, referenced: card });
     }
 
     drawSpell(playerId: string) {
@@ -687,6 +691,14 @@ export class GameActions {
             throw new WsException('got either but or none targets...');
         }
 
-        this.effects.runEffect(effect, data);        
+        if (data.source.type === InstanceType.SPELL){
+            this.emitter.opponentPlayedSpell(this.getOpponentId(player.socketId), data.source);
+        }
+
+        this.effects.runEffect(effect, data);   
+                
+        if (data.source.type === InstanceType.SPELL){
+            this.runTriggerEffects(EFFECT_TRIGGERS.ANY_SPELL_PLAYED, { playerId: player.socketId, referenced: data.source });
+        }
     }
 }

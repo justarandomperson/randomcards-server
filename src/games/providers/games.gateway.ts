@@ -89,7 +89,15 @@ export class GamesGateway implements OnGatewayInit, OnGatewayDisconnect {
 		this.matchMaking.removeFromQueue(client.id);
 
 		if (client.data.gameId) {
+			const gameId = client.data.gameId;
+
 			this.gamesService.playerDisconnected(client.data.gameId, client.id);
+
+			const opponentId = this.gamesService.getOpponentState(gameId, client.id).socketId;
+			const opponentSocket = this.getSocket(opponentId);
+
+			client.data.gameId = null;
+			opponentSocket.data.gameId = null;
 		}
  	}
 
