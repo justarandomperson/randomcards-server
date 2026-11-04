@@ -94,6 +94,12 @@ export class GamesEmitter {
 
 
     // client specific
+    updateShopBoth(gameId: string, shop: (ArtifactInstance | null)[]) {
+        const payload = shop.map((artifact) => artifact ? artifactInstanceToClient(artifact) : null);
+
+        this.server.to(gameId).emit(SOCKET_EVENT_NAMES.UPDATE_SHOP, payload);   
+    }
+
     updateShop(clientId: string, shop: (ArtifactInstance | null)[]) {
         const client = this.playerIdToSocket(clientId);
         const payload = shop.map((artifact) => artifact ? artifactInstanceToClient(artifact) : null);
@@ -121,18 +127,20 @@ export class GamesEmitter {
        client.emit(SOCKET_EVENT_NAMES.UPDATE_CARD, payload);
     }
 
-    updateArtifactBoth(gameId: string, artifact: ArtifactInstance, artifactLocation: InstanceLocation) {
+    updateArtifactBoth(gameId: string, artifact: ArtifactInstance, artifactLocation: InstanceLocation, playerId?: string) {
         const clientArtifactData = artifactInstanceToClient(artifact);
 
         const payload: UpdateArtifactPayload = {
             artifact: clientArtifactData,
-            location: artifactLocation
+            location: artifactLocation,
+            playerId
         };
 
         this.server.to(gameId).emit(SOCKET_EVENT_NAMES.UPDATE_ARTIFACT, payload);
     }
     
     updateArtifact(clientId: string, artifact: ArtifactInstance, artifactLocation: InstanceLocation, playerId?: string) {
+        //! is not used as of now 
         const client = this.playerIdToSocket(clientId);
         const clientArtifactData = artifactInstanceToClient(artifact);
 

@@ -37,7 +37,7 @@ export class GamesService {
         const player1State = initPlayerState(player1, player1Deck);
         const player2State = initPlayerState(player2, player2Deck);
 
-        const possibleShopPool = [...artifactsMap.values()];
+        const possibleShopPool = this.instances.generateArtifactInstances([...artifactsMap.values()]);
         const state: GameState = {
             gameId: match.gameId,
             players: new Map([
@@ -181,7 +181,7 @@ export class GamesService {
             throw new WsException("Not players turn");
         } 
 
-        if (player.artifactsBought > MAX_ARTIFACTS_TO_BUY_PER_TURN) {
+        if (player.artifactsBought >= MAX_ARTIFACTS_TO_BUY_PER_TURN) {
             throw new WsException("already bought max artifacts per turn"); 
         }
 

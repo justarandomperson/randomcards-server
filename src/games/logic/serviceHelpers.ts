@@ -1,4 +1,4 @@
-import { ArtifactInstance } from "../../instances/shared/instances.types";
+import { ArtifactInstance, InstanceZone } from "../../instances/shared/instances.types";
 import { PLAY_TURNS_PER_CYCLE, TURNS_PER_CYCLE } from "../shared/games.constants";
 import { GamePhase } from "../shared/games.types";
 
@@ -25,11 +25,12 @@ export const shouldSwitchPhase = (currentPhase: GamePhase, player1Turn: number, 
 }
 
 export const fillShop = (currentShop: (ArtifactInstance | null)[], pool: ArtifactInstance[]): ArtifactInstance[] => {
-    const newShop = currentShop.map((slot) => {
+    const newShop = currentShop.map((slot, i) => {
         if (!slot) {
             const randomIndex = Math.floor((Math.random() * pool.length));
 
             slot = pool[randomIndex];
+            slot.location = { insideOf: InstanceZone.SHOP, index: i }
             pool.splice(randomIndex, 1);
         }
 
