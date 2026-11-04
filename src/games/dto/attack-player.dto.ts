@@ -6,5 +6,5 @@ export default class AttackPlayerDto {
     attackerId: string;
 
     @IsBoolean()
-    isAttackOpponent: boolean;
+    isOpponent: boolean;
 }

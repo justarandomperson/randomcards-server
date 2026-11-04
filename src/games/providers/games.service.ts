@@ -248,7 +248,7 @@ export class GamesService {
         const player = game.actions.getPlayerState(playerId);
 
         const attacker = this.validateAttackPlayer(game, player, dto);
-        const target = (dto.isAttackOpponent) ? this.getOpponentState(gameId, playerId) : player;
+        const target = (dto.isOpponent) ? this.getOpponentState(gameId, playerId) : player;
 
         game.actions.attackPlayer(target.socketId, attacker.atk, attacker);
     }
@@ -270,6 +270,7 @@ export class GamesService {
     }
 
     private validateAttackAny(game: Game, player: PlayerState, dto: AttackUnitDto | AttackPlayerDto): UnitInstance {
+        
         const attacker = this.instances.findInstance(dto.attackerId, game.state.board);
         if (attacker.ownerId != player.socketId) {
             throw new WsException("Invalid attacker");
@@ -291,12 +292,12 @@ export class GamesService {
         const game = this.getGame(gameId);
         const player = game.actions.getPlayerState(playerId);
 
-        const { targetUnit, targetPlayerId } = this.validateRunCurrentEffect(game, dto);
+        const { targetUnit, targetPlayerId } = this.validateRunCurrentEffect(game, player ,dto);
 
         game.actions.runCurrentEffect(player, targetUnit, targetPlayerId);
     }
 
-    private validateRunCurrentEffect(game: Game, dto: SelectedTargetDto): { targetUnit?: UnitInstance, targetPlayerId?: string } {
+    private validateRunCurrentEffect(game: Game, player: PlayerState ,dto: SelectedTargetDto): { targetUnit?: UnitInstance, targetPlayerId?: string } {
         if (dto.isPlayer) {
             const playerKeys = [...game.state.players.keys()];
 
@@ -310,9 +311,17 @@ export class GamesService {
         }
         else {
             const board = game.state.board;
+            const bench = player.bench;
 
             for (let i = 0; i < board.length; i++) {
                 const slot = board[i];
+                if (slot && dto.id === slot.instanceId) {
+                    return { targetUnit: slot };
+                }
+            }
+
+             for (let i = 0; i < bench.length; i++) {
+                const slot = bench[i];
                 if (slot && dto.id === slot.instanceId) {
                     return { targetUnit: slot };
                 }

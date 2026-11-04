@@ -677,9 +677,9 @@ export class GameActions {
             return; //? or do we need to throw an error
         }
 
-        this.shiftPlayerCurrentEffect(player);
-
         const { effect, data } = player.currentEffects[0];
+
+        this.shiftPlayerCurrentEffect(player);
 
         if (targetUnit && !targetPlayerId) {
             data.targetUnit = targetUnit
