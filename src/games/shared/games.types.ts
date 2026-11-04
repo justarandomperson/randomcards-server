@@ -29,6 +29,7 @@ export type PlayerState = {
   hand: SpellInstance[]
   bench: (UnitInstance | null)[]
   currentEffects: CurrentEffectData[]
+  artifactsBought: number
 };
 
 export enum GamePhase {

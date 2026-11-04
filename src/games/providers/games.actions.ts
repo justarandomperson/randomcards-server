@@ -477,6 +477,14 @@ export class GameActions {
         player.currentEffects.shift();
     }
 
+    incrementArtifactsBought(player: PlayerState) {
+        player.artifactsBought += 1;
+    }
+
+    resetArtifactsBought(player: PlayerState) {
+        player.artifactsBought = 0;
+    }
+
 
     /*  ____ ____ ___ _ ____ _  _ ____ 
         |__| |     |  | |  | |\ | [__  
@@ -599,6 +607,9 @@ export class GameActions {
         const player = this.getPlayerState(playerId);
 
         this.decrementBenchCooldown(player);
+        if (this.state.gamePhase == GamePhase.SHOP) {
+            this.resetArtifactsBought(player);
+        }
 
         this.runTriggerEffects(EFFECT_TRIGGERS.TURN_END, { playerId });
     }

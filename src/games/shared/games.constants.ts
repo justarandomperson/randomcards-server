@@ -14,6 +14,7 @@ export const MAX_CARD_IN_BOARD = 8;
 export const MAX_HAND_SIZE = 6;
 
 export const MAX_ARTIFACTS_IN_SHOP = 5;
+export const MAX_ARTIFACTS_TO_BUY_PER_TURN = 2;
 
 export const TURN_NUMBER_MONEY_MULT = 2;
 
