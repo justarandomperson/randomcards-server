@@ -509,8 +509,10 @@ export class GameActions {
         const player = this.getPlayerState(playerId);
 
         if (boardIndex == undefined) {
-            boardIndex = this.getPlayerBoard(playerId).findIndex((slot) => slot.unit == undefined);
-            if (!boardIndex) {
+            const playerBoard =this.getPlayerBoard(playerId)
+            const freeIndex = playerBoard.findIndex((slot)  => slot.unit == undefined);
+            boardIndex = playerBoard[freeIndex].index
+            if (boardIndex == undefined) {
                 return; // no place left to summon
             }
         }
@@ -591,7 +593,7 @@ export class GameActions {
             attacker.canAttack = false;
 
             const attackerOwnerId = this.instances.getOwnerId(attacker);
-            this.runTriggerEffects(EFFECT_TRIGGERS.ATTACKED, { playerId: attackerOwnerId });
+            this.runTriggerEffects(EFFECT_TRIGGERS.ATTACKED, { playerId: attackerOwnerId, source: attacker });
         }
 
         const hp = this.decreasePlayerHealth(player, amount);
