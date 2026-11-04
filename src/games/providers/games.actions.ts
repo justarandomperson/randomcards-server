@@ -125,6 +125,7 @@ export class GameActions {
 
     refillShop() {
         this.setShop(fillShop(this.state.shop, this.state.possibleShopPool));
+        console.log(this.state.shop);
     }
 
 
@@ -292,7 +293,6 @@ export class GameActions {
 
         this.state.shop[location.index] = null;
         player.artifacts.push(artifact);
-        this.state.possibleShopPool.splice(this.state.possibleShopPool.indexOf(artifact), 1);
 
         artifact.location = { insideOf: InstanceZone.PLAYER, index: player.artifacts.length - 1 };
 
@@ -478,11 +478,11 @@ export class GameActions {
     }
 
     incrementArtifactsBought(player: PlayerState) {
-        player.artifactsBought += 1;
+        player.artifactsBoughtThisTurn += 1;
     }
 
     resetArtifactsBought(player: PlayerState) {
-        player.artifactsBought = 0;
+        player.artifactsBoughtThisTurn = 0;
     }
 
 
@@ -624,7 +624,6 @@ export class GameActions {
 
     startTurn() {
         const players = [...this.state.players.values()]
-
         // change phase is needed
         const phaseChanged = shouldSwitchPhase(this.state.gamePhase, players[0].turn, players[1].turn);
         if (phaseChanged) {
@@ -633,7 +632,7 @@ export class GameActions {
 
         // change player turn
         if (phaseChanged && this.state.gamePhase === GamePhase.SHOP) {
-            const lessHpId = players.toSorted((player) => player.hp)[0].socketId;
+            const lessHpId = players.toSorted((p1, p2) => p1.hp - p2.hp)[0].socketId;
             this.setPlayerTurnId(lessHpId);
         }
         else { 
@@ -642,11 +641,11 @@ export class GameActions {
         }
 
         // start of turn stuff
+        const player = this.getPlayerState(this.state.playerTurnId);
+        this.incrementPlayerTurn(player);
+
         switch(this.state.gamePhase) {
             case GamePhase.PLAY: {
-                const player = this.getPlayerState(this.state.playerTurnId);
-
-                this.incrementPlayerTurn(player);
                 this.runTriggerEffects(EFFECT_TRIGGERS.TURN_START,  { playerId: player.socketId });
                 this.startTurnPlay(player);
                 break;
@@ -654,6 +653,7 @@ export class GameActions {
 
             case GamePhase.SHOP:
                 this.refillShop();
+                this.emitter.updateShopBoth(this.state.gameId, this.state.shop);
                 break;
         }
 
@@ -667,8 +667,13 @@ export class GameActions {
         this.emitter.updateGamePhase(this.state.gameId)
 
         if (this.state.gamePhase === GamePhase.PLAY) { // changed from shop
-            this.setShop(fillShop([], this.state.possibleShopPool)); // generate a new shop
-            this.emitter.updateShopBoth(this.state.gameId, this.state.shop)
+            const unsoldArtifacts = this.state.shop.filter((item): item is ArtifactInstance => item !== null);
+
+            this.setShop([null, null, null, null, null]);
+            this.refillShop();
+            this.state.possibleShopPool.push(...unsoldArtifacts);
+
+            this.emitter.updateShopBoth(this.state.gameId, this.state.shop);
         }
 
     }

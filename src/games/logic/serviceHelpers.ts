@@ -1,5 +1,5 @@
 import { ArtifactInstance, InstanceZone } from "../../instances/shared/instances.types";
-import { PLAY_TURNS_PER_CYCLE, TURNS_PER_CYCLE } from "../shared/games.constants";
+import { CYCLE_TURNS_PER_PLAYER, PLAY_TURNS_PER_PLAYER, SHOP_TURNS_PER_PLAYER } from "../shared/games.constants";
 import { GamePhase } from "../shared/games.types";
 
 
@@ -19,28 +19,41 @@ export const unTranslateBoardIndex = (index: number, isPlayer1: boolean): number
 
 export const shouldSwitchPhase = (currentPhase: GamePhase, player1Turn: number, player2Turn: number): boolean => {
     const totalTurns = player1Turn + player2Turn;
-    const nextTurnPhase = totalTurns % TURNS_PER_CYCLE < PLAY_TURNS_PER_CYCLE ? GamePhase.PLAY : GamePhase.SHOP;
+    if (totalTurns % 2 == 0) {
+        return false;
+    }
+
+    const totalTurnsPerPlayer = Math.floor(totalTurns / 2);
+    const nextTurnPhase = (totalTurnsPerPlayer % CYCLE_TURNS_PER_PLAYER) >= PLAY_TURNS_PER_PLAYER ?
+        GamePhase.SHOP : GamePhase.PLAY;
+
+    console.log({ currentPhase, player1Turn, player2Turn, totalTurns, totalTurnsPerPlayer, nextTurnPhase });
 
     return nextTurnPhase !== currentPhase;
 }
 
-export const fillShop = (currentShop: (ArtifactInstance | null)[], pool: ArtifactInstance[]): ArtifactInstance[] => {
+export const fillShop = (currentShop: (ArtifactInstance | null)[], pool: ArtifactInstance[]): (ArtifactInstance | null)[] => {
     const newShop = currentShop.map((slot, i) => {
-        if (!slot) {
-            const randomIndex = Math.floor((Math.random() * pool.length));
-
-            slot = pool[randomIndex];
-            slot.location = { insideOf: InstanceZone.SHOP, index: i }
-            pool.splice(randomIndex, 1);
+        if (slot) {
+            return slot;
+        }
+        
+        console.log('pool size:', pool.length);
+        if (pool.length == 0) {
+            return null;
         }
 
-        return slot;
+        const randomIndex = Math.floor(Math.random() * pool.length);
+        const [picked] = pool.splice(randomIndex, 1);
+
+        picked.location = { insideOf: InstanceZone.SHOP, index: i }
+        
+        return picked;
     })
 
     return newShop;
 }
 
 export const getRandomInt = (min: number, max: number): number => {
-    return Math.floor(Math.random() * (max + 1)) + min;
+    return Math.floor(Math.random() * (max - min + 1)) + min;
 }
-

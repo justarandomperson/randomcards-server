@@ -14,7 +14,8 @@ export const playerStateToClient = (player: PlayerState): ClientPlayerData => {
         money: player.money,
         turn: player.turn,
         drawpileCount: player.drawpile.length,
-        artifacts: clientArtifacts
+        artifacts: clientArtifacts,
+        artifactsBoughtThisTurn: player.artifactsBoughtThisTurn
     };
 
     return clientPlayerData;

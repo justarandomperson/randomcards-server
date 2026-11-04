@@ -49,8 +49,8 @@ export class GamesEmitter {
         this.allCardEvents(player1Socket, player1State, gameState.board);
         this.allCardEvents(player2Socket, player2State, gameState.board);
 
-        this.updateShop(player1Id, gameState.shop);
-        this.updateShop(player2Id, gameState.shop);
+        this.updateShopBoth(gameState.gameId, gameState.shop);
+
 
         return true;
     }

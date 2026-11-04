@@ -36,15 +36,21 @@ const ArtifactList: ArtifactInstance[] = [
 
                         // rng target
                         const opponentUnits = ctx.actions.getOpponentUnits(ctx.data.playerId);
-                        const optionsAmount = opponentUnits.length + 1; // 1 for opponent itself
-                        const randomNumber = getRandomInt(1, optionsAmount);
 
-                        // attack
-                        if (randomNumber === optionsAmount) { // got biggest number? attack opponent
-                            ctx.actions.attackPlayer(ctx.actions.getOpponentId(ctx.data.playerId), damage);
-                        }  
-                        else {
-                            ctx.actions.attackUnit(ctx.data.playerId, opponentUnits[randomNumber - 1].unit, damage);
+                        if (opponentUnits) {
+                            const optionsAmount = opponentUnits.length + 1; // 1 for opponent itself
+                            const randomNumber = getRandomInt(1, optionsAmount);
+
+                            // attack
+                            if (randomNumber === optionsAmount) { // got biggest number? attack opponent
+                                ctx.actions.attackPlayer(ctx.actions.getOpponentId(ctx.data.playerId), damage);
+                            }  
+                            else {
+                                const target = opponentUnits[randomNumber - 1];
+                                if (target) {
+                                    ctx.actions.attackUnit(ctx.data.playerId, target.unit, damage);
+                                }
+                            }
                         }
                     }
                 }

@@ -29,7 +29,7 @@ export type PlayerState = {
   hand: SpellInstance[]
   bench: (UnitInstance | null)[]
   currentEffects: CurrentEffectData[]
-  artifactsBought: number
+  artifactsBoughtThisTurn: number
 };
 
 export enum GamePhase {
@@ -86,7 +86,8 @@ export type ClientPlayerData = {
   money: number,
   turn: number,
   drawpileCount: number,
-  artifacts: ClientArtifactData[]
+  artifacts: ClientArtifactData[],
+  artifactsBoughtThisTurn: number
 }
 
 export enum targetOption {

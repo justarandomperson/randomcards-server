@@ -16,7 +16,7 @@ export const initPlayerState = (player: BasicPlayerData, deck: Deck): PlayerStat
         hand: [],
         bench: deck.units,
         currentEffects: [],
-        artifactsBought: 0
+        artifactsBoughtThisTurn: 0
     };
 
     return playerState;

@@ -181,7 +181,7 @@ export class GamesService {
             throw new WsException("Not players turn");
         } 
 
-        if (player.artifactsBought >= MAX_ARTIFACTS_TO_BUY_PER_TURN) {
+        if (player.artifactsBoughtThisTurn >= MAX_ARTIFACTS_TO_BUY_PER_TURN) {
             throw new WsException("already bought max artifacts per turn"); 
         }
 
