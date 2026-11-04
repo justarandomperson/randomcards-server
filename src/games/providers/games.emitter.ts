@@ -192,11 +192,10 @@ export class GamesEmitter {
         this.server.to(gameId).emit(SOCKET_EVENT_NAMES.UPDATE_DRAWPILE_COUNT, payload);
     }
 
-    opponentPlayedSpell(clientId: string, spell: SpellInstance) {
-        const client = this.playerIdToSocket(clientId);
+    playedSpell(gameId: string, spell: SpellInstance) {
         const payload = spellInstanceToClient(spell);
 
-        client.emit(SOCKET_EVENT_NAMES.OPPONENT_PLAYED_SPELL, payload);
+        this.server.to(gameId).emit(SOCKET_EVENT_NAMES.PLAYED_SPELL, payload);
     }
 
     gameEnd(gameId: string, winnerId: string) {

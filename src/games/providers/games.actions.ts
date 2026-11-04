@@ -572,7 +572,7 @@ export class GameActions {
         this.moveSpellFromHandToDrawpile(player, card); // also checks for token
 
         if (!needsTarget){
-            this.emitter.opponentPlayedSpell(this.getOpponentId(playerId), card);
+            this.emitter.playedSpell(this.state.gameId, card);
             this.runTriggerEffects(EFFECT_TRIGGERS.ANY_SPELL_PLAYED, { playerId, referenced: card });
         }
 
@@ -714,7 +714,7 @@ export class GameActions {
         }
 
         if (data.source.type === InstanceType.SPELL){
-            this.emitter.opponentPlayedSpell(this.getOpponentId(player.socketId), data.source);
+            this.emitter.playedSpell(this.state.gameId, data.source);
         }
 
         this.effects.runEffect(effect, data);   
