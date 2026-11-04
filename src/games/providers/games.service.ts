@@ -3,7 +3,7 @@ import { ArtifactInstance, SpellInstance, UnitInstance } from '../../instances/s
 import { Game, GamePhase, GameState, PlayerState } from '../shared/games.types';
 import { Match } from '../../matchmaking/matchmaking.types';
 import { initPlayerState } from '../logic/gameSetup';
-import { MAX_CARD_IN_BOARD } from '../shared/games.constants';
+import { MAX_ARTIFACTS_TO_BUY_PER_TURN, MAX_CARD_IN_BOARD } from '../shared/games.constants';
 import { WsException } from '@nestjs/websockets';
 import PlayUnitDto from '../dto/play-unit.dto';
 import PlaySpellDto from '../dto/play-spell.dto';
@@ -172,6 +172,7 @@ export class GamesService {
         const artifact = this.validateBuyArtifact(game, player, dto);
 
         game.actions.moveArtifactFromShopToInventory(player, artifact);
+        game.actions.incrementArtifactsBought(player);
         game.actions.decreasePlayerMoney(player, artifact.cost);
     }
 
@@ -179,6 +180,10 @@ export class GamesService {
         if (player.socketId !== game.state.playerTurnId) {
             throw new WsException("Not players turn");
         } 
+
+        if (player.artifactsBought > MAX_ARTIFACTS_TO_BUY_PER_TURN) {
+            throw new WsException("already bought max artifacts per turn"); 
+        }
 
         const artifact = this.instances.findInstance(dto.instanceId, game.state.shop);
 
