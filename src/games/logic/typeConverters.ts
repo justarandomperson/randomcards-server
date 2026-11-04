@@ -9,6 +9,7 @@ export const playerStateToClient = (player: PlayerState): ClientPlayerData => {
 
     const clientPlayerData: ClientPlayerData = {
         name: player.name,
+        id: player.socketId,
         hp: player.hp,
         money: player.money,
         turn: player.turn,

@@ -1,6 +1,7 @@
 import { EFFECT_TRIGGERS, EffectContext, Status } from "../../effects/effects.types";
 import { getRandomInt } from "../../games/logic/serviceHelpers";
 import { InstanceType, SpellInstance, UnitInstance } from "../shared/instances.types";
+import { targetOption } from "../../games/shared/games.types";
 
 
 const spellList: SpellInstance[] = [
@@ -23,7 +24,7 @@ const spellList: SpellInstance[] = [
         effects: [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
-                hasTarget: true,
+                 hasTarget:  new Set([targetOption.ALLY]),
                 execute: (ctx: EffectContext) => {
                     if (ctx.data.targetUnit) {
                         ctx.actions.increaseUnitAttack(ctx.data.targetUnit, 2);
@@ -42,7 +43,7 @@ const spellList: SpellInstance[] = [
         effects: [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
-                hasTarget: true,
+                hasTarget: new Set([targetOption.ALLY]),
                 execute: (ctx: EffectContext) => {
                     if (ctx.data.targetUnit) {
                         ctx.actions.attackPlayer(ctx.data.playerId, 3);
@@ -62,7 +63,7 @@ const spellList: SpellInstance[] = [
         effects: [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
-                hasTarget: true,
+                hasTarget: new Set([targetOption.BENCH]),
                 execute: (ctx: EffectContext) => {
                     if (ctx.data.targetUnit) {
                         ctx.actions.increaseUnitCooldown(ctx.data.targetUnit, -1);
@@ -124,7 +125,7 @@ const spellList: SpellInstance[] = [
         effects: [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
-                hasTarget: true,
+                hasTarget:  new Set([targetOption.ALLY, targetOption.ENEMY]),
                 execute: (ctx: EffectContext) => {
                     if (ctx.data.targetUnit) {
                         ctx.actions.attackUnit(ctx.data.playerId, ctx.data.targetUnit, 3);
@@ -170,7 +171,7 @@ const spellList: SpellInstance[] = [
         effects: [
             {
                 trigger: [EFFECT_TRIGGERS.ANY_SUMMONED],
-                hasTarget: true,
+                hasTarget:  new Set([targetOption.ALLY, targetOption.SELF]),
                 execute: (ctx: EffectContext) => {
                     if (ctx.data.targetUnit) {
                         ctx.actions.increaseUnitHealth(ctx.data.targetUnit, 2);
@@ -252,7 +253,7 @@ const spellList: SpellInstance[] = [
         effects: [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
-                hasTarget: true,
+                hasTarget:  new Set([targetOption.ALLY, targetOption.ENEMY]),
                 execute: (ctx: EffectContext) => {
                     if (ctx.data.targetUnit) {
                         ctx.actions.attackUnit(ctx.data.playerId, ctx.data.targetUnit, ctx.data.targetUnit.hp);
@@ -271,7 +272,7 @@ const spellList: SpellInstance[] = [
         effects: [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
-                hasTarget: true,
+                hasTarget:  new Set([targetOption.ALLY, targetOption.ENEMY]),
                 execute: (ctx: EffectContext) => {
                     if (ctx.data.targetUnit) {
                         ctx.actions.addUnitStatus(ctx.data.targetUnit, Status.SILENCED);
@@ -330,11 +331,12 @@ const spellList: SpellInstance[] = [
         id: "S_16",
         name: "i need more bullets",
         type: InstanceType.SPELL,
-        effectDesc: "give a unit of yours +2 ATK",
+        effectDesc: "give an ally unit +2 ATK",
         effects: [
             {
+                //change to give haste
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
-                hasTarget: true,
+                 hasTarget:  new Set([targetOption.ALLY]),
                 execute: (ctx: EffectContext) => {
                     if (ctx.data.targetUnit) {
                         ctx.actions.increaseUnitAttack(ctx.data.targetUnit, 2);
@@ -370,7 +372,7 @@ const spellList: SpellInstance[] = [
         effects: [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
-                hasTarget: true,
+                hasTarget:  new Set([targetOption.ALLY, targetOption.ENEMY]),
                 execute: (ctx: EffectContext) => {
                     if (ctx.data.targetUnit) {
                         ctx.actions.attackUnit(ctx.data.playerId, ctx.data.targetUnit, 8);

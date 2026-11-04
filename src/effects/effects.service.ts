@@ -1,6 +1,6 @@
 import { WsException } from "@nestjs/websockets";
 import { AnyInstance, InstanceType } from "../instances/shared/instances.types";
-import { CurrentEffectData, GameState } from "../games/shared/games.types";
+import { CurrentEffectData, GameState, selectTargetFilter, targetOption } from "../games/shared/games.types";
 import { Effect, EFFECT_TRIGGERS, EffectContext, EffectContextData, EffectTrigger, TriggerData } from "./effects.types";
 import { GameActions } from "../games/providers/games.actions";
 import { InstancesService } from "../instances/providers/instances.service";
@@ -47,15 +47,19 @@ export class EffectsService {
 
 
     // helpers
-    private iterateEffects(trigger: EffectTrigger, triggerData: TriggerData, source: AnyInstance): boolean {
-        let needsTarget = false;
+    private iterateEffects(trigger: EffectTrigger, triggerData: TriggerData, source: AnyInstance): selectTargetFilter | undefined {
+        let needsTarget;
 
         source.effects.map((effect) => {
             if (effect.trigger.includes(trigger)) {
                 const effectContextData = this.createEffectContextData(triggerData, source);
 
                 if (this.checkEffectNeedsTarget(effect, effectContextData)) {
-                    needsTarget = true;
+
+                    const newEffectData: CurrentEffectData = { effect, data:effectContextData };
+                    this.actions.pushPlayerCurrentEffect(this.actions.getPlayerState(effectContextData.playerId), newEffectData);
+
+                    needsTarget = effect.hasTarget;
                 }
 
                 else {
@@ -70,8 +74,6 @@ export class EffectsService {
     private checkEffectNeedsTarget(effect: Effect, data: EffectContextData): boolean {
         if (effect.hasTarget) {
 
-            const newEffectData: CurrentEffectData = { effect, data };
-            this.actions.pushPlayerCurrentEffect(this.actions.getPlayerState(data.playerId), newEffectData);
             
             return true;
         }
@@ -86,7 +88,7 @@ export class EffectsService {
         effect.execute(context);
     }
 
-    runTriggerEffects(trigger: EffectTrigger, data: TriggerData): boolean {
+    runTriggerEffects(trigger: EffectTrigger, data: TriggerData): selectTargetFilter | undefined {
         switch (trigger) {
             case EFFECT_TRIGGERS.TURN_START:
             case EFFECT_TRIGGERS.TURN_END:
@@ -105,8 +107,8 @@ export class EffectsService {
         }
     }
 
-    private runUnspecificEffects(trigger: EffectTrigger, triggerData: TriggerData): boolean {
-        let needsTarget = false;
+    private runUnspecificEffects(trigger: EffectTrigger, triggerData: TriggerData): selectTargetFilter | undefined {
+        let needsTarget;
 
         const playerBoard = this.actions.getPlayerBoard(triggerData.playerId); 
         for (const slot of playerBoard) {
@@ -125,14 +127,14 @@ export class EffectsService {
         return needsTarget;
     }
 
-    private runInstanceSpecificEffectsForTrigger(trigger: EffectTrigger, triggerData: TriggerData): boolean {
+    private runInstanceSpecificEffectsForTrigger(trigger: EffectTrigger, triggerData: TriggerData): selectTargetFilter | undefined {
         const source = triggerData.source;
         if (!source) {
             throw new WsException("effect needs the source card/artifact id");
         }
 
         if (source.type === InstanceType.UNIT && source.statuses.silenced) {
-            return false; // didnt run effect, but also doesnt need target, so false.
+            return undefined; // didnt run effect, but also doesnt need target, so false.
         }
 
         return this.iterateEffects(trigger, triggerData, source);

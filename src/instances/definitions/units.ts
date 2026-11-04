@@ -2,6 +2,7 @@ import { EFFECT_TRIGGERS, EffectContext, Status } from '../../effects/effects.ty
 import { getRandomInt } from '../../games/logic/serviceHelpers';
 import { MAX_CARDS_PER_BOARD_ROW } from '../../games/shared/games.constants';
 import { InstanceType, InstanceZone, UnitInstance } from '../shared/instances.types';
+import { targetOption } from '../../games/shared/games.types';
 
 
 const unitList: UnitInstance[] = [
@@ -75,7 +76,7 @@ const unitList: UnitInstance[] = [
         effects: [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
-                hasTarget: true,
+                hasTarget:  new Set([targetOption.ALLY, targetOption.ENEMY]),
                 execute: (ctx: EffectContext) => {;
                     if (ctx.data.targetUnit) {
                         ctx.actions.attackUnit(ctx.data.playerId, ctx.data.targetUnit, 1);

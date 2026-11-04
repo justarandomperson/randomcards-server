@@ -80,9 +80,20 @@ export type UpdateArtifactPayload = {
 // they contain only what the client should get
 export type ClientPlayerData = {
   name: string
+  id: string
   hp: number
   money: number
   turn: number
   drawpileCount: number
   artifacts: ClientArtifactData[]
 }
+
+export enum targetOption {
+  ALLY,
+  SELF,
+  ENEMY,
+  OPPONENT,
+  BENCH
+}
+
+export type selectTargetFilter = Set<targetOption>

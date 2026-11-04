@@ -1,6 +1,6 @@
 import { AnyInstance, UnitInstance } from '../instances/shared/instances.types';
 import { GameActions } from '../games/providers/games.actions';
-import { GameState } from '../games/shared/games.types'
+import { GameState, selectTargetFilter } from '../games/shared/games.types'
 import { InstancesService } from '../instances/providers/instances.service';
 
 
@@ -24,7 +24,7 @@ export type EffectContextData = {
 export type Effect = {
   trigger: EffectTrigger[]
   execute(ctx: EffectContext): void
-  hasTarget?: boolean
+  hasTarget?: selectTargetFilter
   value?: number
 };
 

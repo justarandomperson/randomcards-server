@@ -1,6 +1,6 @@
 import { WsException } from "@nestjs/websockets";
 import { EffectsService } from "../../effects/effects.service";
-import { CurrentEffectData, GamePhase, GameState, PlayerState } from "../shared/games.types";
+import { CurrentEffectData, GamePhase, GameState, PlayerState, selectTargetFilter } from "../shared/games.types";
 import { ArtifactInstance, InstanceLocation, SpellInstance, UnitInstance, InstanceZone, InstanceType } from "../../instances/shared/instances.types";
 import { EFFECT_TRIGGERS, EffectTrigger, Status, TriggerData } from "../../effects/effects.types";
 import { MAX_HAND_SIZE, MINIMUM_MONEY, STARTING_SPELLS_IN_HAND } from "../shared/games.constants";
@@ -159,15 +159,15 @@ export class GameActions {
         return location;
     }
 
-    private runTriggerEffects(trigger: EffectTrigger, triggerData: TriggerData): boolean {
+    private runTriggerEffects(trigger: EffectTrigger, triggerData: TriggerData): selectTargetFilter | undefined {
         const needsTarget = this.effects.runTriggerEffects(trigger, triggerData);
 
         if (needsTarget) {
-            this.emitter.selectTarget(triggerData.playerId);
-            return true;
+            this.emitter.selectTarget(triggerData.playerId, needsTarget);
+            return needsTarget;
         }
 
-        return false;
+        return undefined;
     }
 
     private emitTwoDifferentUpdateCard(playerId: string, card: UnitInstance | SpellInstance) {

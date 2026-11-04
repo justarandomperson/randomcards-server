@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
-import { GameState, MatchStartPayload, PlayerState, UpdateArtifactPayload, UpdateCardPayload, UpdateDrawpileCountPayload, UpdateHealthPayload, UpdateMoneyPayload } from '../shared/games.types';
+import { GameState, MatchStartPayload, PlayerState, selectTargetFilter, UpdateArtifactPayload, UpdateCardPayload, UpdateDrawpileCountPayload, UpdateHealthPayload, UpdateMoneyPayload } from '../shared/games.types';
 import { artifactInstanceToClient, playerStateToClient, spellInstanceToClient, unitInstanceToClient } from '../logic/typeConverters';
 import { ArtifactInstance, InstanceLocation, InstanceType, SpellInstance, UnitInstance } from '../../instances/shared/instances.types';
 import { WsException } from '@nestjs/websockets';
@@ -145,10 +145,10 @@ export class GamesEmitter {
         client.emit(SOCKET_EVENT_NAMES.UPDATE_ARTIFACT, payload);
     }
 
-    selectTarget(clientId: string) {
+    selectTarget(clientId: string, filter: selectTargetFilter) {
         const client = this.playerIdToSocket(clientId);
 
-        client.emit(SOCKET_EVENT_NAMES.SELECT_TARGET);
+        client.emit(SOCKET_EVENT_NAMES.SELECT_TARGET, Array.from(filter));
     }
 
 
