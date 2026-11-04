@@ -103,7 +103,7 @@ export class InstancesService {
     }
 
 
-    // services
+    // services    
     getDefaultUnitById(cardId: string): UnitInstance {
         const unit = unitsMap.get(cardId);
 
@@ -134,6 +134,14 @@ export class InstancesService {
         }
 
         throw new WsException('cannot find empty slot');
+    }
+
+    generateArtifactInstances(artifactList: ArtifactInstance[]): ArtifactInstance[] {
+        for (const artifact of artifactList) {
+            artifact.instanceId = this.generateInstanceId()
+        }
+
+        return artifactList
     }
     
     async getImages(): Promise<ImagesList> {

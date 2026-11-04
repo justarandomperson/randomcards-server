@@ -296,7 +296,7 @@ export class GameActions {
 
         artifact.location = { insideOf: InstanceZone.PLAYER, index: player.artifacts.length - 1 };
 
-        this.emitter.updateArtifact(player.socketId, artifact, artifact.location);
+        this.emitter.updateArtifactBoth(this.state.gameId, artifact, artifact.location, player.socketId);
 
         return artifact.location;
     }
@@ -631,14 +631,14 @@ export class GameActions {
             this.changeGamePhase();
         }
 
-        // set player id (different algorithm depending on the phase)
-        if (this.state.gamePhase === GamePhase.PLAY || !phaseChanged) { // dont run for if shopPhase just started
-            const opponent = this.getOpponentState(this.state.playerTurnId);
-            this.setPlayerTurnId(opponent.socketId);
-        }
-        else { // run if shopPhase just started
+        // change player turn
+        if (phaseChanged && this.state.gamePhase === GamePhase.SHOP) {
             const lessHpId = players.toSorted((player) => player.hp)[0].socketId;
             this.setPlayerTurnId(lessHpId);
+        }
+        else { 
+            const opponent = this.getOpponentState(this.state.playerTurnId);
+            this.setPlayerTurnId(opponent.socketId);
         }
 
         // start of turn stuff
@@ -664,9 +664,13 @@ export class GameActions {
         const phase = this.state.gamePhase;
         this.setGamePhase((phase === GamePhase.PLAY ? GamePhase.SHOP : GamePhase.PLAY));
 
+        this.emitter.updateGamePhase(this.state.gameId)
+
         if (this.state.gamePhase === GamePhase.PLAY) { // changed from shop
             this.setShop(fillShop([], this.state.possibleShopPool)); // generate a new shop
+            this.emitter.updateShopBoth(this.state.gameId, this.state.shop)
         }
+
     }
 
     private startTurnPlay(player: PlayerState) {
