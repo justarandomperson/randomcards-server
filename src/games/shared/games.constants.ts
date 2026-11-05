@@ -1,8 +1,6 @@
-import { PLAYERS_IN_MATCH } from "../../matchmaking/matchmaking.constants";
-
 export const STARTING_HEALTH = 20;
-export const STARTING_MONEY = 20;
-export const STARTING_TURN = 0;
+export const STARTING_MONEY = 0;
+export const STARTING_TURN = 1;
 export const STARTING_SPELLS_IN_HAND = 3;
 
 export const UNITS_IN_DECK = 8;

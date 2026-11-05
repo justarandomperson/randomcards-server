@@ -47,7 +47,7 @@ export class GamesService {
             board: Array(MAX_CARD_IN_BOARD).fill(null),
             shop: fillShop([null, null, null, null, null], possibleShopPool), 
             gamePhase: GamePhase.PLAY,
-            playerTurnId: player1.socketId,
+            playerTurnId: player2.socketId,
             possibleShopPool
         };
         const actions = new GameActions(state, this.emitter, this.instances);
@@ -103,6 +103,8 @@ export class GamesService {
             this.removeGame(gameId);
             throw new WsException("couldn't match players");
         }
+
+        game.actions.startTurn();
     }
 
     playUnit(gameId: string, playerId: string, dto: PlayUnitDto) {
@@ -302,7 +304,9 @@ export class GamesService {
         game.actions.runCurrentEffect(player, targetUnit, targetPlayerId);
     }
 
-    private validateRunCurrentEffect(game: Game, player: PlayerState ,dto: SelectedTargetDto): { targetUnit?: UnitInstance, targetPlayerId?: string } {
+    private validateRunCurrentEffect(
+        game: Game, player: PlayerState ,dto: SelectedTargetDto
+    ) : { targetUnit?: UnitInstance, targetPlayerId?: string } {
         if (dto.isPlayer) {
             const playerKeys = [...game.state.players.keys()];
 

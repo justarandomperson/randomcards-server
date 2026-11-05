@@ -522,7 +522,10 @@ export class GameActions {
         this.moveUnitFromBenchToBoard(player, card, boardIndex);
         this.emitTwoDifferentUpdateCard(player.socketId, card);
 
-        this.runTriggerEffects(EFFECT_TRIGGERS.SUMMONED, { playerId, source: card });
+        if (!card.statuses.silenced) {
+            this.runTriggerEffects(EFFECT_TRIGGERS.SUMMONED, { playerId, source: card });
+        }
+
         this.runTriggerEffects(EFFECT_TRIGGERS.ANY_SUMMONED, { playerId, referenced: card});
     }
 
@@ -534,7 +537,10 @@ export class GameActions {
             attacker.canAttack = false;
 
             const attackerOwnerId = this.instances.getOwnerId(attacker);
-            this.runTriggerEffects(EFFECT_TRIGGERS.ATTACKED, { playerId: attackerOwnerId, source: attacker, attacked: card });
+
+            if (!attacker.statuses.silenced) {
+                this.runTriggerEffects(EFFECT_TRIGGERS.ATTACKED, { playerId: attackerOwnerId, source: attacker, attacked: card });
+            }
         }
 
         if (card.statuses.dodge > 0) {
@@ -543,7 +549,10 @@ export class GameActions {
         else {
             const isUnitDead = this.decreaseUnitHealth(card, amount);
 
-            this.runTriggerEffects(EFFECT_TRIGGERS.DAMAGED, { playerId, source: card, attacker });
+            if (!card.statuses.silenced) {
+                this.runTriggerEffects(EFFECT_TRIGGERS.DAMAGED, { playerId, source: card, attacker });
+            }
+            
             this.runTriggerEffects(EFFECT_TRIGGERS.ANY_DAMAGED, { playerId, referenced: card });
 
             if (isUnitDead) {
@@ -558,7 +567,10 @@ export class GameActions {
 
                 this.increaseUnitCooldown(card, +1);
 
-                this.runTriggerEffects(EFFECT_TRIGGERS.DEATH, { playerId, source: card });
+                if (!card.statuses.silenced) {
+                    this.runTriggerEffects(EFFECT_TRIGGERS.DEATH, { playerId, source: card });
+                }
+
                 this.runTriggerEffects(EFFECT_TRIGGERS.ANY_DIED, { playerId, referenced: card });
             }
         }
@@ -593,7 +605,10 @@ export class GameActions {
             attacker.canAttack = false;
 
             const attackerOwnerId = this.instances.getOwnerId(attacker);
-            this.runTriggerEffects(EFFECT_TRIGGERS.ATTACKED, { playerId: attackerOwnerId, source: attacker });
+
+            if (!attacker.statuses.silenced) {
+                this.runTriggerEffects(EFFECT_TRIGGERS.ATTACKED, { playerId: attackerOwnerId, source: attacker });
+            }
         }
 
         const hp = this.decreasePlayerHealth(player, amount);
@@ -608,7 +623,9 @@ export class GameActions {
     endTurn(playerId: string) {
         const player = this.getPlayerState(playerId);
 
+        this.incrementPlayerTurn(player);
         this.decrementBenchCooldown(player);
+
         if (this.state.gamePhase == GamePhase.SHOP) {
             this.resetArtifactsBought(player);
         }
@@ -643,11 +660,9 @@ export class GameActions {
         }
 
         // start of turn stuff
-        const player = this.getPlayerState(this.state.playerTurnId);
-        this.incrementPlayerTurn(player);
-
         switch(this.state.gamePhase) {
             case GamePhase.PLAY: {
+                const player = this.getPlayerState(this.state.playerTurnId);
                 this.runTriggerEffects(EFFECT_TRIGGERS.TURN_START,  { playerId: player.socketId });
                 this.startTurnPlay(player);
                 break;

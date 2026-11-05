@@ -141,13 +141,22 @@ const unitList: UnitInstance[] = [
         name: "Silverfish",
         type: InstanceType.UNIT,
         effectDesc: "Dodge (1). Haste.",
-        effects: [],
+        effects: [
+            {
+                trigger: [EFFECT_TRIGGERS.SUMMONED],
+                execute: (ctx: EffectContext) => {
+                    const source = ctx.instances.typeInstance(ctx.data.source, InstanceType.UNIT);
+                    ctx.actions.addUnitStatus(source, Status.DODGE);
+                    ctx.actions.addUnitStatus(source, Status.HASTE);
+                }
+            },
+        ],
         statuses: {
-            haste: true,
+            haste: false,
             taunt: false,
             paralyzed: false,
             silenced: false,
-            dodge: 1
+            dodge: 0
         },
         cost: 2,
         hp: 2,
@@ -161,6 +170,13 @@ const unitList: UnitInstance[] = [
         effectDesc: "Taunt. Damaged: paralyze the attacker.",
         effects: [
             {
+                trigger: [EFFECT_TRIGGERS.SUMMONED],
+                execute: (ctx: EffectContext) => {
+                    const source = ctx.instances.typeInstance(ctx.data.source, InstanceType.UNIT);
+                    ctx.actions.addUnitStatus(source, Status.TAUNT);
+                }
+            },
+            {
                 trigger: [EFFECT_TRIGGERS.DAMAGED],
                 execute: (ctx: EffectContext) => {
                     if (ctx.data.attacker) {
@@ -171,7 +187,7 @@ const unitList: UnitInstance[] = [
         ],
         statuses: {
             haste: false,
-            taunt: true,
+            taunt: false,
             paralyzed: false,
             silenced: false,
             dodge: 0
@@ -217,6 +233,13 @@ const unitList: UnitInstance[] = [
         effectDesc: "Haste. Damaged: Gain +2 ATK.",
         effects: [
             {
+                trigger: [EFFECT_TRIGGERS.SUMMONED],
+                execute: (ctx: EffectContext) => {
+                    const source = ctx.instances.typeInstance(ctx.data.source, InstanceType.UNIT);
+                    ctx.actions.addUnitStatus(source, Status.HASTE);
+                }
+            },
+            {
                 trigger: [EFFECT_TRIGGERS.DAMAGED],
                 execute: (ctx: EffectContext) => {
                     const source = ctx.instances.typeInstance(ctx.data.source, InstanceType.UNIT);
@@ -225,7 +248,7 @@ const unitList: UnitInstance[] = [
             }
         ],
         statuses: {
-            haste: true,
+            haste: false,
             taunt: false,
             paralyzed: false,
             silenced: false,
