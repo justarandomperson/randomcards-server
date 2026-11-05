@@ -508,12 +508,15 @@ export class GameActions {
     summonUnit(playerId: string, card: UnitInstance, boardIndex?: number) {
         const player = this.getPlayerState(playerId);
 
-        if (boardIndex == undefined) {
-            const playerBoard =this.getPlayerBoard(playerId)
-            const freeIndex = playerBoard.findIndex((slot)  => slot.unit == undefined);
-            boardIndex = playerBoard[freeIndex].index
-            if (boardIndex == undefined) {
-                return; // no place left to summon
+        if (boardIndex === undefined) {
+            const playerBoard = this.getPlayerBoard(playerId);
+            const freeIndex = playerBoard.findIndex((slot) => slot.unit == undefined);
+            if (freeIndex === -1){ 
+                boardIndex = playerBoard[freeIndex].index
+            }
+
+            if (boardIndex === undefined) {
+                return;
             }
         }
 
