@@ -1,4 +1,4 @@
-import { ArtifactInstance, InstanceZone } from "../../instances/shared/instances.types";
+import { ArtifactInstance, InstanceZone, SpellInstance } from "../../instances/shared/instances.types";
 import { CYCLE_TURNS_PER_PLAYER, PLAY_TURNS_PER_PLAYER, SHOP_TURNS_PER_PLAYER } from "../shared/games.constants";
 import { GamePhase } from "../shared/games.types";
 
@@ -48,6 +48,11 @@ export const fillShop = (currentShop: (ArtifactInstance | null)[], pool: Artifac
     })
 
     return newShop;
+}
+
+export const shuffleSpells = (spells: SpellInstance[]): SpellInstance[] => {
+    const shuffledSpells = spells.toSorted(() => Math.random() - 0.5);
+    return shuffledSpells;
 }
 
 export const getRandomInt = (min: number, max: number): number => {

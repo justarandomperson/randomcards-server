@@ -229,7 +229,6 @@ export class GamesService {
             throw new WsException("Invalid attacker");
         }
 
-        //? paralyzed units can still attack if they are ordered to through effects right?
         if (attacker.statuses.paralyzed) {
             throw new WsException("attacker is paralyzed");
         }
@@ -238,7 +237,6 @@ export class GamesService {
             throw new WsException("attacker cant attack");
         }
 
-        //? units can still attack enemy units without taunt when they have a taunt unit on board through effects right?
         const opponentBoard = game.actions.getOpponentBoard(player.socketId);
         for (const slot of opponentBoard) {
             const unit = slot.unit;
@@ -267,7 +265,6 @@ export class GamesService {
     private validateAttackPlayer(game: Game, player: PlayerState, dto: AttackPlayerDto): UnitInstance {
         const attacker = this.validateAttackAny(game, player, dto);
 
-        //? units can still attack enemy units without taunt when they have a taunt unit on board through effects right?
         const opponentBoard = game.actions.getOpponentBoard(player.socketId);
         for (const slot of opponentBoard) {
             const unit = slot.unit;
@@ -287,7 +284,6 @@ export class GamesService {
             throw new WsException("Invalid attacker");
         }
 
-        //? paralyzed units can still attack if they are ordered to through effects right?
         if (attacker.statuses.paralyzed) {
             throw new WsException("attacker is paralyzed");
         }

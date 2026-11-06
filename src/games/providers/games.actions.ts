@@ -84,7 +84,7 @@ export class GameActions {
                 continue;
             }
 
-            //? didnt want to use as but for some reason it doesnt work?!!!
+            // didnt want to use as but for some reason it doesnt work?!!!
             playerUnits.push(playerBoard[i] as { unit: UnitInstance, index: number });
         }
 
@@ -274,9 +274,6 @@ export class GameActions {
         card.location = { insideOf: InstanceZone.NONE }
 
         this.emitTwoDifferentUpdateCard(card);
-
-        //? should i delete the card or something? set it to null if possible?
-        //^ no, it is being 'freed' automatically. welcome to the world of javascript
     }
 
     moveSpellFromHandToDrawpile(player: PlayerState, card: SpellInstance): InstanceLocation {   
@@ -287,8 +284,8 @@ export class GameActions {
 
         player.hand.splice(location.index, 1);
 
-        if (card.inDeck) {
-            player.drawpile.push(card); // does not add card to drawpile if card is a token card
+        if (card.inDeck) { // does not add card to drawpile if card is a token card
+            player.drawpile.push(card);
         }
 
         card.location = { insideOf: InstanceZone.NONE };
@@ -580,11 +577,16 @@ export class GameActions {
         this.moveUnitFromBenchToBoard(player, card, boardIndex);
         this.emitTwoDifferentUpdateCard(card);
 
+        const cardOwnerId = this.instances.getOwnerId(card);
+
+        let needsTarget: selectTargetFilter | undefined = undefined;
         if (!card.statuses.silenced) {
-            this.runTriggerEffects(EFFECT_TRIGGERS.SUMMONED, { playerId, source: card });
+            needsTarget = this.runTriggerEffects(EFFECT_TRIGGERS.SUMMONED, { playerId: cardOwnerId, source: card });
         }
 
-        this.runTriggerEffects(EFFECT_TRIGGERS.ANY_SUMMONED, { playerId, referenced: card});
+        if (!needsTarget){
+            this.runTriggerEffects(EFFECT_TRIGGERS.ANY_SUMMONED, { playerId: cardOwnerId, referenced: card});
+        }
     }
 
     attackUnit(playerId: string, card: UnitInstance, amount: number, attacker?: UnitInstance) {
@@ -598,8 +600,9 @@ export class GameActions {
 
             if (!attacker.statuses.silenced) {
                 this.runTriggerEffects(EFFECT_TRIGGERS.ATTACKED, { playerId: attackerOwnerId, source: attacker, attacked: card });
-                this.runTriggerEffects(EFFECT_TRIGGERS.ANY_ATTACKED, { playerId: attackerOwnerId, source: attacker, attacked: card });
             }
+
+            this.runTriggerEffects(EFFECT_TRIGGERS.ANY_ATTACKED, { playerId: attackerOwnerId, source: attacker, attacked: card });
 
             this.emitter.attacked(playerId);
         }
@@ -609,12 +612,13 @@ export class GameActions {
         }
         else {
             const isUnitDead = this.decreaseUnitHealth(card, amount);
+            const cardOwnerId = this.instances.getOwnerId(card);
 
             if (!card.statuses.silenced) {
-                this.runTriggerEffects(EFFECT_TRIGGERS.DAMAGED, { playerId, source: card, attacker });
+                this.runTriggerEffects(EFFECT_TRIGGERS.DAMAGED, { playerId: cardOwnerId, source: card, attacker });
             }
             
-            this.runTriggerEffects(EFFECT_TRIGGERS.ANY_DAMAGED, { playerId, referenced: card });
+            this.runTriggerEffects(EFFECT_TRIGGERS.ANY_DAMAGED, { playerId: cardOwnerId, referenced: card });
 
             if (isUnitDead) {
                 if (card.assignedBenchSlot) {
@@ -628,25 +632,25 @@ export class GameActions {
                 }
 
                 if (!card.statuses.silenced) {
-                    this.runTriggerEffects(EFFECT_TRIGGERS.DEATH, { playerId: card.ownerId! , source: card });
+                    this.runTriggerEffects(EFFECT_TRIGGERS.DEATH, { playerId: cardOwnerId, source: card });
                 }
 
-                this.runTriggerEffects(EFFECT_TRIGGERS.ANY_DIED, { playerId, referenced: card });
-                this.runTriggerEffects(EFFECT_TRIGGERS.ANY_DIED, { playerId: this.getOpponentId(playerId), referenced: card });
+                this.runTriggerEffects(EFFECT_TRIGGERS.ANY_DIED, { playerId: cardOwnerId, referenced: card });
             }
         }
     }
 
     useSpell(playerId: string, card: SpellInstance) {
         const player = this.getPlayerState(playerId);
+        const cardOwnerId = this.instances.getOwnerId(card);
 
-        const needsTarget = this.runTriggerEffects(EFFECT_TRIGGERS.SUMMONED, { playerId, source: card });
+        const needsTarget = this.runTriggerEffects(EFFECT_TRIGGERS.SUMMONED, { playerId: cardOwnerId, source: card });
         
         this.moveSpellFromHandToDrawpile(player, card); // also checks for token
 
         if (!needsTarget){
             this.emitter.playedSpell(this.state.gameId, card);
-            this.runTriggerEffects(EFFECT_TRIGGERS.ANY_SPELL_PLAYED, { playerId, referenced: card });
+            this.runTriggerEffects(EFFECT_TRIGGERS.ANY_SPELL_PLAYED, { playerId: cardOwnerId, referenced: card });
         }
 
     }
@@ -766,7 +770,7 @@ export class GameActions {
 
     runCurrentEffect(player: PlayerState, targetUnit?: UnitInstance, targetPlayerId?: string) {
         if (!player.currentEffects[0]) {
-            return; //? or do we need to throw an error
+            return;
         }
 
         const { effect, data } = player.currentEffects[0];
@@ -788,9 +792,14 @@ export class GameActions {
         }
 
         this.effects.runEffect(effect, data);   
-                
-        if (data.source.type === InstanceType.SPELL){
-            this.runTriggerEffects(EFFECT_TRIGGERS.ANY_SPELL_PLAYED, { playerId: player.socketId, referenced: data.source });
+        const cardOwnerId = this.instances.getOwnerId(data.source);     
+
+        if (data.source.type === InstanceType.UNIT) {
+            this.runTriggerEffects(EFFECT_TRIGGERS.ANY_SPELL_PLAYED, { playerId: cardOwnerId, referenced: data.source });
         }
+        else if (data.source.type === InstanceType.SPELL){
+            this.runTriggerEffects(EFFECT_TRIGGERS.ANY_SPELL_PLAYED, { playerId: cardOwnerId, referenced: data.source });
+        }
+        
     }
 }

@@ -247,7 +247,7 @@ const ArtifactList: ArtifactInstance[] = [
         effectDesc: "Summon a random unit",
         effects: [
             {
-                trigger: [EFFECT_TRIGGERS.SUMMONED], //? im not sure if artifacts run on summoned. we can add that
+                trigger: [EFFECT_TRIGGERS.SUMMONED],
                 execute: (ctx: EffectContext) => {
                     const unitsMap = ctx.instances.getUnits()
                     const unitIds = [...unitsMap.values()].map(unit =>
@@ -270,7 +270,7 @@ const ArtifactList: ArtifactInstance[] = [
         effectDesc: "Saiki K. triggers 2 effects instead of 1",
         effects: [
             {
-                trigger: [EFFECT_TRIGGERS.SUMMONED], //! pretty sure this just doesnt work
+                trigger: [EFFECT_TRIGGERS.SUMMONED],
                 execute: (ctx: EffectContext) => {
                     const playerBench = ctx.actions.getPlayerState(ctx.data.playerId).bench
                     const playerUnits = ctx.actions.getPlayerUnits(ctx.data.playerId)

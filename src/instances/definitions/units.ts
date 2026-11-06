@@ -527,7 +527,7 @@ const unitList: UnitInstance[] = [
         effectDesc: "Turn End: Decrease all benched unit cooldowns by 1.",
         effects: [
              {
-                trigger: [EFFECT_TRIGGERS.ANY_DIED],
+                trigger: [EFFECT_TRIGGERS.TURN_END],
                 execute: (ctx: EffectContext) => {
                     const bench = ctx.actions.getPlayerState(ctx.data.playerId).bench;
 
@@ -698,7 +698,7 @@ const unitList: UnitInstance[] = [
     },
     {
         id: "U_25",
-        name: "Saiki K.", //! isnt he supposed to have additionalData?
+        name: "Saiki K.",
         type: InstanceType.UNIT,
         effectDesc: "Turn start: Trigger a random turn start effect, turn end: trigger a random turn end effect (no target effect)",
         effects: [
@@ -745,6 +745,9 @@ const unitList: UnitInstance[] = [
             paralyzed: false,
             silenced: false,
             dodge: 0
+        },
+        additionalData: {
+            "triggers": 1
         },
         cost: 8,
         hp: 7,

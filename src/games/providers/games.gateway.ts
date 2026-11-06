@@ -141,7 +141,6 @@ export class GamesGateway implements OnGatewayInit, OnGatewayDisconnect {
 			throw new WsException('deck not created');
 		}
 
-		//? a bit controversial passing server but i did it alright?!
 		this.gamesService.createGame(match, player1Deck, player2Deck, this.server);
 		this.gamesService.startMatch(match.gameId, player1Id, player2Id);
 	}

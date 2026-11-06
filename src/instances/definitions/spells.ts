@@ -25,7 +25,7 @@ const spellList: SpellInstance[] = [
         effects: [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
-                 hasTarget:  new Set([targetOption.ALLY]),
+                 hasTarget: new Set([targetOption.ALLY]),
                 execute: (ctx: EffectContext) => {
                     if (ctx.data.targetUnit) {
                         ctx.actions.increaseUnitAttack(ctx.data.targetUnit, 2);
@@ -38,9 +38,9 @@ const spellList: SpellInstance[] = [
     },
     {
         id: "S_3",
-        name: "Take 3 hp off of yourself and give it to one of your units",
+        name: "I love you 😘😍💘",
         type: InstanceType.SPELL,
-        effectDesc: "I couldn't think of a better name",
+        effectDesc: "Take 3 hp off of yourself and give it to one of your units",
         effects: [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
@@ -173,7 +173,7 @@ const spellList: SpellInstance[] = [
         effectDesc: "Heal yourself by 4 HP or one of your units by 2 HP.",
         effects: [
             {
-                trigger: [EFFECT_TRIGGERS.ANY_SUMMONED],
+                trigger: [EFFECT_TRIGGERS.SUMMONED],
                 hasTarget:  new Set([targetOption.ALLY, targetOption.SELF]),
                 execute: (ctx: EffectContext) => {
                     if (ctx.data.targetUnit) {
@@ -334,15 +334,15 @@ const spellList: SpellInstance[] = [
         id: "S_16",
         name: "i need more bullets",
         type: InstanceType.SPELL,
-        effectDesc: "give an ally unit +2 ATK",
+        effectDesc: "give haste to an ally unit.",
         effects: [
             {
                 //change to give haste
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
-                 hasTarget:  new Set([targetOption.ALLY]),
+                hasTarget: new Set([targetOption.ALLY]),
                 execute: (ctx: EffectContext) => {
                     if (ctx.data.targetUnit) {
-                        ctx.actions.increaseUnitAttack(ctx.data.targetUnit, 2);
+                        ctx.actions.addUnitStatus(ctx.data.targetUnit, Status.HASTE);
                     }
                 }
             }

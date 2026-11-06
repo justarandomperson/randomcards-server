@@ -127,7 +127,6 @@ export class EffectsService {
     }
 
     private runInstanceSpecificEffectsForTrigger(trigger: EffectTrigger, triggerData: TriggerData): selectTargetFilter | undefined {
-        //? unit shouldnt be silenced if it got here, but im not sure if this actually checks and if it even needs to.
         const source = triggerData.source;
         if (!source) {
             throw new WsException("effect needs the source card/artifact id");

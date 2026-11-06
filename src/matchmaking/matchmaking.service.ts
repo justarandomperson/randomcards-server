@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { BasicPlayerData, type Match } from './matchmaking.types';
 import { PLAYERS_IN_MATCH } from './matchmaking.constants';
 import { randomUUID } from 'crypto';
+import { WsException } from '@nestjs/websockets';
 
 
 @Injectable()
@@ -12,7 +13,7 @@ export class MatchMakingService {
   addIntoQueue(player: BasicPlayerData): Match | null {
     const isPlayerInQueue = this.queue.some((p) => p.socketId === player.socketId);
     if (isPlayerInQueue) {
-      return null; // TODO: probably should throw an expection but then the games.gateway needs to handle it
+      throw new WsException("Player is already in queue");
     }
 
     this.queue.push(player);
