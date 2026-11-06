@@ -43,7 +43,7 @@ export class AuthService {
     const { username, password } = signInDto;
 
     const user = await this.usersService.findOne(username);
-    if (!user) throw new NotFoundException('User not found');
+    if (!user) throw new UnauthorizedException('Invalid username or password');
 
     const validPassword = await bcrypt.compare(password, user.password);
 
@@ -59,7 +59,7 @@ export class AuthService {
     try {
       const payload = this.jwtService.verify(validateTokenDto.token);
       return { valid: true, payload };
-    } catch {
+    } catch(error: any) {
       throw new UnauthorizedException('Invalid or expired token');
     }
   }

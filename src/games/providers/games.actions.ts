@@ -1,6 +1,6 @@
 import { WsException } from "@nestjs/websockets";
 import { EffectsService } from "../../effects/effects.service";
-import { CurrentEffectData, GamePhase, GameState, PlayerState, selectTargetFilter } from "../shared/games.types";
+import { CurrentEffectData, GamePhase, GameState, PlayerState, selectTargetFilter, targetOption } from "../shared/games.types";
 import { ArtifactInstance, InstanceLocation, SpellInstance, UnitInstance, InstanceZone, InstanceType } from "../../instances/shared/instances.types";
 import { EFFECT_TRIGGERS, EffectTrigger, Status, TriggerData } from "../../effects/effects.types";
 import { MAX_HAND_SIZE, MINIMUM_MONEY, STARTING_SPELLS_IN_HAND } from "../shared/games.constants";
@@ -125,7 +125,6 @@ export class GameActions {
 
     refillShop() {
         this.setShop(fillShop(this.state.shop, this.state.possibleShopPool));
-        console.log(this.state.shop);
     }
 
 
@@ -137,6 +136,7 @@ export class GameActions {
     //otherwise, index needs to be adjusted to be on the opposite site of the board
     //therefore it doesn't matter who is player1 or player2
     private getClientBoardLocation(clientId: string, actionPlayerId: string, location: InstanceLocation): InstanceLocation {
+        if (location.insideOf === InstanceZone.NONE) return location
         if (location.insideOf !== InstanceZone.BOARD) {
             throw new WsException('cardLocation is not in board');
         }
@@ -164,11 +164,49 @@ export class GameActions {
         const needsTarget = this.effects.runTriggerEffects(trigger, triggerData);
 
         if (needsTarget) {
+            const hasValidTarget = this.checkIfTargetFilterHasValidTarget(triggerData, needsTarget)
+            if (!hasValidTarget) return undefined
             this.emitter.selectTarget(triggerData.playerId, needsTarget);
             return needsTarget;
         }
 
         return undefined;
+    }
+
+    private checkIfTargetFilterHasValidTarget(triggerData: TriggerData,filter: selectTargetFilter)
+    {
+        if (filter.has(targetOption.SELF) || filter.has(targetOption.OPPONENT)) return true
+
+         if (filter.has(targetOption.BENCH))
+        {
+            const playerBench = this.getPlayerState(triggerData.playerId).bench
+            const hasAllyTarget = playerBench.some((slot) => slot != null)
+            if (hasAllyTarget) return true
+        }
+
+
+        if (filter.has(targetOption.HAND))
+        {
+            const playerHand = this.getPlayerState(triggerData.playerId).hand
+            const hasAllyTarget = playerHand.length > 0
+            if (hasAllyTarget) return true
+        }
+
+        if (filter.has(targetOption.ALLY))
+        {
+            const playerBoard = this.getPlayerBoard(triggerData.playerId)
+            const hasAllyTarget = playerBoard.some((slot) => slot.unit != null)
+            if (hasAllyTarget) return true
+        }
+
+         if (filter.has(targetOption.ENEMY))
+        {
+            const opponentBoard = this.getOpponentBoard(triggerData.playerId)
+            const hasEnemyTarget = opponentBoard.some((slot) => slot.unit != null)
+            if (hasEnemyTarget) return true
+        }
+
+        return false
     }
 
     private emitTwoDifferentUpdateCard(playerId: string, card: UnitInstance | SpellInstance) {
@@ -236,6 +274,7 @@ export class GameActions {
         this.emitTwoDifferentUpdateCard(player.socketId, card);
 
         //? should i delete the card or something? set it to null if possible?
+        //^ no, it is being 'freed' automatically. welcome to the world of javascript
     }
 
     moveSpellFromHandToDrawpile(player: PlayerState, card: SpellInstance): InstanceLocation {   
@@ -511,9 +550,7 @@ export class GameActions {
         if (boardIndex === undefined) {
             const playerBoard = this.getPlayerBoard(playerId);
             const freeIndex = playerBoard.findIndex((slot) => slot.unit == undefined);
-            if (freeIndex === -1){ 
-                boardIndex = playerBoard[freeIndex].index
-            }
+            boardIndex = playerBoard[freeIndex]?.index
 
             if (boardIndex === undefined) {
                 return;
@@ -563,12 +600,11 @@ export class GameActions {
                     this.moveUnitFromBoardToBench(card);
 
                     this.resetUnitData(card);
+                    this.increaseUnitCooldown(card, +1);
                 }
                 else {
                     this.removeUnitFromBoard(player, card);
                 }
-
-                this.increaseUnitCooldown(card, +1);
 
                 if (!card.statuses.silenced) {
                     this.runTriggerEffects(EFFECT_TRIGGERS.DEATH, { playerId, source: card });

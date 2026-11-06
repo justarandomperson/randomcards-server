@@ -9,7 +9,8 @@ import path from 'path';
 export class InstancesService {
     // initializers, getters, setters
     createUnitInstance = (unitId: string, ownerId: string): UnitInstance => {
-        return this.createCardInstance(unitsMap, unitId, ownerId) as UnitInstance;
+        const instance = this.createCardInstance(unitsMap, unitId, ownerId) as UnitInstance;
+        return instance
     }
 
     createSpellInstance(spellId: string, ownerId: string): SpellInstance{
@@ -67,6 +68,7 @@ export class InstancesService {
 
     getLocation(instance: AnyInstance): InstanceLocation {
         if (!instance.location) {
+            console.log("no location..")
             throw new WsException('instance has no location'); 
         }
 

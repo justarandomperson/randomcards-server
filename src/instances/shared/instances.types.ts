@@ -30,7 +30,8 @@ export type UnitInstance = {
   atk: number
   hp: number
   cooldown: number
-  canAttack?: boolean
+  canAttack?: boolean,
+  summoned?: boolean
   location?: InstanceLocation
   assignedBenchSlot?: number
 };
