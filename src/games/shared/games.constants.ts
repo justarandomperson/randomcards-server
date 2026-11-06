@@ -1,7 +1,7 @@
 export const STARTING_HEALTH = 20;
 export const STARTING_MONEY = 100;
 export const STARTING_TURN = 1;
-export const STARTING_SPELLS_IN_HAND = 3;
+export const STARTING_SPELLS_IN_HAND = 2;
 
 export const UNITS_IN_DECK = 8;
 export const SPELLS_IN_DECK = 12; // also max drawpile size
