@@ -7,7 +7,7 @@ import { targetOption } from "../../games/shared/games.types";
 const spellList: SpellInstance[] = [
     {
         id: "S_1",
-        name: "cat",
+        name: "cat (non corporeal)",
         type: InstanceType.SPELL,
         effectDesc: "though I may bear the semblance of canine form, I possess no corporeal body whatsoever. " +
                     "Pray, doth it befit thee to name such a being a cat?" +
@@ -311,7 +311,7 @@ const spellList: SpellInstance[] = [
         id: "S_15",
         name: "Offering",
         type: InstanceType.SPELL,
-        effectDesc: "Lose 6 HP, Gain 6$ and draw 2 cards.",
+        effectDesc: "Lose 4 HP, Gain 3$ and draw 2 cards.",
         effects: [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],

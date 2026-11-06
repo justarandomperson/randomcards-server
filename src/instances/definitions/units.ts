@@ -390,7 +390,7 @@ const unitList: UnitInstance[] = [
                 execute: (ctx: EffectContext) => {
                     const opponentUnits = ctx.actions.getOpponentUnits(ctx.data.playerId);
 
-                    if (opponentUnits) {
+                    if (opponentUnits.length > 0) {
                         const slotToAttack = opponentUnits[0];
 
                         ctx.actions.addUnitStatus(slotToAttack.unit, Status.SILENCED);
@@ -426,13 +426,14 @@ const unitList: UnitInstance[] = [
              {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
                 execute: (ctx: EffectContext) => {
+                    const source = ctx.instances.typeInstance(ctx.data.source, InstanceType.UNIT);
+
                     const monsterInfront = ctx.actions.getUnitInfront(
-                        ctx.instances.getLocationIndex(ctx.data.source, InstanceZone.BOARD)
+                        ctx.instances.getLocationIndex(source, InstanceZone.BOARD)
                     );
 
                     if (monsterInfront) {
-                        ctx.data.source.effects = monsterInfront.effects;
-                        ctx.data.source.effectDesc = `Copied: ${monsterInfront.effectDesc}`;
+                        ctx.actions.changeUnitEffect(source, monsterInfront.effects, monsterInfront.effectDesc);
                     }
                 }
             },
@@ -786,13 +787,15 @@ const unitList: UnitInstance[] = [
                 execute: (ctx: EffectContext) => {
                     const playerUnits = ctx.actions.getPlayerUnits(ctx.data.playerId);
 
-                    const optionsAmount = playerUnits.length;
-                    const randomNumber = getRandomInt(0, optionsAmount - 1);
+                    if (playerUnits.length > 0) {
+                        const optionsAmount = playerUnits.length;
+                        const randomNumber = getRandomInt(0, optionsAmount - 1);
 
-                    ctx.actions.increaseUnitHealth(playerUnits[randomNumber].unit, 2);
+                        ctx.actions.increaseUnitHealth(playerUnits[randomNumber].unit, 2);
 
-                    const data = ctx.instances.getAdditionalData(ctx.data.source);
-                    data["timesHealed"] += 1;
+                        const data = ctx.instances.getAdditionalData(ctx.data.source);
+                        data["timesHealed"] += 1;
+                    }
                 }
             },
             {
@@ -801,7 +804,8 @@ const unitList: UnitInstance[] = [
                     // Note: both happen at turn start, but the effect before should happen earlier, so thats why its ok.
                     const data = ctx.instances.getAdditionalData(ctx.data.source);
                     if (data["timesHealed"] === 4) {
-
+                        const mikuMikuBeam = ctx.instances.createSpellInstance("S_25", ctx.data.playerId);
+                        ctx.actions.useSpell(ctx.data.playerId, mikuMikuBeam);
                         data["timesHealed"] = 0;
                     }
                 }

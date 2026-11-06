@@ -2,7 +2,7 @@ import { WsException } from "@nestjs/websockets";
 import { EffectsService } from "../../effects/effects.service";
 import { CurrentEffectData, GamePhase, GameState, PlayerState, selectTargetFilter, targetOption } from "../shared/games.types";
 import { ArtifactInstance, InstanceLocation, SpellInstance, UnitInstance, InstanceZone, InstanceType } from "../../instances/shared/instances.types";
-import { EFFECT_TRIGGERS, EffectTrigger, Status, TriggerData } from "../../effects/effects.types";
+import { Effect, EFFECT_TRIGGERS, EffectTrigger, Status, TriggerData } from "../../effects/effects.types";
 import { MAX_HAND_SIZE, MINIMUM_MONEY, STARTING_SPELLS_IN_HAND } from "../shared/games.constants";
 import { GamesEmitter } from "./games.emitter";
 import { calculateTurnStartMoney, fillShop, shouldSwitchPhase, translateBoardIndex, unTranslateBoardIndex } from "../logic/serviceHelpers";
@@ -477,6 +477,12 @@ export class GameActions {
         this.emitTwoDifferentUpdateCard(card);
     }
 
+    changeUnitEffect(card: UnitInstance, effects: Effect[], effectDesc: string) {
+        card.effects = effects;
+        card.effectDesc = `Copied: ${effectDesc}`;
+
+        this.emitTwoDifferentUpdateCard(card);
+    }
 
     // change player data
     decreasePlayerHealth(player: PlayerState, amount: number): number {
@@ -710,6 +716,9 @@ export class GameActions {
         if (phaseChanged && this.state.gamePhase === GamePhase.SHOP) {
             const lessHpId = players.toSorted((p1, p2) => p1.hp - p2.hp)[0].socketId;
             this.setPlayerTurnId(lessHpId);
+        }
+        else if (phaseChanged && this.state.gamePhase === GamePhase.PLAY) {
+            this.setPlayerTurnId(players[0].socketId)
         }
         else { 
             const opponent = this.getOpponentState(this.state.playerTurnId);

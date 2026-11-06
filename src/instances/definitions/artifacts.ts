@@ -364,7 +364,7 @@ const ArtifactList: ArtifactInstance[] = [
     },
     {
         id: "A_17",
-        name: "1000 Blank White Cards",
+        name: "1000 Blank White Cards", // TODO:
         type: InstanceType.ARTIFACT,
         effectDesc: "",
         effects: [
