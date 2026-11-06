@@ -429,12 +429,20 @@ export class GameActions {
 
             case Status.SILENCED:
                 card.statuses.silenced = true;
+                
+                // reset all other statuses
+                card.statuses.haste = false;
+                card.statuses.taunt = false;
+                card.statuses.paralyzed = false;
+                card.statuses.dodge = 0;
                 break;
 
             case Status.DODGE:
                 card.statuses.dodge += 1;
                 break;
         }
+
+        this.emitTwoDifferentUpdateCard(card);
     }
 
     removeUnitStatus(card: UnitInstance, status: Status) {
