@@ -50,6 +50,7 @@ export const SOCKET_EVENT_NAMES = { // this is used both on 'emit' and on 'on'
   UPDATE_BENCH: 'update_bench',
   UPDATE_BOARD: 'update_board',
   UPDATE_SHOP: 'update_shop',
+  ATTACKED: 'attacked',
   PLAYED_SPELL: 'played_spell',
   GAME_END: 'game_end'
 } as const;
