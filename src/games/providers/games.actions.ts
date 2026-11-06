@@ -209,7 +209,9 @@ export class GameActions {
         return false
     }
 
-    private emitTwoDifferentUpdateCard(playerId: string, card: UnitInstance | SpellInstance) {
+    private emitTwoDifferentUpdateCard(card: UnitInstance | SpellInstance) {
+        const playerId = this.instances.getOwnerId(card);
+
         const cardLocation = this.instances.getLocation(card);
         const clientCardLocation = this.getClientBoardLocation(playerId, playerId, cardLocation);
         this.emitter.updateCard(playerId, card, clientCardLocation);
@@ -271,7 +273,7 @@ export class GameActions {
 
         card.location = { insideOf: InstanceZone.NONE }
 
-        this.emitTwoDifferentUpdateCard(player.socketId, card);
+        this.emitTwoDifferentUpdateCard(card);
 
         //? should i delete the card or something? set it to null if possible?
         //^ no, it is being 'freed' automatically. welcome to the world of javascript
@@ -357,7 +359,7 @@ export class GameActions {
         if (!card.ownerId) throw new WsException("Card does not have owner")
         card.hp -= amount;
 
-        this.emitTwoDifferentUpdateCard(card.ownerId, card);
+        this.emitTwoDifferentUpdateCard(card);
 
         if (card.hp <= 0) {
             return true; // as in unit died
@@ -369,7 +371,7 @@ export class GameActions {
     increaseUnitAttack(card: UnitInstance, amount: number): number {
         card.atk += amount;
 
-        this.emitTwoDifferentUpdateCard(this.state.gameId, card);
+        this.emitTwoDifferentUpdateCard(card);
 
         return card.atk;
     }
@@ -377,7 +379,7 @@ export class GameActions {
     increaseUnitHealth(card: UnitInstance, amount: number): number {
         card.hp += amount;
 
-        this.emitTwoDifferentUpdateCard(this.state.gameId, card);
+        this.emitTwoDifferentUpdateCard(card);
 
         return card.hp;
     }
@@ -385,7 +387,7 @@ export class GameActions {
     increaseCardCost(card: UnitInstance | SpellInstance, amount: number): number {
         card.cost += amount;
 
-        this.emitTwoDifferentUpdateCard(this.state.gameId, card);
+        this.emitTwoDifferentUpdateCard(card);
 
         return card.cost;
     }
@@ -463,6 +465,8 @@ export class GameActions {
                 break;
             }
         }
+
+        this.emitTwoDifferentUpdateCard(card);
     }
 
 
@@ -560,7 +564,7 @@ export class GameActions {
         card.canAttack = false; // just summoned to board so cannot attack.
 
         this.moveUnitFromBenchToBoard(player, card, boardIndex);
-        this.emitTwoDifferentUpdateCard(player.socketId, card);
+        this.emitTwoDifferentUpdateCard(card);
 
         if (!card.statuses.silenced) {
             this.runTriggerEffects(EFFECT_TRIGGERS.SUMMONED, { playerId, source: card });
@@ -581,6 +585,8 @@ export class GameActions {
             if (!attacker.statuses.silenced) {
                 this.runTriggerEffects(EFFECT_TRIGGERS.ATTACKED, { playerId: attackerOwnerId, source: attacker, attacked: card });
             }
+
+            this.emitter.attacked(playerId);
         }
 
         if (card.statuses.dodge > 0) {
@@ -648,6 +654,8 @@ export class GameActions {
             if (!attacker.statuses.silenced) {
                 this.runTriggerEffects(EFFECT_TRIGGERS.ATTACKED, { playerId: attackerOwnerId, source: attacker });
             }
+
+            this.emitter.attacked(playerId);
         }
 
         const hp = this.decreasePlayerHealth(player, amount);
