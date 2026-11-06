@@ -487,6 +487,65 @@ const spellList: SpellInstance[] = [
         cost: 4,
         isToken: false
     },
+    {
+        id: "S_22",
+        name: "Does he know?",
+        type: InstanceType.SPELL,
+        effectDesc: 'Either generates a "He doesn\'t know!" for you, or "He knows!" for your opponent. ',
+        effects: [
+            {
+                trigger: [EFFECT_TRIGGERS.SUMMONED],
+                execute: (ctx: EffectContext) => {
+                    const rnd = Math.random()
+                    const id = rnd > .5 ? "S_23" : "S_24"
+                    const ownerId = rnd > .5 ? ctx.data.playerId : ctx.actions.getOpponentId(ctx.data.playerId)
+                    const spellInstance = ctx.instances.createSpellInstance(id, ownerId)
+
+                    const ownerState = ctx.state.players[ownerId]
+
+                    ctx.actions.addSpellToHand(ownerState, spellInstance)
+                }
+            }
+        ],
+        cost: 2,
+        isToken: false
+    },
+    {
+        id: "S_23",
+        name: "He doesn't know!",
+        type: InstanceType.SPELL,
+        effectDesc: 'Deal 4 damage to an enemy unit',
+        effects: [
+            {
+                trigger: [EFFECT_TRIGGERS.SUMMONED],
+                hasTarget: new Set([targetOption.ENEMY]),
+                execute: (ctx: EffectContext) => {
+                    if (!ctx.data.targetUnit) return
+                    ctx.actions.decreaseUnitHealth(ctx.data.targetUnit, 4)
+                }
+            }
+        ],
+        cost: 0,
+        isToken: true
+    },
+    {
+        id: "S_24",
+        name: "He knows!",
+        type: InstanceType.SPELL,
+        effectDesc: 'Give 4 HP to an ally unit',
+        effects: [
+            {
+                trigger: [EFFECT_TRIGGERS.SUMMONED],
+                hasTarget: new Set([targetOption.ALLY]),
+                execute: (ctx: EffectContext) => {
+                    if (!ctx.data.targetUnit) return
+                    ctx.actions.increaseUnitHealth(ctx.data.targetUnit, 4)
+                }
+            }
+        ],
+        cost: 0,
+        isToken: true
+    },
 ];
 
 export const spellsMap = new Map<string, SpellInstance>(
