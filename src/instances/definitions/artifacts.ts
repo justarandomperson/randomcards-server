@@ -217,8 +217,148 @@ const ArtifactList: ArtifactInstance[] = [
             }
         ],
         cost: 10,     
-    }
-    
+    },
+    {
+        id: "A_10",
+        name: "Daruma Doll",
+        type: InstanceType.ARTIFACT,
+        effectDesc: "Deals 1 Damage to enemy units when they attack on even numbered turns",
+        effects: [
+            {
+                trigger: [EFFECT_TRIGGERS.ANY_ATTACKED],
+                execute: (ctx: EffectContext) => {
+                    const attacker = ctx.data.attacker
+                    if (!attacker) return
+                    const opponentTurn = ctx.actions.getOpponentState(ctx.data.playerId).turn
+                    if (opponentTurn % 2 == 0) ctx.actions.decreaseUnitHealth(attacker, 1)
+                }
+            }
+        ],
+        cost: 6,     
+    },
+    {
+        id: "A_11",
+        name: "Judgement",
+        type: InstanceType.ARTIFACT,
+        effectDesc: "Summon a random unit ()",
+        effects: [
+            {
+                trigger: [EFFECT_TRIGGERS.SUMMONED],
+                execute: (ctx: EffectContext) => {
+                    const unitsMap = ctx.instances.getUnits()
+                    const unitIds = [...unitsMap.values()].map(unit =>
+                        unit.id
+                    );
+
+                    const randomUnitId = unitIds[Math.floor(Math.random() * unitIds.length)];
+                    const randomUnitInstance = ctx.instances.createUnitInstance(randomUnitId, ctx.data.playerId)
+
+                    ctx.actions.summonUnit(ctx.data.playerId, randomUnitInstance)
+                }
+            }
+        ],
+        cost: 4,     
+    },
+    {
+        id: "A_12",
+        name: "Saiki Kusuke",
+        type: InstanceType.ARTIFACT,
+        effectDesc: "Saiki K. triggers 2 effects instead of 1",
+        effects: [
+            {
+                trigger: [EFFECT_TRIGGERS.SUMMONED],
+                execute: (ctx: EffectContext) => {
+                    const playerBench = ctx.actions.getPlayerState(ctx.data.playerId).bench
+                    const playerUnits = ctx.actions.getPlayerUnits(ctx.data.playerId)
+
+                    playerBench.map((unit) => {
+                        if (unit && unit.id == "S_25" && unit.additionalData)
+                        {
+                            unit.additionalData["triggers"] = 2
+                        }
+                    })
+
+                    playerUnits.map((slot) => {
+                        const unit = slot.unit
+                        if (unit && unit.id == "S_25" && unit.additionalData)
+                        {
+                            unit.additionalData["triggers"] = 2
+                        }
+                    })
+                }
+            }
+        ],
+        cost: 5,     
+    },
+    {
+        id: "A_13",
+        name: "Leshy's Camera",
+        type: InstanceType.ARTIFACT,
+        effectDesc: "Whenever a enemy unit is killed, summon a 1/1 copy.",
+        effects: [
+            {
+                trigger: [EFFECT_TRIGGERS.ANY_DIED],
+                execute: (ctx: EffectContext) => {
+                    const source = ctx.data.source
+                    if (source.ownerId != ctx.data.playerId)
+                    {
+                        const instanceCopy = ctx.instances.createUnitInstance(source.id, ctx.data.playerId)
+                        instanceCopy.atk = 1
+                        instanceCopy.hp = 1
+                        ctx.actions.summonUnit(ctx.data.playerId, instanceCopy)
+                    }
+                }
+            }
+        ],
+        cost: 5,     
+    },
+    {
+        id: "A_14",
+        name: "White Pen Of Hope",
+        type: InstanceType.ARTIFACT,
+        effectDesc: "Whenever a unit is summoned, it gains +1 HP.",
+        effects: [
+            {
+                trigger: [EFFECT_TRIGGERS.ANY_SUMMONED],
+                execute: (ctx: EffectContext) => {
+                    const source = ctx.data.source
+                    if (source.ownerId == ctx.data.playerId && source.type == InstanceType.UNIT)
+                    {
+                        ctx.actions.increaseUnitHealth(source, 1)
+                    }
+                }
+            }
+        ],
+        cost: 5,     
+    },
+    {
+        id: "A_15",
+        name: "Joker",
+        type: InstanceType.ARTIFACT,
+        effectDesc: "+4 Mult* (Mult holds no meaning in this game.)",
+        effects: [],
+        cost: 1,     
+    },
+     {
+        id: "A_16",
+        name: "Very Very Interesting",
+        type: InstanceType.ARTIFACT,
+        effectDesc: "Gaster blasters cost -2 (will give you $2 upon playing it, fuck you)",
+        effects: [
+            {
+                trigger: [EFFECT_TRIGGERS.ANY_SUMMONED],
+                execute: (ctx: EffectContext) => {
+                    const source = ctx.data.source
+                    if (source.ownerId == ctx.data.playerId && source.id === "S_666")
+                    {
+                        const playerState = ctx.actions.getPlayerState(ctx.data.playerId)
+                        ctx.actions.increasePlayerMoney(playerState, 2)
+                    }
+                }
+            }
+        ],
+        cost: 5,     
+    },
 ];
 
 export const artifactsMap = new Map<string, ArtifactInstance>(

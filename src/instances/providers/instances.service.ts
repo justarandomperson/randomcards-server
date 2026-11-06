@@ -98,6 +98,11 @@ export class InstancesService {
         return card.assignedBenchSlot;
     }
 
+    getUnits(): Map<string, UnitInstance>
+    {
+        return unitsMap
+    }
+
     
     // helpers
     private generateInstanceId(): string {

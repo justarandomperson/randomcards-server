@@ -1,6 +1,6 @@
 import { EFFECT_TRIGGERS, EffectContext, Status } from "../../effects/effects.types";
 import { getRandomInt } from "../../games/logic/serviceHelpers";
-import { InstanceType, SpellInstance, UnitInstance } from "../shared/instances.types";
+import { InstanceType, InstanceZone, SpellInstance, UnitInstance } from "../shared/instances.types";
 import { targetOption } from "../../games/shared/games.types";
 
 
@@ -376,6 +376,110 @@ const spellList: SpellInstance[] = [
                 execute: (ctx: EffectContext) => {
                     if (ctx.data.targetUnit) {
                         ctx.actions.attackUnit(ctx.data.playerId, ctx.data.targetUnit, 8);
+                    }
+                }
+            }
+        ],
+        cost: 4,
+        isToken: false
+    },
+    {
+        id: "S_18",
+        name: "Jarona",
+        type: InstanceType.SPELL,
+        effectDesc: "Ally unit attacks a random enemy with +2 ATK, doesn't take damage",
+        effects: [
+            {
+                trigger: [EFFECT_TRIGGERS.SUMMONED],
+                hasTarget:  new Set([targetOption.ALLY]),
+                execute: (ctx: EffectContext) => {
+                    if (ctx.data.targetUnit) {
+                        const target = ctx.data.targetUnit
+                        const opponentUnits = ctx.actions.getOpponentBoard(ctx.data.playerId)
+                            .filter(slot => slot.unit !== null);
+
+                        const randomUnit = opponentUnits[Math.floor(Math.random() * opponentUnits.length)];
+                        if (!randomUnit.unit) throw new Error("couldn't get random unit")
+                        ctx.actions.attackUnit(ctx.actions.getOpponentId(ctx.data.playerId), randomUnit.unit, target.atk + 2, target)
+                    }
+                }
+            }
+        ],
+        cost: 5,
+        isToken: false
+    },
+    {
+        id: "S_19",
+        name: "Hand Jump",
+        type: InstanceType.SPELL,
+        effectDesc: "Activate an unit's summon ability again",
+        effects: [
+            {
+                trigger: [EFFECT_TRIGGERS.SUMMONED],
+                hasTarget:  new Set([targetOption.ALLY, targetOption.ENEMY]),
+                execute: (ctx: EffectContext) => {
+                    if (ctx.data.targetUnit) {
+                       const summonEffects = ctx.data.targetUnit.effects.filter((effect) => effect.trigger.includes(EFFECT_TRIGGERS.SUMMONED))
+                       const newContext: EffectContext = {
+                        ...ctx,
+                        data: {
+                            ...ctx.data,
+                            source: ctx.data.targetUnit
+                        }
+                       }
+                       summonEffects.map((effect) => {
+                            effect.execute(newContext)
+                        })
+                    }
+                }
+            }
+        ],
+        cost: 2,
+        isToken: false
+    },
+    {
+        id: "S_20",
+        name: "Sacrifice the rook",
+        type: InstanceType.SPELL,
+        effectDesc: "Kill an ally unit, deal it's ATK to all enemy units",
+        effects: [
+            {
+                trigger: [EFFECT_TRIGGERS.SUMMONED],
+                hasTarget:  new Set([targetOption.ALLY]),
+                execute: (ctx: EffectContext) => {
+                    if (ctx.data.targetUnit) {
+                       ctx.actions.decreaseUnitHealth(ctx.data.targetUnit, ctx.data.targetUnit.hp)
+                       const atk = ctx.data.targetUnit.atk
+
+                       const enemyUnits = ctx.actions.getOpponentBoard(ctx.data.playerId).filter((slot) => slot.unit !== null)
+                       enemyUnits.map((enemyUnit) => {
+                        if (enemyUnit.unit) ctx.actions.decreaseUnitHealth(enemyUnit.unit, atk)
+                       })
+                    }
+                }
+            }
+        ],
+        cost: 4,
+        isToken: false
+    },
+    {
+        id: "S_21",
+        name: "❤️ Proceed",
+        type: InstanceType.SPELL,
+        effectDesc: "Select an ally unit, the enemy unit in front of it gets paralyzed and the ally unit gains its ATK.",
+        effects: [
+            {
+                trigger: [EFFECT_TRIGGERS.SUMMONED],
+                hasTarget:  new Set([targetOption.ALLY]),
+                execute: (ctx: EffectContext) => {
+                    if (ctx.data.targetUnit) {
+                       if (ctx.data.source.location?.insideOf !== InstanceZone.BOARD) throw new Error("ally not on board")
+                        const cardLocation = ctx.instances.getLocationIndex(ctx.data.targetUnit, InstanceZone.BOARD)
+                        const enemyUnit = ctx.actions.getUnitInfront(cardLocation)
+                        if (!enemyUnit) return
+                        
+                        enemyUnit.statuses.paralyzed = true
+                        ctx.actions.increaseUnitAttack(ctx.data.targetUnit, enemyUnit.atk)
                     }
                 }
             }

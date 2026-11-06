@@ -655,6 +655,120 @@ const unitList: UnitInstance[] = [
         atk: 5,
         cooldown: 0   
     },
+    {
+        id: "U_23",
+        name: "Kiyotaka Ayanokoji",
+        type: InstanceType.UNIT,
+        effectDesc: "Summon: Manipulates an enemy unit to attack a random enemy unit",
+        effects: [
+             {
+                trigger: [EFFECT_TRIGGERS.SUMMONED],
+                hasTarget:  new Set([targetOption.ENEMY]),
+                execute: (ctx: EffectContext) => {
+                    const target = ctx.data.targetUnit
+                    if (!target) throw new Error("has to have target")
+                    const opponentUnits = ctx.actions.getOpponentBoard(ctx.data.playerId)
+                        .filter(slot => slot.unit !== null);
+
+                    const randomUnit = opponentUnits[Math.floor(Math.random() * opponentUnits.length)];
+                    if (!randomUnit.unit) throw new Error("couldn't get random unit")
+                    ctx.actions.attackUnit(ctx.actions.getOpponentId(ctx.data.playerId), randomUnit.unit, target.atk, target)
+                    ctx.actions.attackUnit(ctx.actions.getOpponentId(ctx.data.playerId), target, randomUnit.unit.atk, randomUnit.unit)
+                }
+            },
+        ],
+        statuses: {
+            haste: false,
+            taunt: false,
+            paralyzed: false,
+            silenced: false,
+            dodge: 0
+        },
+        cost: 7,
+        hp: 5,
+        atk: 5,
+        cooldown: 0   
+    },
+       {
+        id: "U_24",
+        name: "Sung jin-woo",
+        type: InstanceType.UNIT,
+        effectDesc: "Haste. gains +1 ATK whenever it attacks and kills",
+        effects: [
+             {
+                trigger: [EFFECT_TRIGGERS.KILL],
+                execute: (ctx: EffectContext) => {
+                   ctx.actions.increaseUnitAttack(ctx.data.source as UnitInstance, 1)
+                }
+            },
+        ],
+        statuses: {
+            haste: true,
+            taunt: false,
+            paralyzed: false,
+            silenced: false,
+            dodge: 0
+        },
+        cost: 4,
+        hp: 6,
+        atk: 2,
+        cooldown: 0   
+    },
+    {
+        id: "U_25",
+        name: "Saiki K.",
+        type: InstanceType.UNIT,
+        effectDesc: "Turn start: Trigger a random turn start effect, turn end: trigger a random turn end effect (no target effect)",
+        effects: [
+             {
+                trigger: [EFFECT_TRIGGERS.TURN_START],
+                execute: (ctx: EffectContext) => {
+                    const unitsMap = ctx.instances.getUnits();
+
+                    const effects = [...unitsMap.values()].flatMap(unit =>
+                        unit.effects.filter(effect =>
+                            effect.trigger.includes(EFFECT_TRIGGERS.TURN_START) &&
+                            !effect.hasTarget
+                        )
+                    );
+
+                    if (effects.length === 0) return;
+
+                    const randomEffect = effects[Math.floor(Math.random() * effects.length)];
+                    randomEffect.execute(ctx)
+                }
+            },
+            {
+                trigger: [EFFECT_TRIGGERS.TURN_END],
+                execute: (ctx: EffectContext) => {
+                    const unitsMap = ctx.instances.getUnits();
+
+                    const effects = [...unitsMap.values()].flatMap(unit =>
+                        unit.effects.filter(effect =>
+                            effect.trigger.includes(EFFECT_TRIGGERS.TURN_END) &&
+                            !effect.hasTarget
+                        )
+                    );
+
+                    if (effects.length === 0) return;
+
+                    const randomEffect = effects[Math.floor(Math.random() * effects.length)];
+                    randomEffect.execute(ctx)
+                }
+            },
+        ],
+        statuses: {
+            haste: false,
+            taunt: false,
+            paralyzed: false,
+            silenced: false,
+            dodge: 0
+        },
+        cost: 8,
+        hp: 7,
+        atk: 7,
+        cooldown: 0   
+    },
 ];
 
 

@@ -33,7 +33,8 @@ export type UnitInstance = {
   canAttack?: boolean,
   summoned?: boolean
   location?: InstanceLocation
-  assignedBenchSlot?: number
+  assignedBenchSlot?: number,
+  additionalData?: Record<string, unknown>;
 };
 
 export type SpellInstance = {

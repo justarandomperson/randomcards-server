@@ -580,6 +580,7 @@ export class GameActions {
 
             if (!attacker.statuses.silenced) {
                 this.runTriggerEffects(EFFECT_TRIGGERS.ATTACKED, { playerId: attackerOwnerId, source: attacker, attacked: card });
+                this.runTriggerEffects(EFFECT_TRIGGERS.ANY_ATTACKED, { playerId: attackerOwnerId, source: attacker, attacked: card });
             }
         }
 

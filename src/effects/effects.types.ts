@@ -78,6 +78,7 @@ export const EFFECT_TRIGGERS = {
   ANY_SPELL_PLAYED: 'any_spell_played',
   ANY_DIED: 'any_died',
   ANY_KILLED: 'any_killed',
+  ANY_ATTACKED: 'any_attacked',
   ANY_DAMAGED: 'any_damaged',
   ANY_COOLDOOWN_END: 'any_cooldown_end'
 } as const;
