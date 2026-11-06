@@ -111,7 +111,7 @@ export class GamesService {
         const game = this.getGame(gameId);
         const player = game.actions.getPlayerState(playerId);
 
-        const { unit: card, destination } = this.validatePlayUnit(game, player, dto);
+        const { unit: card, destination } = this.validatePlayUnit(game, player ,dto);
 
         game.actions.summonUnit(player.socketId, card, destination);
         game.actions.decreasePlayerMoney(player, card.cost);
@@ -131,8 +131,10 @@ export class GamesService {
 
         const isPlayer1 = game.actions.isPlayer1(player.socketId);
         const destination = translateBoardIndex(dto.boardIndex, isPlayer1)
+        const start = isPlayer1 ? 0 : 4
+        const end = isPlayer1 ? 3 : 7
 
-        if (destination > game.state.board.length || destination < 0) {
+        if (destination > end || destination < start) {
             throw new WsException('out of bounds');
         } 
         if (game.state.board[destination] != null) {

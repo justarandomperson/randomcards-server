@@ -25,6 +25,10 @@ export class InstancesService {
 
         const cardInstance = {
             ...card,
+           ...(card.type === InstanceType.UNIT && {
+                statuses: { ...card.statuses }
+            }),
+            effects: [...card.effects],
             instanceId: this.generateInstanceId(),
             ownerId
         };

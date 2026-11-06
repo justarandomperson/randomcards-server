@@ -351,8 +351,8 @@ export class GameActions {
         unit.hp = defaultUnit.hp;
         unit.atk = defaultUnit.atk;
         unit.cost = defaultUnit.cost;
-        unit.effects = defaultUnit.effects;
-        unit.statuses = defaultUnit.statuses;
+        unit.effects = {...defaultUnit.effects};
+        unit.statuses = {...defaultUnit.statuses};
     }
 
     decreaseUnitHealth(card: UnitInstance, amount: number): boolean {
@@ -622,7 +622,7 @@ export class GameActions {
                 }
 
                 if (!card.statuses.silenced) {
-                    this.runTriggerEffects(EFFECT_TRIGGERS.DEATH, { playerId, source: card });
+                    this.runTriggerEffects(EFFECT_TRIGGERS.DEATH, { playerId: card.ownerId! , source: card });
                 }
 
                 this.runTriggerEffects(EFFECT_TRIGGERS.ANY_DIED, { playerId, referenced: card });

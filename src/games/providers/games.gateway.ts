@@ -16,16 +16,16 @@ import { SOCKET_EVENT_NAMES } from '../shared/games.constants';
 import { DecksService } from '../../decks/providers/deck.service';
 import SelectedTargetDto from '../dto/selected-target.dto';
 
-
 @UsePipes(new ValidationPipe({
 	whitelist: true,
 	transform: true,
 	exceptionFactory: (errors) => new WsException(errors),
 }))
 
+
 @WebSocketGateway({ // also marks as injectable
     cors: {
-    origin: 'http://localhost:3001',
+    origin: process.env.PUBLIC_IP,
     credentials: true,
   }
 })

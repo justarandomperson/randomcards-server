@@ -244,7 +244,7 @@ const ArtifactList: ArtifactInstance[] = [
         id: "A_11",
         name: "Judgement",
         type: InstanceType.ARTIFACT,
-        effectDesc: "Summon a random unit ()",
+        effectDesc: "Summon a random unit",
         effects: [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED], //? im not sure if artifacts run on summoned. we can add that
