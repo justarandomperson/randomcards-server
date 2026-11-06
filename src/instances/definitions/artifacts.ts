@@ -1,6 +1,6 @@
 import { EFFECT_TRIGGERS, EffectContext } from "../../effects/effects.types";
 import { getRandomInt } from "../../games/logic/serviceHelpers";
-import { ArtifactInstance, InstanceType, SpellInstance, UnitInstance } from "../shared/instances.types";
+import { ArtifactInstance, InstanceType, UnitInstance } from "../shared/instances.types";
 
 
 const ArtifactList: ArtifactInstance[] = [
@@ -228,9 +228,13 @@ const ArtifactList: ArtifactInstance[] = [
                 trigger: [EFFECT_TRIGGERS.ANY_ATTACKED],
                 execute: (ctx: EffectContext) => {
                     const attacker = ctx.data.attacker
-                    if (!attacker) return
-                    const opponentTurn = ctx.actions.getOpponentState(ctx.data.playerId).turn
-                    if (opponentTurn % 2 == 0) ctx.actions.decreaseUnitHealth(attacker, 1)
+
+                    if (attacker) {
+                        const opponentTurn = ctx.actions.getOpponentState(ctx.data.playerId).turn;
+                        if (opponentTurn % 2 == 0) {
+                            ctx.actions.decreaseUnitHealth(attacker, 1);
+                        }
+                    }
                 }
             }
         ],
@@ -243,7 +247,7 @@ const ArtifactList: ArtifactInstance[] = [
         effectDesc: "Summon a random unit ()",
         effects: [
             {
-                trigger: [EFFECT_TRIGGERS.SUMMONED],
+                trigger: [EFFECT_TRIGGERS.SUMMONED], //? im not sure if artifacts run on summoned. we can add that
                 execute: (ctx: EffectContext) => {
                     const unitsMap = ctx.instances.getUnits()
                     const unitIds = [...unitsMap.values()].map(unit =>
@@ -266,7 +270,7 @@ const ArtifactList: ArtifactInstance[] = [
         effectDesc: "Saiki K. triggers 2 effects instead of 1",
         effects: [
             {
-                trigger: [EFFECT_TRIGGERS.SUMMONED],
+                trigger: [EFFECT_TRIGGERS.SUMMONED], //! pretty sure this just doesnt work
                 execute: (ctx: EffectContext) => {
                     const playerBench = ctx.actions.getPlayerState(ctx.data.playerId).bench
                     const playerUnits = ctx.actions.getPlayerUnits(ctx.data.playerId)
@@ -321,15 +325,15 @@ const ArtifactList: ArtifactInstance[] = [
             {
                 trigger: [EFFECT_TRIGGERS.ANY_SUMMONED],
                 execute: (ctx: EffectContext) => {
-                    const source = ctx.data.source
-                    if (source.ownerId == ctx.data.playerId && source.type == InstanceType.UNIT)
-                    {
-                        ctx.actions.increaseUnitHealth(source, 1)
+                    const referenced = ctx.data.referenced;
+                    if (referenced && referenced.type === InstanceType.UNIT) {
+                        ctx.actions.increaseUnitHealth(referenced, 1);
                     }
+
                 }
             }
         ],
-        cost: 5,     
+        cost: 9,     
     },
     {
         id: "A_15",
@@ -339,21 +343,35 @@ const ArtifactList: ArtifactInstance[] = [
         effects: [],
         cost: 1,     
     },
-     {
+    {
         id: "A_16",
         name: "Very Very Interesting",
         type: InstanceType.ARTIFACT,
-        effectDesc: "Gaster blasters cost -2 (will give you $2 upon playing it, fuck you)",
+        effectDesc: "Gaster blasters cost -2 (will give you $2 upon playing it, fuck you )", // (so you still need 4$ to play it..?)
         effects: [
             {
-                trigger: [EFFECT_TRIGGERS.ANY_SUMMONED],
+                trigger: [EFFECT_TRIGGERS.ANY_SPELL_PLAYED],
                 execute: (ctx: EffectContext) => {
-                    const source = ctx.data.source
-                    if (source.ownerId == ctx.data.playerId && source.id === "S_666")
-                    {
-                        const playerState = ctx.actions.getPlayerState(ctx.data.playerId)
-                        ctx.actions.increasePlayerMoney(playerState, 2)
+                    const referenced = ctx.data.referenced;
+                    if (referenced && referenced.id === "S_666") {
+                        const playerState = ctx.actions.getPlayerState(ctx.data.playerId);
+                        ctx.actions.increasePlayerMoney(playerState, 2);
                     }
+                }
+            }
+        ],
+        cost: 5,     
+    },
+    {
+        id: "A_17",
+        name: "1000 Blank White Cards",
+        type: InstanceType.ARTIFACT,
+        effectDesc: "",
+        effects: [
+            {
+                trigger: [],
+                execute: (ctx: EffectContext) => {
+                   
                 }
             }
         ],

@@ -393,14 +393,15 @@ const spellList: SpellInstance[] = [
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
                 hasTarget:  new Set([targetOption.ALLY]),
                 execute: (ctx: EffectContext) => {
-                    if (ctx.data.targetUnit) {
-                        const target = ctx.data.targetUnit
-                        const opponentUnits = ctx.actions.getOpponentBoard(ctx.data.playerId)
-                            .filter(slot => slot.unit !== null);
+                    const target = ctx.data.targetUnit;
 
-                        const randomUnit = opponentUnits[Math.floor(Math.random() * opponentUnits.length)];
-                        if (!randomUnit.unit) throw new Error("couldn't get random unit")
-                        ctx.actions.attackUnit(ctx.actions.getOpponentId(ctx.data.playerId), randomUnit.unit, target.atk + 2, target)
+                    if (target) {
+                        const opponentUnits = ctx.actions.getOpponentUnits(ctx.data.playerId)
+
+                        const randomUnit = opponentUnits[getRandomInt(0, opponentUnits.length - 1)];
+                        if (randomUnit.unit) {
+                            ctx.actions.attackUnit(ctx.data.playerId, randomUnit.unit, target.atk + 2, target);
+                        }
                     }
                 }
             }
@@ -419,17 +420,21 @@ const spellList: SpellInstance[] = [
                 hasTarget:  new Set([targetOption.ALLY, targetOption.ENEMY]),
                 execute: (ctx: EffectContext) => {
                     if (ctx.data.targetUnit) {
-                       const summonEffects = ctx.data.targetUnit.effects.filter((effect) => effect.trigger.includes(EFFECT_TRIGGERS.SUMMONED))
-                       const newContext: EffectContext = {
-                        ...ctx,
-                        data: {
-                            ...ctx.data,
-                            source: ctx.data.targetUnit
-                        }
-                       }
-                       summonEffects.map((effect) => {
-                            effect.execute(newContext)
-                        })
+                        const summonEffects = ctx.data.targetUnit.effects.filter((effect) => {
+                            effect.trigger.includes(EFFECT_TRIGGERS.SUMMONED)
+                        });
+
+                        const newContext: EffectContext = {
+                            ...ctx,
+                            data: {
+                                ...ctx.data,
+                                source: ctx.data.targetUnit
+                            }
+                        };
+
+                        summonEffects.map((effect) => {
+                            effect.execute(newContext);
+                        });
                     }
                 }
             }
@@ -447,14 +452,14 @@ const spellList: SpellInstance[] = [
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
                 hasTarget:  new Set([targetOption.ALLY]),
                 execute: (ctx: EffectContext) => {
-                    if (ctx.data.targetUnit) {
-                       ctx.actions.decreaseUnitHealth(ctx.data.targetUnit, ctx.data.targetUnit.hp)
-                       const atk = ctx.data.targetUnit.atk
+                    const target = ctx.data.targetUnit;
+                    if (target) {
+                        ctx.actions.decreaseUnitHealth(target, target.hp);
 
-                       const enemyUnits = ctx.actions.getOpponentBoard(ctx.data.playerId).filter((slot) => slot.unit !== null)
-                       enemyUnits.map((enemyUnit) => {
-                        if (enemyUnit.unit) ctx.actions.decreaseUnitHealth(enemyUnit.unit, atk)
-                       })
+                        const opponentUnits = ctx.actions.getOpponentUnits(ctx.data.playerId);
+                        for (const unit of opponentUnits) {
+                            ctx.actions.decreaseUnitHealth(unit.unit, target.atk);
+                        }
                     }
                 }
             }
@@ -473,13 +478,14 @@ const spellList: SpellInstance[] = [
                 hasTarget:  new Set([targetOption.ALLY]),
                 execute: (ctx: EffectContext) => {
                     if (ctx.data.targetUnit) {
-                       if (ctx.data.source.location?.insideOf !== InstanceZone.BOARD) throw new Error("ally not on board")
-                        const cardLocation = ctx.instances.getLocationIndex(ctx.data.targetUnit, InstanceZone.BOARD)
+                        const source = ctx.instances.typeInstance(ctx.data.source, InstanceType.UNIT);
+                        const cardLocation = ctx.instances.getLocationIndex(ctx.data.targetUnit, InstanceZone.BOARD);
+
                         const enemyUnit = ctx.actions.getUnitInfront(cardLocation)
-                        if (!enemyUnit) return
-                        
-                        enemyUnit.statuses.paralyzed = true
-                        ctx.actions.increaseUnitAttack(ctx.data.targetUnit, enemyUnit.atk)
+                        if (enemyUnit) {
+                            ctx.actions.addUnitStatus(enemyUnit, Status.PARALYZED);
+                            ctx.actions.increaseUnitAttack(ctx.data.targetUnit, enemyUnit.atk);
+                        }
                     }
                 }
             }
@@ -496,14 +502,14 @@ const spellList: SpellInstance[] = [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
                 execute: (ctx: EffectContext) => {
-                    const rnd = Math.random()
-                    const id = rnd > .5 ? "S_23" : "S_24"
-                    const ownerId = rnd > .5 ? ctx.data.playerId : ctx.actions.getOpponentId(ctx.data.playerId)
-                    const spellInstance = ctx.instances.createSpellInstance(id, ownerId)
+                    const rnd = Math.random();
+                    const id = rnd > .5 ? "S_23" : "S_24";
+                    const ownerId = rnd > .5 ? ctx.data.playerId : ctx.actions.getOpponentId(ctx.data.playerId);
 
-                    const ownerState = ctx.state.players[ownerId]
+                    const spellInstance = ctx.instances.createSpellInstance(id, ownerId);
+                    const ownerState = ctx.state.players[ownerId];
 
-                    ctx.actions.addSpellToHand(ownerState, spellInstance)
+                    ctx.actions.addSpellToHand(ownerState, spellInstance);
                 }
             }
         ],
@@ -520,8 +526,9 @@ const spellList: SpellInstance[] = [
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
                 hasTarget: new Set([targetOption.ENEMY]),
                 execute: (ctx: EffectContext) => {
-                    if (!ctx.data.targetUnit) return
-                    ctx.actions.decreaseUnitHealth(ctx.data.targetUnit, 4)
+                    if (ctx.data.targetUnit) {
+                        ctx.actions.decreaseUnitHealth(ctx.data.targetUnit, 4);
+                    }
                 }
             }
         ],
@@ -538,8 +545,30 @@ const spellList: SpellInstance[] = [
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
                 hasTarget: new Set([targetOption.ALLY]),
                 execute: (ctx: EffectContext) => {
-                    if (!ctx.data.targetUnit) return
-                    ctx.actions.increaseUnitHealth(ctx.data.targetUnit, 4)
+                    if (ctx.data.targetUnit) {
+                        ctx.actions.increaseUnitHealth(ctx.data.targetUnit, 4);
+                    }
+                }
+            }
+        ],
+        cost: 0,
+        isToken: true
+    },
+    {
+        id: "S_25", // TODO: add pic
+        name: "Miku Miku Beam!!!",
+        type: InstanceType.SPELL,
+        effectDesc: 'Deal 5 damage to a random enemy unit.',
+        effects: [
+            {
+                trigger: [EFFECT_TRIGGERS.SUMMONED],
+                execute: (ctx: EffectContext) => {
+                    const opponentUnits = ctx.actions.getOpponentUnits(ctx.data.playerId);
+
+                    const optionsAmount = opponentUnits.length;
+                    const randomNumber = getRandomInt(0, optionsAmount - 1);
+
+                    ctx.actions.attackUnit(ctx.data.playerId, opponentUnits[randomNumber].unit, 5);
                 }
             }
         ],

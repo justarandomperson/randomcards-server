@@ -68,11 +68,18 @@ export class InstancesService {
 
     getLocation(instance: AnyInstance): InstanceLocation {
         if (!instance.location) {
-            console.log("no location..")
             throw new WsException('instance has no location'); 
         }
 
         return instance.location;
+    }
+
+    getAdditionalData(instance: AnyInstance): Record<string, any> {
+        if (!instance.additionalData) {
+            throw new WsException('instance has no addtional data'); 
+        }
+
+        return instance.additionalData;
     }
 
     getLocationIndex(instance: AnyInstance, expectedInsideOf?: InstanceZone): number {

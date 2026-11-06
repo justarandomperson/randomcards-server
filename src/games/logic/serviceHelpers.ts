@@ -51,5 +51,6 @@ export const fillShop = (currentShop: (ArtifactInstance | null)[], pool: Artifac
 }
 
 export const getRandomInt = (min: number, max: number): number => {
+    if (max <= min) return 0;
     return Math.floor(Math.random() * (max - min + 1)) + min;
 }

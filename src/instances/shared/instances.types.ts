@@ -34,7 +34,7 @@ export type UnitInstance = {
   summoned?: boolean
   location?: InstanceLocation
   assignedBenchSlot?: number,
-  additionalData?: Record<string, unknown>;
+  additionalData?: Record<string, any>;
 };
 
 export type SpellInstance = {
@@ -49,6 +49,7 @@ export type SpellInstance = {
   isToken: boolean
   inDeck?: boolean
   location?: InstanceLocation
+  additionalData?: Record<string, any>;
 };
 
 export type ArtifactInstance = {
@@ -61,6 +62,7 @@ export type ArtifactInstance = {
   effects: Effect[]
   cost: number
   location?: InstanceLocation
+  additionalData?: Record<string, any>;
 }
 
 export type AnyInstance = UnitInstance| SpellInstance | ArtifactInstance

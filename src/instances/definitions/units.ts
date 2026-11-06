@@ -3,6 +3,7 @@ import { getRandomInt } from '../../games/logic/serviceHelpers';
 import { MAX_CARDS_PER_BOARD_ROW } from '../../games/shared/games.constants';
 import { InstanceType, InstanceZone, UnitInstance } from '../shared/instances.types';
 import { targetOption } from '../../games/shared/games.types';
+import { WsException } from '@nestjs/websockets';
 
 
 const unitList: UnitInstance[] = [
@@ -665,15 +666,18 @@ const unitList: UnitInstance[] = [
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
                 hasTarget:  new Set([targetOption.ENEMY]),
                 execute: (ctx: EffectContext) => {
-                    const target = ctx.data.targetUnit
-                    if (!target) throw new Error("has to have target")
-                    const opponentUnits = ctx.actions.getOpponentBoard(ctx.data.playerId)
-                        .filter(slot => slot.unit !== null);
+                    const target = ctx.data.targetUnit;
+                    if (target) {
+                        const opponentUnits = ctx.actions.getOpponentUnits(ctx.data.playerId);
 
-                    const randomUnit = opponentUnits[Math.floor(Math.random() * opponentUnits.length)];
-                    if (!randomUnit.unit) throw new Error("couldn't get random unit")
-                    ctx.actions.attackUnit(ctx.actions.getOpponentId(ctx.data.playerId), randomUnit.unit, target.atk, target)
-                    ctx.actions.attackUnit(ctx.actions.getOpponentId(ctx.data.playerId), target, randomUnit.unit.atk, randomUnit.unit)
+                        const randomUnit = opponentUnits[getRandomInt(0, opponentUnits.length - 1)];
+
+                        if (randomUnit) {
+                            ctx.actions.attackUnit(ctx.data.playerId, randomUnit.unit, target.atk, target);
+                            // attack back
+                            ctx.actions.attackUnit(ctx.data.playerId, target, randomUnit.unit.atk, randomUnit.unit);
+                        }
+                    }
                 }
             },
         ],
@@ -698,7 +702,8 @@ const unitList: UnitInstance[] = [
              {
                 trigger: [EFFECT_TRIGGERS.KILL],
                 execute: (ctx: EffectContext) => {
-                   ctx.actions.increaseUnitAttack(ctx.data.source as UnitInstance, 1)
+                    const source = ctx.instances.typeInstance(ctx.data.source, InstanceType.UNIT);
+                    ctx.actions.increaseUnitAttack(source, 1);
                 }
             },
         ],
@@ -716,7 +721,7 @@ const unitList: UnitInstance[] = [
     },
     {
         id: "U_25",
-        name: "Saiki K.",
+        name: "Saiki K.", //! isnt he supposed to have additionalData?
         type: InstanceType.UNIT,
         effectDesc: "Turn start: Trigger a random turn start effect, turn end: trigger a random turn end effect (no target effect)",
         effects: [
@@ -767,6 +772,54 @@ const unitList: UnitInstance[] = [
         cost: 8,
         hp: 7,
         atk: 7,
+        cooldown: 0   
+    },
+    {
+        id: "U_26",
+        name: "Hatsune Miku", // TODO: add pic
+        type: InstanceType.UNIT,
+        effectDesc: "Turn start: Heal a random ally unit by 2 HP and add a counter." +
+                    "At 4 counters: Use a Miku Miku Beam!!!",
+        effects: [
+             {
+                trigger: [EFFECT_TRIGGERS.TURN_START],
+                execute: (ctx: EffectContext) => {
+                    const playerUnits = ctx.actions.getPlayerUnits(ctx.data.playerId);
+
+                    const optionsAmount = playerUnits.length;
+                    const randomNumber = getRandomInt(0, optionsAmount - 1);
+
+                    ctx.actions.increaseUnitHealth(playerUnits[randomNumber].unit, 2);
+
+                    const data = ctx.instances.getAdditionalData(ctx.data.source);
+                    data["timesHealed"] += 1;
+                }
+            },
+            {
+                trigger: [EFFECT_TRIGGERS.TURN_START],
+                execute: (ctx: EffectContext) => {
+                    // Note: both happen at turn start, but the effect before should happen earlier, so thats why its ok.
+                    const data = ctx.instances.getAdditionalData(ctx.data.source);
+                    if (data["timesHealed"] === 4) {
+
+                        data["timesHealed"] = 0;
+                    }
+                }
+            },
+        ],
+        statuses: {
+            haste: false,
+            taunt: false,
+            paralyzed: false,
+            silenced: false,
+            dodge: 0
+        },
+        additionalData: {
+            "timesHealed": 0
+        },
+        cost: 4,
+        hp: 4,
+        atk: 2,
         cooldown: 0   
     },
 ];
