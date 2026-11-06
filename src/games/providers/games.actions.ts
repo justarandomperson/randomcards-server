@@ -351,7 +351,7 @@ export class GameActions {
         unit.hp = defaultUnit.hp;
         unit.atk = defaultUnit.atk;
         unit.cost = defaultUnit.cost;
-        unit.effects = {...defaultUnit.effects};
+        unit.effects = [...defaultUnit.effects];
         unit.statuses = {...defaultUnit.statuses};
     }
 

@@ -2,6 +2,7 @@ import { EFFECT_TRIGGERS, EffectContext, Status } from "../../effects/effects.ty
 import { getRandomInt } from "../../games/logic/serviceHelpers";
 import { InstanceType, InstanceZone, SpellInstance, UnitInstance } from "../shared/instances.types";
 import { targetOption } from "../../games/shared/games.types";
+import { WsException } from "@nestjs/websockets";
 
 
 const spellList: SpellInstance[] = [
@@ -422,9 +423,7 @@ const spellList: SpellInstance[] = [
                 hasTarget:  new Set([targetOption.ALLY, targetOption.ENEMY]),
                 execute: (ctx: EffectContext) => {
                     if (ctx.data.targetUnit) {
-                        const summonEffects = ctx.data.targetUnit.effects.filter((effect) => {
-                            effect.trigger.includes(EFFECT_TRIGGERS.SUMMONED)
-                        });
+                        const summonEffects = ctx.data.targetUnit.effects.filter((effect) => effect.trigger.includes(EFFECT_TRIGGERS.SUMMONED));
 
                         const newContext: EffectContext = {
                             ...ctx,
@@ -509,7 +508,9 @@ const spellList: SpellInstance[] = [
                     const ownerId = rnd > .5 ? ctx.data.playerId : ctx.actions.getOpponentId(ctx.data.playerId);
 
                     const spellInstance = ctx.instances.createSpellInstance(id, ownerId);
-                    const ownerState = ctx.state.players[ownerId];
+                    const ownerState = ctx.state.players.get(ownerId)
+
+                    if (!ownerState) throw new WsException("Couldn't get owner ")
 
                     ctx.actions.addSpellToHand(ownerState, spellInstance);
                 }

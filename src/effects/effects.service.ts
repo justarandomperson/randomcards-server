@@ -49,7 +49,6 @@ export class EffectsService {
     // helpers
     private iterateEffects(trigger: EffectTrigger, triggerData: TriggerData, source: AnyInstance): selectTargetFilter | undefined {
         let needsTarget;
-
         source.effects.map((effect) => {
             if (effect.trigger.includes(trigger)) {
                 const effectContextData = this.createEffectContextData(triggerData, source);
