@@ -626,6 +626,7 @@ export class GameActions {
                 }
 
                 this.runTriggerEffects(EFFECT_TRIGGERS.ANY_DIED, { playerId, referenced: card });
+                this.runTriggerEffects(EFFECT_TRIGGERS.ANY_DIED, { playerId: this.getOpponentId(playerId), referenced: card });
             }
         }
     }

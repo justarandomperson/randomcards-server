@@ -215,6 +215,7 @@ export class GamesService {
         const player = game.actions.getPlayerState(playerId);
 
         const { attacker, target } = this.validateAttackUnit(game, player, dto);
+        attacker.canAttack = false
 
         game.actions.attackUnit(playerId, target, attacker.atk);
         game.actions.attackUnit(game.actions.getOpponentState(playerId).socketId, attacker, target.atk);
@@ -257,6 +258,7 @@ export class GamesService {
         const attacker = this.validateAttackPlayer(game, player, dto);
         const target = (dto.isOpponent) ? this.getOpponentState(gameId, playerId) : player;
 
+        attacker.canAttack = false
         game.actions.attackPlayer(target.socketId, attacker.atk, attacker);
     }
 

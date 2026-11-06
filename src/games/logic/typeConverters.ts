@@ -31,7 +31,8 @@ export const unitInstanceToClient = (unit: UnitInstance): ClientUnitData => {
         statuses: unit.statuses,
         cost: unit.cost,
         hp: unit.hp,
-        atk: unit.atk
+        atk: unit.atk,
+        canAttack: unit.canAttack || false
     };
 
     return clientUnitData;

@@ -110,7 +110,8 @@ export type ClientUnitData = {
   }
   cost: number
   hp: number
-  atk: number
+  atk: number,
+  canAttack: boolean
 }
 
 export type ClientArtifactData = {
