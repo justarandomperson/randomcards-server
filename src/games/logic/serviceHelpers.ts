@@ -27,8 +27,6 @@ export const shouldSwitchPhase = (currentPhase: GamePhase, player1Turn: number, 
     const nextTurnPhase = (totalTurnsPerPlayer % CYCLE_TURNS_PER_PLAYER) >= PLAY_TURNS_PER_PLAYER ?
         GamePhase.SHOP : GamePhase.PLAY;
 
-    console.log({ currentPhase, player1Turn, player2Turn, totalTurns, totalTurnsPerPlayer, nextTurnPhase });
-
     return nextTurnPhase !== currentPhase;
 }
 
@@ -37,8 +35,6 @@ export const fillShop = (currentShop: (ArtifactInstance | null)[], pool: Artifac
         if (slot) {
             return slot;
         }
-        
-        console.log('pool size:', pool.length);
         if (pool.length == 0) {
             return null;
         }

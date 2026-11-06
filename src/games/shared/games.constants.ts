@@ -1,5 +1,5 @@
 export const STARTING_HEALTH = 20;
-export const STARTING_MONEY = 0;
+export const STARTING_MONEY = 100;
 export const STARTING_TURN = 1;
 export const STARTING_SPELLS_IN_HAND = 3;
 

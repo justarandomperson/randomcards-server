@@ -145,13 +145,14 @@ export class InstancesService {
     }
     
     async getImages(): Promise<ImagesList> {
-        const [artifacts, spells, units] = await Promise.all([
+        const [artifacts, spells, units, statuses] = await Promise.all([
             this.readDirectory(path.join('src', 'instances', 'shared', 'images', 'artifacts')),
             this.readDirectory(path.join('src', 'instances', 'shared', 'images', 'spells')),
             this.readDirectory(path.join('src', 'instances', 'shared', 'images', 'units')),
+            this.readDirectory(path.join('src', 'instances', 'shared', 'images', 'statuses')),
         ]);
 
-        return [...artifacts, ...spells, ...units];
+        return [...artifacts, ...spells, ...units, ...statuses];
     }
 
     private async readDirectory(dirname: string): Promise<ImagesList> {
