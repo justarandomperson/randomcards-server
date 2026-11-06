@@ -559,38 +559,14 @@ const unitList: UnitInstance[] = [
     },
     {
         id: "U_20",
-        name: "Random!Sans",
+        name: "Random!Sans", // TODO: new effect!!
         type: InstanceType.UNIT,
-        effectDesc: "Dodge (3). Turn End: Gain +1 ATK. \n " + 
-                    "Turn Start: If at 8 ATK or more, deal 5 damage to 3 random enemies (including opponent), and reset ATK to 1.",
+        effectDesc: "",
         effects: [
             {
-                trigger: [EFFECT_TRIGGERS.TURN_END],
+                trigger: [],
                 execute: (ctx: EffectContext) => {
-                    const source = ctx.instances.typeInstance(ctx.data.source, InstanceType.UNIT);
-                    ctx.actions.increaseUnitAttack(source, 1);
-                }
-            },
-            {
-                trigger: [EFFECT_TRIGGERS.TURN_START],
-                execute: (ctx: EffectContext) => {
-                    const source = ctx.instances.typeInstance(ctx.data.source, InstanceType.UNIT);
-
-                    if (source.atk >= 8) {
-                        for (let i = 0; i < 3; i++) {
-                            const opponentUnits = ctx.actions.getOpponentUnits(ctx.data.playerId);
-
-                            const optionsAmount = opponentUnits.length + 1; // 1 for opponent itself
-                            const randomNumber = getRandomInt(1, optionsAmount);
-
-                            if (randomNumber === optionsAmount) { // got biggest number? attack opponent
-                                ctx.actions.attackPlayer(ctx.actions.getOpponentId(ctx.data.playerId), 5);
-                            }  
-                            else {
-                                ctx.actions.attackUnit(ctx.data.playerId, opponentUnits[randomNumber - 1].unit, 5);
-                            }
-                        }
-                    }
+                    
                 }
             }
         ],
@@ -599,7 +575,7 @@ const unitList: UnitInstance[] = [
             taunt: false,
             paralyzed: false,
             silenced: false,
-            dodge: 3
+            dodge: 0
         },
         cost: 5,
         hp: 1,

@@ -712,18 +712,7 @@ export class GameActions {
             this.changeGamePhase();
         }
 
-        // change player turn
-        if (phaseChanged && this.state.gamePhase === GamePhase.SHOP) {
-            const lessHpId = players.toSorted((p1, p2) => p1.hp - p2.hp)[0].socketId;
-            this.setPlayerTurnId(lessHpId);
-        }
-        else if (phaseChanged && this.state.gamePhase === GamePhase.PLAY) {
-            this.setPlayerTurnId(players[0].socketId)
-        }
-        else { 
-            const opponent = this.getOpponentState(this.state.playerTurnId);
-            this.setPlayerTurnId(opponent.socketId);
-        }
+        this.setPlayerTurnId(this.getOpponentId(this.state.playerTurnId));
 
         // start of turn stuff
         switch(this.state.gamePhase) {

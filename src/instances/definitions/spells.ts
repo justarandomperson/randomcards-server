@@ -153,10 +153,12 @@ const spellList: SpellInstance[] = [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
                 execute: (ctx: EffectContext) => {
-                    const opponentUnits = ctx.actions.getOpponentUnits;
-                    const randomNumber = getRandomInt(1, opponentUnits.length);
-
-                    ctx.actions.attackUnit(ctx.data.playerId, opponentUnits[randomNumber - 1].unit, 2);
+                    const opponentUnits = ctx.actions.getOpponentUnits(ctx.data.playerId);
+                    
+                    if (opponentUnits.length > 0) {
+                        const randomNumber = getRandomInt(1, opponentUnits.length - 1);
+                        ctx.actions.attackUnit(ctx.data.playerId, opponentUnits[randomNumber].unit, 2);
+                    }
                 }
             }
         ],
