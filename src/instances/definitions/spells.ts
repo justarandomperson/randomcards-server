@@ -576,6 +576,22 @@ const spellList: SpellInstance[] = [
         cost: 0,
         isToken: true
     },
+    {
+        id: "S_26",
+        name: "Blank White Card",
+        type: InstanceType.SPELL,
+        effectDesc: "",
+        effects: [
+            {
+                trigger: [EFFECT_TRIGGERS.SUMMONED],
+                execute: (ctx: EffectContext) => {
+                    // TODO: maybe have a random spell effect happen
+                }
+            }
+        ],
+        cost: 1,
+        isToken: true
+    },
 ];
 
 export const spellsMap = new Map<string, SpellInstance>(

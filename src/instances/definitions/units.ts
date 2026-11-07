@@ -358,26 +358,18 @@ const unitList: UnitInstance[] = [
     },
     {
         id: "U_14",
-        name: "Golden Experience Requiem", //! maybe change the effect
+        name: "Crazy Diamond",
         type: InstanceType.UNIT,
-        effectDesc: "Turn End: Silence & Kill the leftmost enemy monster, then summon it again.",
+        effectDesc: "Damaged: Heal the damage this card lost to yourself",
         effects: [
              {
-                trigger: [EFFECT_TRIGGERS.TURN_END],
+                trigger: [EFFECT_TRIGGERS.DAMAGED],
                 execute: (ctx: EffectContext) => {
-                    const opponentUnits = ctx.actions.getOpponentUnits(ctx.data.playerId);
+                    if (ctx.data.attacker) {
+                        // Note: pretty sure this happens before any other effect so the attacker's atk would not change.
+                        const attacker = ctx.instances.typeInstance(ctx.data.attacker, InstanceType.UNIT);
 
-                    if (opponentUnits.length > 0) {
-                        const slotToAttack = opponentUnits[0];
-
-                        ctx.actions.addUnitStatus(slotToAttack.unit, Status.SILENCED);
-                        ctx.actions.attackUnit(ctx.data.playerId, slotToAttack.unit, slotToAttack.unit.hp);
-
-                        const defaultUnit = ctx.instances.createUnitInstance(
-                            slotToAttack.unit.id, ctx.actions.getOpponentId(ctx.data.playerId)
-                        );
-
-                        ctx.actions.summonUnit(ctx.data.playerId, defaultUnit, slotToAttack.index);
+                        ctx.actions.increasePlayerHealth(ctx.actions.getPlayerState(ctx.data.playerId), attacker.atk);
                     }
                 }
             },
@@ -390,9 +382,9 @@ const unitList: UnitInstance[] = [
             dodge: 0,
             cooldown: 0
         },
-        cost: 10,
-        hp: 10,
-        atk: 8,
+        cost: 6,
+        hp: 6,
+        atk: 4,
     },
     {
         id: "U_15",
@@ -617,7 +609,7 @@ const unitList: UnitInstance[] = [
         effects: [
              {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
-                hasTarget:  new Set([targetOption.ENEMY]),
+                hasTarget: new Set([targetOption.ENEMY]),
                 execute: (ctx: EffectContext) => {
                     const target = ctx.data.targetUnit;
                     if (target) {
@@ -797,6 +789,37 @@ const unitList: UnitInstance[] = [
         cost: 4,
         hp: 4,
         atk: 2,
+    },
+    {
+        id: "U_27",
+        name: "Imitater",
+        type: InstanceType.UNIT,
+        effectDesc: "Summon: Copy the effects of a random unit on bench or board.",
+        effects: [
+             {
+                trigger: [EFFECT_TRIGGERS.SUMMONED],
+                hasTarget: new Set([targetOption.ALLY, targetOption.BENCH]),
+                execute: (ctx: EffectContext) => {
+                    if (ctx.data.targetUnit) {
+                        const target = ctx.instances.typeInstance(ctx.data.targetUnit, InstanceType.UNIT);
+
+                        const source = ctx.instances.typeInstance(ctx.data.source, InstanceType.UNIT);
+                        ctx.actions.changeUnitEffect(source, target.effects, target.effectDesc);
+                    }
+                }
+            },
+        ],
+        statuses: {
+            haste: false,
+            taunt: false,
+            paralyzed: false,
+            silenced: false,
+            dodge: 0,
+            cooldown: 0
+        },
+        cost: 8,
+        hp: 3,
+        atk: 3,
     },
 ];
 

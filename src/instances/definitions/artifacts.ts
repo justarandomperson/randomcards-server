@@ -1,5 +1,6 @@
 import { EFFECT_TRIGGERS, EffectContext } from "../../effects/effects.types";
 import { getRandomInt } from "../../games/logic/serviceHelpers";
+import { MAX_HAND_SIZE } from "../../games/shared/games.constants";
 import { ArtifactInstance, InstanceType, UnitInstance } from "../shared/instances.types";
 
 
@@ -370,7 +371,7 @@ const ArtifactList: ArtifactInstance[] = [
         id: "A_16",
         name: "Very Very Interesting",
         type: InstanceType.ARTIFACT,
-        effectDesc: "Gaster blasters cost -2 (will give you $2 upon playing it, fuck you )", // (so you still need 4$ to play it..?)
+        effectDesc: "Gaster blasters cost -2 (will give you $2 upon playing it, fuck you )",
         effects: [
             {
                 trigger: [EFFECT_TRIGGERS.ANY_SPELL_PLAYED],
@@ -389,18 +390,31 @@ const ArtifactList: ArtifactInstance[] = [
     },
     {
         id: "A_17",
-        name: "1000 Blank White Cards", // TODO:
+        name: "1000 Blank White Cards",
         type: InstanceType.ARTIFACT,
-        effectDesc: "",
+        effectDesc: "Turn End: Fill your hand with Blank White Cards, until all 1000 blank white cards are used.",
         effects: [
             {
-                trigger: [],
+                trigger: [EFFECT_TRIGGERS.TURN_END],
                 execute: (ctx: EffectContext) => {
-                   
+                    const source = ctx.instances.typeInstance(ctx.data.source, InstanceType.ARTIFACT);
+                    const data = ctx.instances.getAdditionalData(source);
+
+                    const player = ctx.actions.getPlayerState(ctx.data.playerId);
+
+                    while (data["cards"] > 0 && player.hand.length < MAX_HAND_SIZE) {
+                        const blankWhiteCard = ctx.instances.createSpellInstance("S_26", ctx.data.playerId);
+                        ctx.actions.addSpellToHand(player, blankWhiteCard);
+
+                        data["cards"] -= 1;
+                    }
                 }
             }
         ],
-        cost: 5,     
+        additionalData: {
+            "cards": 1000
+        },
+        cost: 10,     
     },
     {
         id: "A_18",
@@ -490,6 +504,25 @@ const ArtifactList: ArtifactInstance[] = [
             counter: 0
         },
         cost: 5,     
+    },
+        {
+        id: "A_21",
+        name: "Straightforward ball",
+        type: InstanceType.ARTIFACT,
+        effectDesc: "Turn end: deals 1 damage to the rightmost enemy unit.",
+        effects: [
+            {
+                trigger: [EFFECT_TRIGGERS.TURN_END],
+                execute: (ctx: EffectContext) => {
+                    const opponentUnits = ctx.actions.getOpponentUnits(ctx.data.playerId);
+
+                    if (opponentUnits.length > 0){
+                        ctx.actions.decreaseUnitHealth(opponentUnits[opponentUnits.length - 1].unit, 1);
+                    }
+                }
+            }
+        ],
+        cost: 9,     
     },
 ];
 
