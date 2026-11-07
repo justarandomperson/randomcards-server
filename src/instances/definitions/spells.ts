@@ -243,8 +243,11 @@ const spellList: SpellInstance[] = [
                 execute: (ctx: EffectContext) => {
                     for (let i = 0; i < 2; i++) {
                         const darkOrb = ctx.instances.createSpellInstance("S_10", ctx.data.playerId);
-                        ctx.actions.addSpellToHand(ctx.actions.getPlayerState(ctx.data.playerId), darkOrb);
-                        ctx.actions.increaseCardCost(darkOrb, 1);
+                        const location = ctx.actions.addSpellToHand(ctx.actions.getPlayerState(ctx.data.playerId), darkOrb, true);
+                        if (location) //as in there was space
+                        {
+                            ctx.actions.increaseCardCost(darkOrb, 1);
+                        }
                     }
                 }
             }

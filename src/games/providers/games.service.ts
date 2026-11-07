@@ -283,6 +283,11 @@ export class GamesService {
             }
         }
 
+        if (!dto.isOpponent)
+        {
+            throw new WsException("Player can't attack itself"); 
+        }
+
         return attacker; 
     }
 

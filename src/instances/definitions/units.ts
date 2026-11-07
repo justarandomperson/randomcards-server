@@ -744,7 +744,7 @@ const unitList: UnitInstance[] = [
         id: "U_26",
         name: "Hatsune Miku", // TODO: add pic
         type: InstanceType.UNIT,
-        effectDesc: "Turn start & Turn End: Heal a random ally unit by 2 HP and add a counter." +
+        effectDesc: "Turn start: Heal a random ally unit by 2 HP and add a counter if healed." +
                     "At 4 counters: Use a Miku Miku Beam!!!",
         effects: [
              {
@@ -756,10 +756,15 @@ const unitList: UnitInstance[] = [
                         const optionsAmount = playerUnits.length;
                         const randomNumber = getRandomInt(0, optionsAmount - 1);
 
-                        ctx.actions.increaseUnitHealth(playerUnits[randomNumber].unit, 2, true);
-
-                        const data = ctx.instances.getAdditionalData(ctx.data.source);
-                        data["timesHealed"] += 1;
+                        const randomUnit = playerUnits[randomNumber].unit
+                        const prevHP = randomUnit.hp
+                        const newHP = ctx.actions.increaseUnitHealth(randomUnit, 2, true);
+                        
+                        if (prevHP != newHP)
+                        {
+                            const data = ctx.instances.getAdditionalData(ctx.data.source);
+                            data["timesHealed"] += 1;
+                        }
                     }
                 }
             },
@@ -768,7 +773,6 @@ const unitList: UnitInstance[] = [
                 execute: (ctx: EffectContext) => {
                     // Note: both happen at turn start, but the effect before should happen earlier, so thats why its ok.
                     const data = ctx.instances.getAdditionalData(ctx.data.source);
-
                     if (data["timesHealed"] === 4) {
                         const mikuMikuBeam = ctx.instances.createSpellInstance("S_25", ctx.data.playerId);
                         ctx.actions.useSpell(ctx.data.playerId, mikuMikuBeam);

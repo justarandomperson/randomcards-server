@@ -7,6 +7,7 @@ async function bootstrap() {
 
   app.enableCors({
      origin: [
+        'http://localhost:1225',
         'http://localhost:3001',
         process.env.PUBLIC_IP,
     ]

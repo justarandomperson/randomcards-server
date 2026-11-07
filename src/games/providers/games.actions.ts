@@ -302,8 +302,9 @@ export class GameActions {
         return card.location;
     }
 
-    addSpellToHand(player: PlayerState, card: SpellInstance): InstanceLocation | null {
-        if (player.hand.length === MAX_HAND_SIZE) {
+    //spellCreated - relevant when extra space will be made by the spell that just is attempting to add the spell to hand.
+    addSpellToHand(player: PlayerState, card: SpellInstance, spellCreated: boolean = false): InstanceLocation | null {
+        if (player.hand.length === MAX_HAND_SIZE + (spellCreated ? 1 : 0)) {
             return null;
         }
 
@@ -387,7 +388,7 @@ export class GameActions {
                     this.moveUnitFromBoardToBench(card);
 
                     this.resetUnitData(card);
-                    this.addUnitStatus(card, Status.COOLDOWN);
+                    this.addUnitStatus(card, Status.COOLDOWN, 3);
                 }
                 else {
                     this.removeUnitFromBoard(card);
@@ -436,7 +437,7 @@ export class GameActions {
         return card.cost;
     }
 
-    addUnitStatus(card: UnitInstance, status: Status) {
+    addUnitStatus(card: UnitInstance, status: Status, amount: number = 1) {
         switch (status) {
             case Status.HASTE:
                 card.statuses.haste = true;
@@ -461,11 +462,11 @@ export class GameActions {
                 break;
 
             case Status.DODGE:
-                card.statuses.dodge += 1;
+                card.statuses.dodge += amount;
                 break;
 
             case Status.COOLDOWN:
-                card.statuses.cooldown += 1;
+                card.statuses.cooldown += amount;
                 break;
         }
 
@@ -668,7 +669,7 @@ export class GameActions {
         const needsTarget = this.runTriggerEffects(EFFECT_TRIGGERS.SUMMONED, { playerId: cardOwnerId, source: card });
         
         if (!needsTarget){
-            this.moveSpellFromHandToDrawpile(player, card);
+            if (!card.isToken) this.moveSpellFromHandToDrawpile(player, card);
             this.emitter.playedSpell(this.state.gameId, card);
             this.runTriggerEffects(EFFECT_TRIGGERS.ANY_SPELL_PLAYED, { playerId: cardOwnerId, referenced: card });
         }

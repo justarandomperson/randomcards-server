@@ -25,7 +25,11 @@ import SelectedTargetDto from '../dto/selected-target.dto';
 
 @WebSocketGateway({ // also marks as injectable
     cors: {
-    origin: process.env.PUBLIC_IP,
+    origin: [
+		process.env.PUBLIC_IP,
+		"http://localhost:3001",
+		"http://localhost:1225"
+	],
     credentials: true,
   }
 })
