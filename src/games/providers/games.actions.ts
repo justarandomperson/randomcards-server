@@ -350,6 +350,7 @@ export class GameActions {
         player.artifacts.push(artifact);
 
         artifact.location = { insideOf: InstanceZone.PLAYER, index: player.artifacts.length - 1 };
+        artifact.ownerId = player.socketId
 
         this.emitter.updateArtifactBoth(this.state.gameId, artifact, artifact.location, player.socketId);
         this.runTriggerEffects(EFFECT_TRIGGERS.BOUGHT, { playerId: player.socketId, source: artifact });

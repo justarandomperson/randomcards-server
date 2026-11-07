@@ -294,9 +294,8 @@ const ArtifactList: ArtifactInstance[] = [
                 execute: (ctx: EffectContext) => {
                     const playerBench = ctx.actions.getPlayerState(ctx.data.playerId).bench;
                     const playerUnits = ctx.actions.getPlayerUnits(ctx.data.playerId);
-
                     playerBench.map((unit) => {
-                        if (unit && unit.id == "S_25" && unit.additionalData)
+                        if (unit && unit.id == "U_25" && unit.additionalData)
                         {
                             unit.additionalData["triggers"] = 2
                         }
@@ -304,7 +303,7 @@ const ArtifactList: ArtifactInstance[] = [
 
                     playerUnits.map((slot) => {
                         const unit = slot.unit
-                        if (unit && unit.id == "S_25" && unit.additionalData)
+                        if (unit && unit.id == "U_25" && unit.additionalData)
                         {
                             unit.additionalData["triggers"] = 2
                         }
