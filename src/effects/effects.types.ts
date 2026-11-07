@@ -36,6 +36,7 @@ export enum Status {
   TAUNT ='taunt',
   HASTE = 'haste',
   DODGE = 'dodge',
+  COOLDOWN = 'cooldown'
 };
 
 export type TriggerData = {

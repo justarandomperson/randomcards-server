@@ -125,6 +125,9 @@ export class GamesService {
 
         const card = this.instances.findInstance(dto.instanceId, player.bench);
 
+        if (card.statuses.cooldown > 0) {
+            throw new WsException("unit is in cooldown");
+        }
         if (player.money < card.cost) {
             throw new WsException('insufficient money');
         }

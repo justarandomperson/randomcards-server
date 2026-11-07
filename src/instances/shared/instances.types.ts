@@ -25,11 +25,11 @@ export type UnitInstance = {
     paralyzed: boolean
     silenced: boolean
     dodge: number
+    cooldown: number
   }
   cost: number
   atk: number
   hp: number
-  cooldown: number
   canAttack?: boolean,
   summoned?: boolean
   location?: InstanceLocation
@@ -107,6 +107,7 @@ export type ClientUnitData = {
     paralyzed: boolean
     silenced: boolean
     dodge: number
+    cooldown: number
   }
   cost: number
   hp: number

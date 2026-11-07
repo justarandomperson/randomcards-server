@@ -67,7 +67,7 @@ const spellList: SpellInstance[] = [
                 hasTarget: new Set([targetOption.BENCH]),
                 execute: (ctx: EffectContext) => {
                     if (ctx.data.targetUnit) {
-                        ctx.actions.increaseUnitCooldown(ctx.data.targetUnit, -1);
+                        ctx.actions.removeUnitStatus(ctx.data.targetUnit, Status.COOLDOWN);
                     }   
                 }
             }
@@ -194,7 +194,7 @@ const spellList: SpellInstance[] = [
         name: "Dark Orb",
         type: InstanceType.SPELL,
         effectDesc: "Deals 3 damage times the amount of Dark Orbs you have in your hand " +
-                    "to the opponent's unit with the least HP.",
+                    "to the opponent's unit with the least HP. Uses all of them.",
         effects: [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
@@ -205,6 +205,10 @@ const spellList: SpellInstance[] = [
                     for (const spell of playerHand) {
                         if (spell.id === "S_10") {
                             damage += 3;
+                        }
+
+                        if (ctx.instances.getInstanceId(ctx.data.source) !== ctx.instances.getInstanceId(spell)) {
+                            ctx.actions.moveSpellFromHandToDrawpile(ctx.actions.getPlayerState(ctx.data.playerId), spell);
                         }
                     }
 
@@ -553,17 +557,16 @@ const spellList: SpellInstance[] = [
         id: "S_25", // TODO: add pic
         name: "Miku Miku Beam!!!",
         type: InstanceType.SPELL,
-        effectDesc: 'Deal 5 damage to a random enemy unit.',
+        effectDesc: 'Deal 4 damage to all enemy units',
         effects: [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
                 execute: (ctx: EffectContext) => {
                     const opponentUnits = ctx.actions.getOpponentUnits(ctx.data.playerId);
 
-                    const optionsAmount = opponentUnits.length;
-                    const randomNumber = getRandomInt(0, optionsAmount - 1);
-
-                    ctx.actions.attackUnit(ctx.data.playerId, opponentUnits[randomNumber].unit, 5);
+                    for (const unit of opponentUnits) {
+                        ctx.actions.attackUnit(ctx.data.playerId, unit.unit, 4);
+                    }
                 }
             }
         ],

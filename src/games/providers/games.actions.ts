@@ -3,7 +3,7 @@ import { EffectsService } from "../../effects/effects.service";
 import { CurrentEffectData, GamePhase, GameState, PlayerState, selectTargetFilter, targetOption } from "../shared/games.types";
 import { ArtifactInstance, InstanceLocation, SpellInstance, UnitInstance, InstanceZone, InstanceType } from "../../instances/shared/instances.types";
 import { Effect, EFFECT_TRIGGERS, EffectTrigger, Status, TriggerData } from "../../effects/effects.types";
-import { MAX_HAND_SIZE, MINIMUM_MONEY, STARTING_SPELLS_IN_HAND } from "../shared/games.constants";
+import { MAX_HAND_SIZE, MINIMUM_MONEY, STARTING_HEALTH, STARTING_SPELLS_IN_HAND } from "../shared/games.constants";
 import { GamesEmitter } from "./games.emitter";
 import { calculateTurnStartMoney, fillShop, shouldSwitchPhase, translateBoardIndex, unTranslateBoardIndex } from "../logic/serviceHelpers";
 import { InstancesService } from "../../instances/providers/instances.service";
@@ -233,7 +233,7 @@ export class GameActions {
     // moving stuff
     moveUnitFromBenchToBoard(player: PlayerState, card: UnitInstance, boardIndex: number): InstanceLocation {
         this.state.board[boardIndex] = card;
-        if (card.assignedBenchSlot) {
+        if (card.assignedBenchSlot || card.assignedBenchSlot === 0) {
             player.bench[card.assignedBenchSlot] = null;
         }
 
@@ -247,9 +247,9 @@ export class GameActions {
             throw new WsException("card has no owner");
         }
 
-        const ownerId = card.ownerId;
+        const ownerId = this.instances.getOwnerId(card);
         const ownerState = this.getPlayerState(ownerId);
-        if (!card.assignedBenchSlot) {
+        if (card.assignedBenchSlot !== 0 && !card.assignedBenchSlot) {
             throw new WsException("card does not have an assigned bench slot"); 
         }
 
@@ -290,8 +290,9 @@ export class GameActions {
 
         player.hand.splice(location.index, 1);
 
-        if (card.inDeck) { // does not add card to drawpile if card is a token card
+        if (card.inDeck) { // does not add card to drawpile if card wasnt originally in deck card
             player.drawpile.push(card);
+            this.emitter.updateDrawpileCount(this.state.gameId, player.socketId, player.drawpile.length);
         }
 
         card.location = { insideOf: InstanceZone.NONE };
@@ -316,7 +317,7 @@ export class GameActions {
     }
 
     drawSpellFromDrawpile(player: PlayerState): SpellInstance {
-        const spellIndex = Math.floor(Math.random() * player.drawpile.length / 2) // first half of drawpile
+        const spellIndex = Math.floor(Math.random() * player.drawpile.length / 2); //? is this how we should be doing this
         const spell = player.drawpile[spellIndex];
         if (!spell) {
             throw new WsException('drawpile is empty');
@@ -359,11 +360,14 @@ export class GameActions {
     }
 
     decreaseUnitHealth(card: UnitInstance, amount: number, attacker?: UnitInstance): boolean {
-        if (!card.ownerId) throw new WsException("Card does not have owner")
+        if (!card.ownerId) {
+            throw new WsException("Card does not have owner")
+        }
+
         card.hp -= amount;
 
         this.emitTwoDifferentUpdateCard(card);
-
+        
         if (attacker)
         {
             if (!card.statuses.silenced) {
@@ -379,11 +383,11 @@ export class GameActions {
             {
                 this.runTriggerEffects(EFFECT_TRIGGERS.KILL, { playerId: attacker.ownerId, source: attacker ,referenced: card});
             }
-            if (card.assignedBenchSlot) {
+            if (card.assignedBenchSlot || card.assignedBenchSlot === 0) {
                     this.moveUnitFromBoardToBench(card);
 
                     this.resetUnitData(card);
-                    this.increaseUnitCooldown(card, +1);
+                    this.addUnitStatus(card, Status.COOLDOWN);
                 }
                 else {
                     this.removeUnitFromBoard(card);
@@ -424,27 +428,6 @@ export class GameActions {
         return card.cost;
     }
 
-
-    decreaseUnitCooldown(playerId: string, card: UnitInstance, amount: number): number {
-        if (card.cooldown > 0) {
-            card.cooldown -= amount;
-
-            this.emitter.updateCard(playerId, card, this.instances.getLocation(card));
-        }
-
-        return card.cooldown;
-
-    }
-
-    increaseUnitCooldown(card: UnitInstance, amount: number): number {
-        if (!card.ownerId) throw new WsException("card has no owner")
-        card.cooldown += amount;
-
-        this.emitter.updateCard(card.ownerId, card, this.instances.getLocation(card));
-
-        return card.cooldown;
-    }
-
     addUnitStatus(card: UnitInstance, status: Status) {
         switch (status) {
             case Status.HASTE:
@@ -472,6 +455,10 @@ export class GameActions {
             case Status.DODGE:
                 card.statuses.dodge += 1;
                 break;
+
+            case Status.COOLDOWN:
+                card.statuses.cooldown += 1;
+                break;
         }
 
         this.emitTwoDifferentUpdateCard(card);
@@ -495,7 +482,7 @@ export class GameActions {
                 card.statuses.silenced = false;
                 break;
 
-            case Status.DODGE: {
+            case Status.DODGE: 
                 card.statuses.dodge -= 1;
 
                 if (card.statuses.dodge < 0) {
@@ -503,10 +490,24 @@ export class GameActions {
                 }
 
                 break;
-            }
+
+            case Status.COOLDOWN:
+                card.statuses.cooldown -= 1;
+
+                if (card.statuses.cooldown < 0) {
+                    card.statuses.cooldown = 0;
+                }
+
+                break;
         }
 
-        this.emitTwoDifferentUpdateCard(card);
+        // cooldown'd units are only in bench so the opponent does not need to get updated on it
+        if (status == Status.COOLDOWN) {
+            this.emitter.updateCard(this.instances.getOwnerId(card), card, this.instances.getLocation(card));
+        }
+        else {
+            this.emitTwoDifferentUpdateCard(card); 
+        }
     }
 
     changeUnitEffect(card: UnitInstance, effects: Effect[], effectDesc: string) {
@@ -527,6 +528,10 @@ export class GameActions {
 
     increasePlayerHealth(player: PlayerState, amount: number): number {
         player.hp += amount;
+
+        if (player.hp > STARTING_HEALTH) {
+            player.hp = STARTING_HEALTH;
+        }
 
         this.emitter.updateHealth(this.state.gameId, player.socketId, player.hp);
 
@@ -654,9 +659,8 @@ export class GameActions {
 
         const needsTarget = this.runTriggerEffects(EFFECT_TRIGGERS.SUMMONED, { playerId: cardOwnerId, source: card });
         
-        this.moveSpellFromHandToDrawpile(player, card); // also checks for token
-
         if (!needsTarget){
+            this.moveSpellFromHandToDrawpile(player, card);
             this.emitter.playedSpell(this.state.gameId, card);
             this.runTriggerEffects(EFFECT_TRIGGERS.ANY_SPELL_PLAYED, { playerId: cardOwnerId, referenced: card });
         }
@@ -697,6 +701,13 @@ export class GameActions {
 
     endTurn(playerId: string) {
         const player = this.getPlayerState(playerId);
+        
+        // remove haste & paralyzed 
+        const playerUnits = this.getPlayerUnits(this.state.playerTurnId);
+        for (const unit of playerUnits) {
+            this.removeUnitStatus(unit.unit, Status.HASTE);
+            this.removeUnitStatus(unit.unit, Status.PARALYZED); //! this uhhh doesnt work correctly fix later
+        }
 
         this.incrementPlayerTurn(player);
         this.decrementBenchCooldown(player);
@@ -711,7 +722,9 @@ export class GameActions {
     private decrementBenchCooldown(player: PlayerState) {
         player.bench.map((unit) => {
             if (unit) {
-                this.decreaseUnitCooldown(player.socketId, unit, 1);
+                if (unit.statuses.cooldown > 0) {
+                    this.removeUnitStatus(unit, Status.COOLDOWN);
+                }
             }
         })
     }
@@ -796,6 +809,7 @@ export class GameActions {
         }
 
         if (data.source.type === InstanceType.SPELL){
+            this.moveSpellFromHandToDrawpile(player, data.source);
             this.emitter.playedSpell(this.state.gameId, data.source);
         }
 
@@ -803,11 +817,10 @@ export class GameActions {
         const cardOwnerId = this.instances.getOwnerId(data.source);     
 
         if (data.source.type === InstanceType.UNIT) {
-            this.runTriggerEffects(EFFECT_TRIGGERS.ANY_SPELL_PLAYED, { playerId: cardOwnerId, referenced: data.source });
+            this.runTriggerEffects(EFFECT_TRIGGERS.ANY_SUMMONED, { playerId: cardOwnerId, referenced: data.source });
         }
         else if (data.source.type === InstanceType.SPELL){
             this.runTriggerEffects(EFFECT_TRIGGERS.ANY_SPELL_PLAYED, { playerId: cardOwnerId, referenced: data.source });
         }
-        
     }
 }

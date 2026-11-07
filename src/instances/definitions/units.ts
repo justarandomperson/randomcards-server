@@ -3,7 +3,6 @@ import { getRandomInt } from '../../games/logic/serviceHelpers';
 import { MAX_CARDS_PER_BOARD_ROW } from '../../games/shared/games.constants';
 import { InstanceType, InstanceZone, UnitInstance } from '../shared/instances.types';
 import { targetOption } from '../../games/shared/games.types';
-import { WsException } from '@nestjs/websockets';
 
 
 const unitList: UnitInstance[] = [
@@ -18,12 +17,13 @@ const unitList: UnitInstance[] = [
             taunt: false,
             paralyzed: false,
             silenced: false,
-            dodge: 0
+            dodge: 0,
+            cooldown: 0
+
         },
         cost: 2,
         hp: 1,
         atk: 2,
-        cooldown: 0
     },
     {
         id: "U_2",
@@ -36,12 +36,12 @@ const unitList: UnitInstance[] = [
             taunt: false,
             paralyzed: false,
             silenced: false,
-            dodge: 0
+            dodge: 0,
+            cooldown: 0
         },
         cost: 2, 
         hp: 2,
         atk: 1,
-        cooldown: 0
     },
     {
         id: "U_3",
@@ -62,12 +62,12 @@ const unitList: UnitInstance[] = [
             taunt: false,
             paralyzed: false,
             silenced: false,
-            dodge: 3
+            dodge: 3,
+            cooldown: 0
         },
         cost: 6,
         hp: 1,
         atk: 1,
-        cooldown: 0
     },
     {
         id: "U_4",
@@ -90,12 +90,12 @@ const unitList: UnitInstance[] = [
             taunt: false,
             paralyzed: false,
             silenced: false,
-            dodge: 0
+            dodge: 0,
+            cooldown: 0
         },
         cost: 6,
         hp: 6,
         atk: 6,
-        cooldown: 0
     },
     {
         id: "U_5",
@@ -130,39 +130,30 @@ const unitList: UnitInstance[] = [
             taunt: false,
             paralyzed: false,
             silenced: false,
-            dodge: 0
+            dodge: 0,
+            cooldown: 0
         },
         cost: 6,
         hp: 4,
         atk: 1,
-        cooldown: 0
     },
     {
        id: "U_6",
         name: "Silverfish",
         type: InstanceType.UNIT,
         effectDesc: "Dodge (1). Haste.",
-        effects: [
-            {
-                trigger: [EFFECT_TRIGGERS.SUMMONED],
-                execute: (ctx: EffectContext) => {
-                    const source = ctx.instances.typeInstance(ctx.data.source, InstanceType.UNIT);
-                    ctx.actions.addUnitStatus(source, Status.DODGE);
-                    ctx.actions.addUnitStatus(source, Status.HASTE);
-                }
-            },
-        ],
+        effects: [],
         statuses: {
-            haste: false,
+            haste: true,
             taunt: false,
             paralyzed: false,
             silenced: false,
-            dodge: 0
+            dodge: 1,
+            cooldown: 0
         },
         cost: 2,
         hp: 2,
         atk: 2,
-        cooldown: 0  
     },
     {
         id: "U_7",
@@ -170,13 +161,6 @@ const unitList: UnitInstance[] = [
         type: InstanceType.UNIT,
         effectDesc: "Taunt. Damaged: paralyze the attacker.",
         effects: [
-            {
-                trigger: [EFFECT_TRIGGERS.SUMMONED],
-                execute: (ctx: EffectContext) => {
-                    const source = ctx.instances.typeInstance(ctx.data.source, InstanceType.UNIT);
-                    ctx.actions.addUnitStatus(source, Status.TAUNT);
-                }
-            },
             {
                 trigger: [EFFECT_TRIGGERS.DAMAGED],
                 execute: (ctx: EffectContext) => {
@@ -188,15 +172,15 @@ const unitList: UnitInstance[] = [
         ],
         statuses: {
             haste: false,
-            taunt: false,
+            taunt: true,
             paralyzed: false,
             silenced: false,
-            dodge: 0
+            dodge: 0,
+            cooldown: 0
         },
         cost: 3,
         hp: 3,
         atk: 3,
-        cooldown: 0   
     },
     {
         id: "U_8",
@@ -220,12 +204,12 @@ const unitList: UnitInstance[] = [
             taunt: false,
             paralyzed: false,
             silenced: false,
-            dodge: 0
+            dodge: 0,
+            cooldown: 0
         },        
         cost: 5,
         hp: 5,
         atk: 3,
-        cooldown: 0   
     },
     {
         id: "U_9",
@@ -233,13 +217,6 @@ const unitList: UnitInstance[] = [
         type: InstanceType.UNIT,
         effectDesc: "Haste. Damaged: Gain +2 ATK.",
         effects: [
-            {
-                trigger: [EFFECT_TRIGGERS.SUMMONED],
-                execute: (ctx: EffectContext) => {
-                    const source = ctx.instances.typeInstance(ctx.data.source, InstanceType.UNIT);
-                    ctx.actions.addUnitStatus(source, Status.HASTE);
-                }
-            },
             {
                 trigger: [EFFECT_TRIGGERS.DAMAGED],
                 execute: (ctx: EffectContext) => {
@@ -249,16 +226,16 @@ const unitList: UnitInstance[] = [
             }
         ],
         statuses: {
-            haste: false,
+            haste: true,
             taunt: false,
             paralyzed: false,
             silenced: false,
-            dodge: 0
+            dodge: 0,
+            cooldown: 0
         },   
         cost: 6,
         hp: 8,
         atk: 2,
-        cooldown: 0   
     },
     {
         id: "U_10",
@@ -294,12 +271,12 @@ const unitList: UnitInstance[] = [
             taunt: false,
             paralyzed: false,
             silenced: false,
-            dodge: 0
+            dodge: 0,
+            cooldown: 0
         },
         cost: 5,
         hp: 4,
         atk: 4,
-        cooldown: 0   
     },
     {
         id: "U_11",
@@ -320,12 +297,12 @@ const unitList: UnitInstance[] = [
             taunt: false,
             paralyzed: false,
             silenced: false,
-            dodge: 0
+            dodge: 0,
+            cooldown: 0
         },
         cost: 3,
         hp: 5,
         atk: 0,
-        cooldown: 0   
     },
     {
         id: "U_12",
@@ -346,12 +323,12 @@ const unitList: UnitInstance[] = [
             taunt: false,
             paralyzed: false,
             silenced: false,
-            dodge: 0
+            dodge: 0,
+            cooldown: 0
         },
         cost: 3,
         hp: 5,
         atk: 0,
-        cooldown: 0   
     },
     {
         id: "U_13",
@@ -372,12 +349,12 @@ const unitList: UnitInstance[] = [
             taunt: false,
             paralyzed: false,
             silenced: false,
-            dodge: 0
+            dodge: 0,
+            cooldown: 0
         },
         cost: 4,
         hp: 5,
         atk: 3,
-        cooldown: 0   
     },
     {
         id: "U_14",
@@ -410,12 +387,12 @@ const unitList: UnitInstance[] = [
             taunt: false,
             paralyzed: false,
             silenced: false,
-            dodge: 0
+            dodge: 0,
+            cooldown: 0
         },
         cost: 10,
         hp: 10,
         atk: 8,
-        cooldown: 0   
     },
     {
         id: "U_15",
@@ -443,12 +420,12 @@ const unitList: UnitInstance[] = [
             taunt: false,
             paralyzed: false,
             silenced: false,
-            dodge: 0
+            dodge: 0,
+            cooldown: 0
         },
         cost: 6,
         hp: 3,
         atk: 3,
-        cooldown: 0   
     },
     {
         id: "U_16",
@@ -461,12 +438,12 @@ const unitList: UnitInstance[] = [
             taunt: false,
             paralyzed: false,
             silenced: false,
-            dodge: 0
+            dodge: 0,
+            cooldown: 0
         },
         cost: 1,
         hp: 1,
         atk: 1,
-        cooldown: 0   
     },
     {
         id: "U_17",
@@ -487,12 +464,12 @@ const unitList: UnitInstance[] = [
             taunt: false,
             paralyzed: false,
             silenced: false,
-            dodge: 0
+            dodge: 0,
+            cooldown: 0
         },
         cost: 5,
         hp: 4,
         atk: 3,
-        cooldown: 0   
     },
     {
         id: "U_18",
@@ -513,12 +490,12 @@ const unitList: UnitInstance[] = [
             taunt: false,
             paralyzed: false,
             silenced: false,
-            dodge: 0
+            dodge: 0,
+            cooldown: 0
         },
         cost: 7,
         hp: 3,
         atk: 6,
-        cooldown: 0   
     },
     {
         id: "U_19",
@@ -535,10 +512,8 @@ const unitList: UnitInstance[] = [
                         const unit = bench[i];
 
                         if (unit) {
-                            const cooldown = unit?.cooldown;
-
-                            if (cooldown && cooldown >= 1) {
-                                ctx.actions.decreaseUnitCooldown(ctx.data.playerId, unit, 1);
+                            if (unit.statuses.cooldown >= 1) {
+                                ctx.actions.removeUnitStatus(unit, Status.COOLDOWN);
                             }
                         }
                     }
@@ -550,12 +525,12 @@ const unitList: UnitInstance[] = [
             taunt: false,
             paralyzed: false,
             silenced: false,
-            dodge: 0
+            dodge: 0,
+            cooldown: 0
         },
         cost: 6,
         hp: 5,
         atk: 5,
-        cooldown: 0   
     },
     {
         id: "U_20",
@@ -575,12 +550,12 @@ const unitList: UnitInstance[] = [
             taunt: false,
             paralyzed: false,
             silenced: false,
-            dodge: 0
+            dodge: 0,
+            cooldown: 0
         },
         cost: 5,
         hp: 1,
         atk: 1,
-        cooldown: 0   
     },
     {
         id: "U_21",
@@ -601,12 +576,12 @@ const unitList: UnitInstance[] = [
             taunt: false,
             paralyzed: false,
             silenced: false,
-            dodge: 0
+            dodge: 0,
+            cooldown: 0
         },
         cost: 4,
         hp: 3,
         atk: 4,
-        cooldown: 0   
     },
     {
         id: "U_22",
@@ -626,12 +601,12 @@ const unitList: UnitInstance[] = [
             taunt: false,
             paralyzed: false,
             silenced: false,
-            dodge: 0
+            dodge: 0,
+            cooldown: 0
         },
         cost: 6,
         hp: 5,
         atk: 5,
-        cooldown: 0   
     },
     {
         id: "U_23",
@@ -666,14 +641,14 @@ const unitList: UnitInstance[] = [
             taunt: false,
             paralyzed: false,
             silenced: false,
-            dodge: 0
+            dodge: 0,
+            cooldown: 0
         },
         cost: 7,
         hp: 5,
         atk: 5,
-        cooldown: 0   
     },
-       {
+    {
         id: "U_24",
         name: "Sung Jin-woo",
         type: InstanceType.UNIT,
@@ -692,12 +667,12 @@ const unitList: UnitInstance[] = [
             taunt: false,
             paralyzed: false,
             silenced: false,
-            dodge: 0
+            dodge: 0,
+            cooldown: 0
         },
         cost: 4,
         hp: 6,
         atk: 2,
-        cooldown: 0   
     },
     {
         id: "U_25",
@@ -755,15 +730,15 @@ const unitList: UnitInstance[] = [
             taunt: false,
             paralyzed: false,
             silenced: false,
-            dodge: 0
+            dodge: 0,
+            cooldown: 0
         },
         additionalData: {
             "triggers": 1
         },
         cost: 8,
         hp: 7,
-        atk: 7,
-        cooldown: 0   
+        atk: 7, 
     },
     {
         id: "U_26",
@@ -793,9 +768,11 @@ const unitList: UnitInstance[] = [
                 execute: (ctx: EffectContext) => {
                     // Note: both happen at turn start, but the effect before should happen earlier, so thats why its ok.
                     const data = ctx.instances.getAdditionalData(ctx.data.source);
+
                     if (data["timesHealed"] === 4) {
                         const mikuMikuBeam = ctx.instances.createSpellInstance("S_25", ctx.data.playerId);
                         ctx.actions.useSpell(ctx.data.playerId, mikuMikuBeam);
+
                         data["timesHealed"] = 0;
                     }
                 }
@@ -806,7 +783,8 @@ const unitList: UnitInstance[] = [
             taunt: false,
             paralyzed: false,
             silenced: false,
-            dodge: 0
+            dodge: 0,
+            cooldown: 0
         },
         additionalData: {
             "timesHealed": 0
@@ -814,7 +792,6 @@ const unitList: UnitInstance[] = [
         cost: 4,
         hp: 4,
         atk: 2,
-        cooldown: 0   
     },
 ];
 

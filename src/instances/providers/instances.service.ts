@@ -13,7 +13,7 @@ export class InstancesService {
         return instance
     }
 
-    createSpellInstance(spellId: string, ownerId: string): SpellInstance{
+    createSpellInstance(spellId: string, ownerId: string): SpellInstance {
         return this.createCardInstance(spellsMap, spellId, ownerId) as SpellInstance;
     }
 
@@ -25,12 +25,13 @@ export class InstancesService {
 
         const cardInstance = {
             ...card,
-           ...(card.type === InstanceType.UNIT && {
+            ...(card.type === InstanceType.UNIT && {
                 statuses: { ...card.statuses }
             }),
             effects: [...card.effects],
             instanceId: this.generateInstanceId(),
             ownerId
+            
         };
 
         return cardInstance;
