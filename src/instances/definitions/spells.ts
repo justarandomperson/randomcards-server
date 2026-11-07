@@ -402,7 +402,7 @@ const spellList: SpellInstance[] = [
                         const opponentUnits = ctx.actions.getOpponentUnits(ctx.data.playerId)
 
                         const randomUnit = opponentUnits[getRandomInt(0, opponentUnits.length - 1)];
-                        if (randomUnit.unit) {
+                        if (randomUnit && randomUnit.unit) {
                             ctx.actions.attackUnit(ctx.data.playerId, randomUnit.unit, target.atk + 2, target);
                         }
                     }
