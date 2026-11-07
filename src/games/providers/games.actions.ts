@@ -354,6 +354,8 @@ export class GameActions {
         this.emitter.updateArtifactBoth(this.state.gameId, artifact, artifact.location, player.socketId);
         this.runTriggerEffects(EFFECT_TRIGGERS.BOUGHT, { playerId: player.socketId, source: artifact });
 
+        this.runTriggerEffects(EFFECT_TRIGGERS.SUMMONED, { playerId: player.socketId, source: artifact });
+
         return artifact.location;
     }
 

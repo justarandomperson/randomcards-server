@@ -16,7 +16,7 @@ const ArtifactList: ArtifactInstance[] = [
                     EFFECT_TRIGGERS.ANY_SUMMONED, EFFECT_TRIGGERS.TURN_END, EFFECT_TRIGGERS.TURN_START
                 ],
                 execute: (ctx: EffectContext) => {
-                    const willTrigger = Math.random() > 0.8;
+                    const willTrigger = Math.random() > 0.859123;
                     if (willTrigger) {
                         // rng damage
                         const damageWeights = new Map<number, number>([
@@ -62,11 +62,12 @@ const ArtifactList: ArtifactInstance[] = [
         id: "A_2",
         name: "Vampire Survivor",
         type: InstanceType.ARTIFACT,
-        effectDesc: "Every time a unit dies, heal 2 HP.",
+        effectDesc: "Every time one of your units die, heal 2 HP.",
         effects: [
             {
                 trigger: [EFFECT_TRIGGERS.ANY_DIED],
                 execute: (ctx: EffectContext) => {
+                    console.log("i activated!!"); //* debug
                     ctx.actions.increasePlayerHealth(ctx.actions.getPlayerState(ctx.data.playerId), 2);
                 }
             }
@@ -77,7 +78,7 @@ const ArtifactList: ArtifactInstance[] = [
         id: "A_3",
         name: "Vampire Destructor",
         type: InstanceType.ARTIFACT,
-        effectDesc: "Every time a unit is summoned, deal 1 damage to a random opponent's unit.",
+        effectDesc: "Every time one of your units is summoned, deal 1 damage to a random opponent's unit.",
         effects: [
             {
                 trigger: [EFFECT_TRIGGERS.ANY_SUMMONED],
@@ -93,7 +94,7 @@ const ArtifactList: ArtifactInstance[] = [
     },
     {
         id: "A_4",
-        name: "Tal's Idea (not really)",
+        name: "Tal's Idea (technically)",
         type: InstanceType.ARTIFACT,
         effectDesc: "Win the game.",
         effects: [
@@ -111,7 +112,7 @@ const ArtifactList: ArtifactInstance[] = [
         name: "Infused Core",
         type: InstanceType.ARTIFACT,
         effectDesc: "Add 3 Lightning Orbs to your hand. \n" +
-                    "Lightning Orbs activate twice.",
+                    "Lightning Orbs you play activate twice.",
         effects: [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
@@ -140,24 +141,33 @@ const ArtifactList: ArtifactInstance[] = [
         id: "A_6",
         name: "Hype moments & aura",
         type: InstanceType.ARTIFACT,
-        effectDesc: "If you reach exactly 1 HP, you deal 10 damage to all off the opponent's units.",
+        effectDesc: "If you reach exactly 1 HP, you deal 10 damage to all off the opponent's units, then disable this.",
         effects: [
             {
                 trigger: [EFFECT_TRIGGERS.PLAYER_DAMAGED],
                 execute: (ctx: EffectContext) => {
-                    const playerHp = ctx.actions.getPlayerState(ctx.data.playerId).hp;
+                    const data = ctx.instances.getAdditionalData(ctx.data.source);
 
-                    if (playerHp === 1) {
-                        const opponentUnits = ctx.actions.getOpponentUnits(ctx.data.playerId);
+                    if (data["disabled"] === false) {
+                        const playerHp = ctx.actions.getPlayerState(ctx.data.playerId).hp;
 
-                        for (const unit of opponentUnits) {
-                            ctx.actions.attackUnit(ctx.data.playerId, unit.unit, 10);
+                        if (playerHp === 1) {
+                            const opponentUnits = ctx.actions.getOpponentUnits(ctx.data.playerId);
+
+                            for (const unit of opponentUnits) {
+                                ctx.actions.attackUnit(ctx.data.playerId, unit.unit, 10);
+                            }
+
+                            data["disabled"] = true;
                         }
                     }
                 }
             }
         ],
-        cost: 9,     
+        additionalData: {
+            "disabled": false
+        },
+        cost: 7,     
     },
     {
         id: "A_7",
@@ -172,7 +182,7 @@ const ArtifactList: ArtifactInstance[] = [
                 }
             }
         ],
-        cost: 8,     
+        cost: 6,     
     },
     {
         id: "A_8",
