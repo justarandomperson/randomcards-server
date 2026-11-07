@@ -3,6 +3,7 @@ import { getRandomInt } from '../../games/logic/serviceHelpers';
 import { MAX_CARDS_PER_BOARD_ROW } from '../../games/shared/games.constants';
 import { InstanceType, InstanceZone, UnitInstance } from '../shared/instances.types';
 import { targetOption } from '../../games/shared/games.types';
+import { ref } from 'process';
 
 
 const unitList: UnitInstance[] = [
@@ -475,13 +476,17 @@ const unitList: UnitInstance[] = [
         id: "U_18",
         name: "Dracula",
         type: InstanceType.UNIT,
-        effectDesc: "Any Died: Gain 2 HP.",
+        effectDesc: "When any of your units die, Gain 2 HP.",
         effects: [
              {
                 trigger: [EFFECT_TRIGGERS.ANY_DIED],
                 execute: (ctx: EffectContext) => {
-                    const source = ctx.instances.typeInstance(ctx.data.source, InstanceType.UNIT);
-                    ctx.actions.increaseUnitHealth(source, 2, false);
+                    const referenced = ctx.data.referenced;
+
+                    if (referenced && ctx.instances.getOwnerId(referenced) === ctx.instances.getOwnerId(ctx.data.source)) {
+                        const source = ctx.instances.typeInstance(ctx.data.source, InstanceType.UNIT);
+                        ctx.actions.increaseUnitHealth(source, 2, false);
+                    }
                 }
             },
         ],
@@ -501,21 +506,16 @@ const unitList: UnitInstance[] = [
         id: "U_19",
         name: "Dio",
         type: InstanceType.UNIT,
-        effectDesc: "Turn End: Decrease all benched unit cooldowns by 1.",
+        effectDesc: "If one of your units died, decrease their cooldown by 1.",
         effects: [
              {
-                trigger: [EFFECT_TRIGGERS.TURN_END],
+                trigger: [EFFECT_TRIGGERS.ANY_DIED],
                 execute: (ctx: EffectContext) => {
-                    const bench = ctx.actions.getPlayerState(ctx.data.playerId).bench;
+                    const referenced = ctx.data.referenced;
 
-                    for (let i = 0; i < bench.length; i++) {
-                        const unit = bench[i];
-
-                        if (unit) {
-                            if (unit.statuses.cooldown >= 1) {
-                                ctx.actions.removeUnitStatus(unit, Status.COOLDOWN);
-                            }
-                        }
+                    if (referenced && ctx.instances.getOwnerId(referenced) === ctx.instances.getOwnerId(ctx.data.source)) {
+                        const referencedTyped = ctx.instances.typeInstance(referenced, InstanceType.UNIT);
+                        ctx.actions.removeUnitStatus(referencedTyped, Status.COOLDOWN);
                     }
                 }
             },

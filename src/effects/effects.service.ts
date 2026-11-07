@@ -110,12 +110,10 @@ export class EffectsService {
     private runUnspecificEffects(trigger: EffectTrigger, triggerData: TriggerData): selectTargetFilter | undefined {
         let needsTarget;
 
-        const playerBoard = this.actions.getPlayerBoard(triggerData.playerId); 
-        for (const slot of playerBoard) {
-            const unit = slot.unit;
-
-            if (unit && !unit.statuses.silenced) {
-                needsTarget = this.iterateEffects(trigger, triggerData, unit);
+        const playerUnits = this.actions.getPlayerUnits(triggerData.playerId); 
+        for (const unit of playerUnits) {
+            if (unit.unit.statuses.silenced) {
+                needsTarget = this.iterateEffects(trigger, triggerData, unit.unit);
             }
         }
 
