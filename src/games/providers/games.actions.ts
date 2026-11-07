@@ -684,7 +684,7 @@ export class GameActions {
                 this.moveSpellFromHandToDrawpile(player, card);
             }
 
-            this.emitter.playedSpell(this.state.gameId, card);
+            this.emitter.playedSpell(this.state.gameId, card, this.instances.getOwnerId(card));
 
             this.runTriggerEffectsBoth(EFFECT_TRIGGERS.ANY_SPELL_PLAYED, { referenced: card });
         }
@@ -835,7 +835,7 @@ export class GameActions {
 
         if (data.source.type === InstanceType.SPELL){
             this.moveSpellFromHandToDrawpile(player, data.source);
-            this.emitter.playedSpell(this.state.gameId, data.source);
+            this.emitter.playedSpell(this.state.gameId, data.source, this.instances.getOwnerId(data.source));
         }
 
         this.effects.runEffect(effect, data);   

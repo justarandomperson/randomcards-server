@@ -184,8 +184,14 @@ export class GamesEmitter {
         client.emit(SOCKET_EVENT_NAMES.ATTACKED);
     }
 
-    playedSpell(gameId: string, spell: SpellInstance) {
-        const payload = spellInstanceToClient(spell);
+    playedSpell(gameId: string, spell: SpellInstance, ownerId: string) {
+        const clientSpellInstance = spellInstanceToClient(spell);
+
+        const payload =
+        {
+            spell: clientSpellInstance,
+            ownerId: ownerId
+        }
 
         this.server.to(gameId).emit(SOCKET_EVENT_NAMES.PLAYED_SPELL, payload);
     }
