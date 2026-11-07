@@ -422,20 +422,14 @@ const spellList: SpellInstance[] = [
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
                 hasTarget:  new Set([targetOption.ALLY, targetOption.ENEMY]),
                 execute: (ctx: EffectContext) => {
-                    if (ctx.data.targetUnit) {
-                        const summonEffects = ctx.data.targetUnit.effects.filter((effect) => effect.trigger.includes(EFFECT_TRIGGERS.SUMMONED));
-
-                        const newContext: EffectContext = {
-                            ...ctx,
-                            data: {
-                                ...ctx.data,
-                                source: ctx.data.targetUnit
-                            }
-                        };
-
-                        summonEffects.map((effect) => {
-                            effect.execute(newContext);
-                        });
+                    const targetUnit = ctx.data.targetUnit
+                    if (targetUnit && targetUnit.ownerId) {
+                        const triggerData =
+                        {
+                            playerId: targetUnit.ownerId,
+                            source: targetUnit
+                        }
+                        ctx.actions.runTriggerEffects(EFFECT_TRIGGERS.SUMMONED, triggerData)
                     }
                 }
             }

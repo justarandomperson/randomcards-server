@@ -160,12 +160,15 @@ export class GameActions {
         return location;
     }
 
-    private runTriggerEffects(trigger: EffectTrigger, triggerData: TriggerData): selectTargetFilter | undefined {
+    runTriggerEffects(trigger: EffectTrigger, triggerData: TriggerData): selectTargetFilter | undefined {
         const needsTarget = this.effects.runTriggerEffects(trigger, triggerData);
 
         if (needsTarget) {
             const hasValidTarget = this.checkIfTargetFilterHasValidTarget(triggerData, needsTarget)
-            if (!hasValidTarget) return undefined
+            if (!hasValidTarget) 
+            {
+                return undefined
+            }
             this.emitter.selectTarget(triggerData.playerId, needsTarget);
             return needsTarget;
         }
@@ -173,7 +176,7 @@ export class GameActions {
         return undefined;
     }
 
-    private checkIfTargetFilterHasValidTarget(triggerData: TriggerData,filter: selectTargetFilter)
+    checkIfTargetFilterHasValidTarget(triggerData: TriggerData,filter: selectTargetFilter)
     {
         if (filter.has(targetOption.SELF) || filter.has(targetOption.OPPONENT)) return true
 

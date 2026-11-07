@@ -56,7 +56,7 @@ export class EffectsService {
                 if (this.checkEffectNeedsTarget(effect, effectContextData)) {
 
                     const newEffectData: CurrentEffectData = { effect, data:effectContextData };
-                    this.actions.pushPlayerCurrentEffect(this.actions.getPlayerState(effectContextData.playerId), newEffectData);
+                    if (this.actions.checkIfTargetFilterHasValidTarget(triggerData, effect.hasTarget!)) this.actions.pushPlayerCurrentEffect(this.actions.getPlayerState(effectContextData.playerId), newEffectData);
 
                     needsTarget = effect.hasTarget;
                 }
