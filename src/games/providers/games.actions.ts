@@ -178,7 +178,8 @@ export class GameActions {
 
     runTriggerEffectsBoth(trigger: EffectTrigger, triggerData: anyTriggerData)
     {
-        const playerId = triggerData.attacker?.ownerId
+        const card = triggerData.source || triggerData.referenced || triggerData.attacker || triggerData.attacked
+        const playerId = card?.ownerId
         if (!playerId) throw new WsException("card has no ownerId")
         this.runTriggerEffects(trigger, {...triggerData, playerId: playerId});
         this.runTriggerEffects(trigger, { ...triggerData, playerId: this.getOpponentId(playerId), });
