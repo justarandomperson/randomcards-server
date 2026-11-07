@@ -402,6 +402,95 @@ const ArtifactList: ArtifactInstance[] = [
         ],
         cost: 5,     
     },
+    {
+        id: "A_18",
+        name: "Piggy Bank", 
+        type: InstanceType.ARTIFACT,
+        effectDesc: "Gain 1$ whenever an enemy unit dies",
+        effects: [
+            {
+                trigger: [EFFECT_TRIGGERS.ANY_DIED],
+                execute: (ctx: EffectContext) => {
+                   const referenced = ctx.data.referenced;
+                   const source = ctx.data.source
+
+                   if (referenced && ctx.instances.getOwnerId(referenced) !== ctx.instances.getOwnerId(source))
+                   {
+                        const playerState = ctx.actions.getPlayerState(ctx.data.playerId)
+                        ctx.actions.increasePlayerMoney(playerState, 1)
+                   }
+                }
+            }
+        ],
+        cost: 5,     
+    },
+    {
+        id: "A_19",
+        name: "Thorn Ring", 
+        type: InstanceType.ARTIFACT,
+        effectDesc: "Ally units gain +1 ATK whenever they kill an enemy unit",
+        effects: [
+            {
+                trigger: [EFFECT_TRIGGERS.ANY_KILLED],
+                execute: (ctx: EffectContext) => {
+                   const referenced = ctx.data.referenced;
+                   const source = ctx.data.source
+
+                   const artifactOwnerId = ctx.instances.getOwnerId(source)
+
+                   if (referenced && ctx.instances.getOwnerId(referenced) !== artifactOwnerId)
+                   {
+                        const attacker = ctx.data.attacker
+                        if (attacker && ctx.instances.getOwnerId(attacker) === artifactOwnerId)
+                        {
+                            ctx.actions.increaseUnitAttack(attacker, 1)
+                        }
+                   }
+                }
+            }
+        ],
+        cost: 5,     
+    },
+    {
+        id: "A_20",
+        name: "Death note", 
+        type: InstanceType.ARTIFACT,
+        effectDesc: "Turn start: gain a counter. at 4 counters or above, whenever you attack a unit the counter is set to 0 and the attacked dies.",
+        effects: [
+            {
+                trigger: [EFFECT_TRIGGERS.TURN_START],
+                execute: (ctx: EffectContext) => {
+                    ctx.instances.getAdditionalData(ctx.data.source)["counter"]++
+                }
+            },
+            {
+                trigger: [EFFECT_TRIGGERS.ANY_ATTACKED],
+                execute: (ctx: EffectContext) => {
+                    const additionalData = ctx.instances.getAdditionalData(ctx.data.source)
+                    const attacked = ctx.data.attacked
+                    const attacker = ctx.data.attacker
+
+                    const artifactOwnerId = ctx.instances.getOwnerId(ctx.data.source)
+
+                    const validAttacked = attacked && ctx.instances.getOwnerId(attacked) !== artifactOwnerId
+                    const validAttacker = attacker && ctx.instances.getOwnerId(attacker) === artifactOwnerId
+                    if (validAttacked && validAttacker)
+                    {
+                        if (additionalData["counters"] >= 4)
+                        {
+                            additionalData["counters"] = 0
+                            ctx.actions.decreaseUnitHealth(attacked, attacked.hp)
+                        }
+                    }
+                }
+            }
+        ],
+        additionalData: 
+        {
+            counter: 0
+        },
+        cost: 5,     
+    },
 ];
 
 export const artifactsMap = new Map<string, ArtifactInstance>(
