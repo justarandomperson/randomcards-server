@@ -511,9 +511,11 @@ const unitList: UnitInstance[] = [
              {
                 trigger: [EFFECT_TRIGGERS.ANY_DIED],
                 execute: (ctx: EffectContext) => {
+                    console.log("its here");
                     const referenced = ctx.data.referenced;
 
                     if (referenced && ctx.instances.getOwnerId(referenced) === ctx.instances.getOwnerId(ctx.data.source)) {
+                                            console.log("its here inside!!");
                         const referencedTyped = ctx.instances.typeInstance(referenced, InstanceType.UNIT);
                         ctx.actions.removeUnitStatus(referencedTyped, Status.COOLDOWN);
                     }
@@ -530,7 +532,7 @@ const unitList: UnitInstance[] = [
         },
         cost: 6,
         hp: 5,
-        atk: 5,
+        atk: 3,
     },
     {
         id: "U_20",
