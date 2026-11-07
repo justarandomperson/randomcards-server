@@ -98,7 +98,7 @@ const ArtifactList: ArtifactInstance[] = [
         effectDesc: "Win the game.",
         effects: [
             {
-                trigger: [EFFECT_TRIGGERS.SUMMONED],
+                trigger: [EFFECT_TRIGGERS.BOUGHT],
                 execute: (ctx: EffectContext) => {
                     ctx.actions.endGame(ctx.data.playerId);
                 }
@@ -178,12 +178,13 @@ const ArtifactList: ArtifactInstance[] = [
         id: "A_8",
         name: "Armor kind of",
         type: InstanceType.ARTIFACT,
-        effectDesc: "Every time you get hit, heal 2 HP.",
+        effectDesc: "Every time you get hit, heal 2 HP. (you won't heal if you die though, fuck you)",
         effects: [
             {
                 trigger: [EFFECT_TRIGGERS.PLAYER_DAMAGED],
                 execute: (ctx: EffectContext) => {
-                    ctx.actions.increasePlayerHealth(ctx.actions.getPlayerState(ctx.data.playerId), 2);
+                    const playerState = ctx.actions.getPlayerState(ctx.data.playerId)
+                    if (playerState.hp > 0) ctx.actions.increasePlayerHealth(ctx.actions.getPlayerState(ctx.data.playerId), 2);
                 }
             }
         ],
@@ -229,7 +230,7 @@ const ArtifactList: ArtifactInstance[] = [
                 execute: (ctx: EffectContext) => {
                     const attacker = ctx.data.attacker
 
-                    if (attacker) {
+                    if (attacker && attacker.ownerId !== ctx.data.playerId) {
                         const opponentTurn = ctx.actions.getOpponentState(ctx.data.playerId).turn;
                         if (opponentTurn % 2 == 0) {
                             ctx.actions.decreaseUnitHealth(attacker, 1);
@@ -247,12 +248,13 @@ const ArtifactList: ArtifactInstance[] = [
         effectDesc: "Summon a random unit",
         effects: [
             {
-                trigger: [EFFECT_TRIGGERS.SUMMONED],
+                trigger: [EFFECT_TRIGGERS.BOUGHT],
                 execute: (ctx: EffectContext) => {
                     const unitsMap = ctx.instances.getUnits()
-                    const unitIds = [...unitsMap.values()].map(unit =>
-                        unit.id
-                    );
+                    // const unitIds = [...unitsMap.values()].map(unit =>
+                    //     unit.id
+                    // );
+                    const unitIds = ["U_23"]
 
                     const randomUnitId = unitIds[Math.floor(Math.random() * unitIds.length)];
                     const randomUnitInstance = ctx.instances.createUnitInstance(randomUnitId, ctx.data.playerId)
@@ -270,7 +272,7 @@ const ArtifactList: ArtifactInstance[] = [
         effectDesc: "Saiki K. triggers 2 effects instead of 1",
         effects: [
             {
-                trigger: [EFFECT_TRIGGERS.SUMMONED],
+                trigger: [EFFECT_TRIGGERS.BOUGHT],
                 execute: (ctx: EffectContext) => {
                     const playerBench = ctx.actions.getPlayerState(ctx.data.playerId).bench
                     const playerUnits = ctx.actions.getPlayerUnits(ctx.data.playerId)
@@ -380,5 +382,5 @@ const ArtifactList: ArtifactInstance[] = [
 ];
 
 export const artifactsMap = new Map<string, ArtifactInstance>(
-    ArtifactList.map((spell) => [spell.id, spell])
+    ArtifactList.map((artifact) => [artifact.id, artifact])
 );

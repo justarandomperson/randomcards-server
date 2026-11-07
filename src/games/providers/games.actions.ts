@@ -2,7 +2,7 @@ import { WsException } from "@nestjs/websockets";
 import { EffectsService } from "../../effects/effects.service";
 import { CurrentEffectData, GamePhase, GameState, PlayerState, selectTargetFilter, targetOption } from "../shared/games.types";
 import { ArtifactInstance, InstanceLocation, SpellInstance, UnitInstance, InstanceZone, InstanceType } from "../../instances/shared/instances.types";
-import { Effect, EFFECT_TRIGGERS, EffectTrigger, Status, TriggerData } from "../../effects/effects.types";
+import { anyTriggerData, Effect, EFFECT_TRIGGERS, EffectTrigger, Status, TriggerData } from "../../effects/effects.types";
 import { MAX_HAND_SIZE, MINIMUM_MONEY, STARTING_HEALTH, STARTING_SPELLS_IN_HAND } from "../shared/games.constants";
 import { GamesEmitter } from "./games.emitter";
 import { calculateTurnStartMoney, fillShop, shouldSwitchPhase, translateBoardIndex, unTranslateBoardIndex } from "../logic/serviceHelpers";
@@ -176,6 +176,14 @@ export class GameActions {
         return undefined;
     }
 
+    runTriggerEffectsBoth(trigger: EffectTrigger, triggerData: anyTriggerData)
+    {
+        const playerId = triggerData.attacker?.ownerId
+        if (!playerId) throw new WsException("card has no ownerId")
+        this.runTriggerEffects(trigger, {...triggerData, playerId: playerId});
+        this.runTriggerEffects(trigger, { ...triggerData, playerId: this.getOpponentId(playerId), });
+    }
+
     checkIfTargetFilterHasValidTarget(triggerData: TriggerData,filter: selectTargetFilter)
     {
         if (filter.has(targetOption.SELF) || filter.has(targetOption.OPPONENT)) return true
@@ -343,6 +351,7 @@ export class GameActions {
         artifact.location = { insideOf: InstanceZone.PLAYER, index: player.artifacts.length - 1 };
 
         this.emitter.updateArtifactBoth(this.state.gameId, artifact, artifact.location, player.socketId);
+        this.runTriggerEffects(EFFECT_TRIGGERS.BOUGHT, { playerId: player.socketId, source: artifact });
 
         return artifact.location;
     }
@@ -375,7 +384,7 @@ export class GameActions {
                 this.runTriggerEffects(EFFECT_TRIGGERS.DAMAGED, { playerId: card.ownerId, source: card, attacker });
             }
             
-            this.runTriggerEffects(EFFECT_TRIGGERS.ANY_DAMAGED, { playerId: card.ownerId, referenced: card });
+            this.runTriggerEffectsBoth(EFFECT_TRIGGERS.ANY_DAMAGED, { referenced: card })
         }
 
 
@@ -384,6 +393,7 @@ export class GameActions {
             {
                 this.runTriggerEffects(EFFECT_TRIGGERS.KILL, { playerId: attacker.ownerId, source: attacker ,referenced: card});
             }
+            this.runTriggerEffectsBoth(EFFECT_TRIGGERS.ANY_KILLED, { referenced: card})
             if (card.assignedBenchSlot || card.assignedBenchSlot === 0) {
                     this.moveUnitFromBoardToBench(card);
 
@@ -398,8 +408,7 @@ export class GameActions {
                         this.runTriggerEffects(EFFECT_TRIGGERS.DEATH, { playerId: card.ownerId! , source: card });
                 }
 
-                this.runTriggerEffects(EFFECT_TRIGGERS.ANY_DIED, { playerId: card.ownerId, referenced: card });
-                this.runTriggerEffects(EFFECT_TRIGGERS.ANY_DIED, { playerId: this.getOpponentId(card.ownerId), referenced: card });
+                this.runTriggerEffectsBoth(EFFECT_TRIGGERS.ANY_DIED, { referenced: card })
             }
 
         return false; 
@@ -634,7 +643,7 @@ export class GameActions {
         }
 
         if (!needsTarget){
-            this.runTriggerEffects(EFFECT_TRIGGERS.ANY_SUMMONED, { playerId: cardOwnerId, referenced: card});
+            this.runTriggerEffectsBoth(EFFECT_TRIGGERS.ANY_SUMMONED, { referenced: card})
         }
     }
 
@@ -649,7 +658,7 @@ export class GameActions {
                 this.runTriggerEffects(EFFECT_TRIGGERS.ATTACKED, { playerId: attackerOwnerId, source: attacker, attacked: card });
             }
 
-            this.runTriggerEffects(EFFECT_TRIGGERS.ANY_ATTACKED, { playerId: attackerOwnerId, source: attacker, attacked: card });
+            this.runTriggerEffectsBoth(EFFECT_TRIGGERS.ANY_ATTACKED,{attacker: attacker, attacked: card})
 
             this.emitter.attacked(playerId);
         }
@@ -671,7 +680,7 @@ export class GameActions {
         if (!needsTarget){
             if (!card.isToken) this.moveSpellFromHandToDrawpile(player, card);
             this.emitter.playedSpell(this.state.gameId, card);
-            this.runTriggerEffects(EFFECT_TRIGGERS.ANY_SPELL_PLAYED, { playerId: cardOwnerId, referenced: card });
+            this.runTriggerEffectsBoth(EFFECT_TRIGGERS.ANY_SPELL_PLAYED, { referenced: card });
         }
 
     }
@@ -695,6 +704,8 @@ export class GameActions {
             if (!attacker.statuses.silenced) {
                 this.runTriggerEffects(EFFECT_TRIGGERS.ATTACKED, { playerId: attackerOwnerId, source: attacker });
             }
+
+            this.runTriggerEffectsBoth(EFFECT_TRIGGERS.ANY_ATTACKED, { attacker: attacker });
 
             this.emitter.attacked(playerId);
         }
@@ -829,7 +840,7 @@ export class GameActions {
             this.runTriggerEffects(EFFECT_TRIGGERS.ANY_SUMMONED, { playerId: cardOwnerId, referenced: data.source });
         }
         else if (data.source.type === InstanceType.SPELL){
-            this.runTriggerEffects(EFFECT_TRIGGERS.ANY_SPELL_PLAYED, { playerId: cardOwnerId, referenced: data.source });
+           this.runTriggerEffectsBoth(EFFECT_TRIGGERS.ANY_SPELL_PLAYED, { referenced: data.source });
         }
     }
 }

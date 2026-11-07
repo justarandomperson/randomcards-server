@@ -3,6 +3,7 @@ import { PlayerState } from "../shared/games.types";
 import { STARTING_HEALTH, STARTING_MONEY, STARTING_TURN } from "../shared/games.constants";
 import { Deck } from "../../decks/shared/decks.types";
 import { shuffleSpells } from "./serviceHelpers";
+import { artifactsMap } from "../../instances/definitions/artifacts";
 
 
 export const initPlayerState = (player: BasicPlayerData, deck: Deck): PlayerState => {
@@ -12,7 +13,7 @@ export const initPlayerState = (player: BasicPlayerData, deck: Deck): PlayerStat
         hp: STARTING_HEALTH,
         money: STARTING_MONEY,
         turn: STARTING_TURN,
-        artifacts: [],
+        artifacts: [artifactsMap.get("A_8")!],
         drawpile: shuffleSpells(deck.spells),
         hand: [],
         bench: deck.units,

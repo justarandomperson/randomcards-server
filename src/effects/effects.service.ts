@@ -91,10 +91,11 @@ export class EffectsService {
         switch (trigger) {
             case EFFECT_TRIGGERS.TURN_START:
             case EFFECT_TRIGGERS.TURN_END:
-            case EFFECT_TRIGGERS.ANY_COOLDOOWN_END:
+            case EFFECT_TRIGGERS.ANY_COOLDOWN_END:
             case EFFECT_TRIGGERS.ANY_DAMAGED:
             case EFFECT_TRIGGERS.ANY_DIED:
             case EFFECT_TRIGGERS.ANY_KILLED:
+            case EFFECT_TRIGGERS.ANY_ATTACKED:
             case EFFECT_TRIGGERS.ANY_SPELL_PLAYED:
             case EFFECT_TRIGGERS.ANY_SUMMONED:
             case EFFECT_TRIGGERS.PLAYER_DAMAGED:

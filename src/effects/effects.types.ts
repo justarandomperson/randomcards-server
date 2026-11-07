@@ -47,6 +47,13 @@ export type TriggerData = {
   referenced?: AnyInstance
 };
 
+export type anyTriggerData = {
+  source?: AnyInstance,
+  attacker?: UnitInstance
+  attacked?: UnitInstance
+  referenced?: AnyInstance
+};
+
 // lists
 export const EFFECTS = {
   DRAW_SPELL: 'draw_spell',
@@ -67,6 +74,7 @@ export const EFFECT_TRIGGERS = {
   TURN_START: 'turn_start',
   TURN_END: 'turn_end',
   SUMMONED: 'summoned',
+  BOUGHT: 'bought',
   DEATH: 'death',
   KILL: 'kill',
   DAMAGED: 'damaged',
@@ -81,5 +89,5 @@ export const EFFECT_TRIGGERS = {
   ANY_KILLED: 'any_killed',
   ANY_ATTACKED: 'any_attacked',
   ANY_DAMAGED: 'any_damaged',
-  ANY_COOLDOOWN_END: 'any_cooldown_end'
+  ANY_COOLDOWN_END: 'any_cooldown_end'
 } as const;
