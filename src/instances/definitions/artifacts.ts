@@ -327,7 +327,7 @@ const ArtifactList: ArtifactInstance[] = [
                 execute: (ctx: EffectContext) => {
                     const referenced = ctx.data.referenced;
                     if (referenced && referenced.type === InstanceType.UNIT) {
-                        ctx.actions.increaseUnitHealth(referenced, 1);
+                        ctx.actions.increaseUnitHealth(referenced, 1, false);
                     }
 
                 }

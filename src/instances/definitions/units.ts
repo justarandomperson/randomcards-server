@@ -481,7 +481,7 @@ const unitList: UnitInstance[] = [
                 trigger: [EFFECT_TRIGGERS.ANY_DIED],
                 execute: (ctx: EffectContext) => {
                     const source = ctx.instances.typeInstance(ctx.data.source, InstanceType.UNIT);
-                    ctx.actions.increaseUnitHealth(source, 2);
+                    ctx.actions.increaseUnitHealth(source, 2, false);
                 }
             },
         ],
@@ -744,7 +744,7 @@ const unitList: UnitInstance[] = [
         id: "U_26",
         name: "Hatsune Miku", // TODO: add pic
         type: InstanceType.UNIT,
-        effectDesc: "Turn start: Heal a random ally unit by 2 HP and add a counter." +
+        effectDesc: "Turn start & Turn End: Heal a random ally unit by 2 HP and add a counter." +
                     "At 4 counters: Use a Miku Miku Beam!!!",
         effects: [
              {
@@ -756,7 +756,7 @@ const unitList: UnitInstance[] = [
                         const optionsAmount = playerUnits.length;
                         const randomNumber = getRandomInt(0, optionsAmount - 1);
 
-                        ctx.actions.increaseUnitHealth(playerUnits[randomNumber].unit, 2);
+                        ctx.actions.increaseUnitHealth(playerUnits[randomNumber].unit, 2, true);
 
                         const data = ctx.instances.getAdditionalData(ctx.data.source);
                         data["timesHealed"] += 1;

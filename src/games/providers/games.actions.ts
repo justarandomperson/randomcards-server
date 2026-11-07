@@ -412,8 +412,16 @@ export class GameActions {
         return card.atk;
     }
 
-    increaseUnitHealth(card: UnitInstance, amount: number): number {
+    increaseUnitHealth(card: UnitInstance, amount: number, upToMax: boolean): number {
         card.hp += amount;
+
+        if (upToMax) {
+            const defaultCard = this.instances.getDefaultUnitById(card.id);
+
+            if (card.hp > defaultCard.hp) {
+                card.hp = defaultCard.hp;
+            }
+        }
 
         this.emitTwoDifferentUpdateCard(card);
 

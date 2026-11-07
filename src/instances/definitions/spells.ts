@@ -48,7 +48,7 @@ const spellList: SpellInstance[] = [
                 execute: (ctx: EffectContext) => {
                     if (ctx.data.targetUnit) {
                         ctx.actions.attackPlayer(ctx.data.playerId, 3);
-                        ctx.actions.increaseUnitHealth(ctx.data.targetUnit, 3);
+                        ctx.actions.increaseUnitHealth(ctx.data.targetUnit, 3, false);
                     }
                 }
             }
@@ -177,7 +177,7 @@ const spellList: SpellInstance[] = [
                 hasTarget:  new Set([targetOption.ALLY, targetOption.SELF]),
                 execute: (ctx: EffectContext) => {
                     if (ctx.data.targetUnit) {
-                        ctx.actions.increaseUnitHealth(ctx.data.targetUnit, 2);
+                        ctx.actions.increaseUnitHealth(ctx.data.targetUnit, 2, true);
                     }
                     else if (ctx.data.targetPlayerId) {
                         ctx.actions.increasePlayerHealth(ctx.actions.getPlayerState(ctx.data.targetPlayerId), 4);
@@ -545,7 +545,7 @@ const spellList: SpellInstance[] = [
                 hasTarget: new Set([targetOption.ALLY]),
                 execute: (ctx: EffectContext) => {
                     if (ctx.data.targetUnit) {
-                        ctx.actions.increaseUnitHealth(ctx.data.targetUnit, 4);
+                        ctx.actions.increaseUnitHealth(ctx.data.targetUnit, 4, false);
                     }
                 }
             }
