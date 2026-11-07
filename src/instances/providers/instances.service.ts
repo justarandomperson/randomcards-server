@@ -26,12 +26,12 @@ export class InstancesService {
         const cardInstance = {
             ...card,
             ...(card.type === InstanceType.UNIT && {
-                statuses: { ...card.statuses }
+                statuses: { ...card.statuses },
+                
             }),
             effects: [...card.effects],
             instanceId: this.generateInstanceId(),
-            ownerId
-            
+            ownerId,
         };
 
         return cardInstance;
@@ -156,11 +156,10 @@ export class InstancesService {
     }
 
     generateArtifactInstances(artifactList: ArtifactInstance[]): ArtifactInstance[] {
-        for (const artifact of artifactList) {
-            artifact.instanceId = this.generateInstanceId()
-        }
-
-        return artifactList
+        return artifactList.map(artifact => ({
+            ...artifact,
+            instanceId: this.generateInstanceId()
+        }));
     }
     
     async getImages(): Promise<ImagesList> {
