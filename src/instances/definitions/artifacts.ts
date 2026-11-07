@@ -37,7 +37,7 @@ const ArtifactList: ArtifactInstance[] = [
                         // rng target
                         const opponentUnits = ctx.actions.getOpponentUnits(ctx.data.playerId);
 
-                        if (opponentUnits) {
+                        if (opponentUnits.length > 0) {
                             const optionsAmount = opponentUnits.length + 1; // 1 for opponent itself
                             const randomNumber = getRandomInt(1, optionsAmount);
 
@@ -67,8 +67,11 @@ const ArtifactList: ArtifactInstance[] = [
             {
                 trigger: [EFFECT_TRIGGERS.ANY_DIED],
                 execute: (ctx: EffectContext) => {
-                    console.log("i activated!!"); //* debug
-                    ctx.actions.increasePlayerHealth(ctx.actions.getPlayerState(ctx.data.playerId), 2);
+                    const referenced = ctx.data.referenced;
+
+                    if (referenced && ctx.instances.getOwnerId(referenced) === ctx.instances.getOwnerId(ctx.data.source)) {
+                        ctx.actions.increasePlayerHealth(ctx.actions.getPlayerState(ctx.data.playerId), 2);
+                    }
                 }
             }
         ],
@@ -83,10 +86,14 @@ const ArtifactList: ArtifactInstance[] = [
             {
                 trigger: [EFFECT_TRIGGERS.ANY_SUMMONED],
                 execute: (ctx: EffectContext) => {
-                    const opponentUnits = ctx.actions.getOpponentUnits(ctx.data.playerId);
-                    const randomNumber = getRandomInt(1, opponentUnits.length);
+                    const referenced = ctx.data.referenced;
 
-                    ctx.actions.attackUnit(ctx.data.playerId, opponentUnits[randomNumber - 1].unit, 1);
+                    if (referenced && ctx.instances.getOwnerId(referenced) === ctx.instances.getOwnerId(ctx.data.source)) {
+                        const opponentUnits = ctx.actions.getOpponentUnits(ctx.data.playerId);
+                        const randomNumber = getRandomInt(1, opponentUnits.length);
+
+                        ctx.actions.attackUnit(ctx.data.playerId, opponentUnits[randomNumber - 1].unit, 1);
+                    }
                 }
             }
         ],
@@ -128,9 +135,10 @@ const ArtifactList: ArtifactInstance[] = [
                 execute: (ctx: EffectContext) => {
                     const referenced = ctx.data.referenced;
 
-                    if (referenced && referenced.id === "S_8") {
-                        const lightningOrb = ctx.instances.createSpellInstance("S_8", ctx.data.playerId);
-                        ctx.actions.useSpell(ctx.data.playerId, lightningOrb);
+                    if (referenced && referenced.id === "S_8" && 
+                        ctx.instances.getOwnerId(referenced) === ctx.instances.getOwnerId(ctx.data.source)) {
+                            const lightningOrb = ctx.instances.createSpellInstance("S_8", ctx.data.playerId);
+                            ctx.actions.useSpell(ctx.data.playerId, lightningOrb);
                     }
                 }
             }
@@ -238,9 +246,9 @@ const ArtifactList: ArtifactInstance[] = [
             {
                 trigger: [EFFECT_TRIGGERS.ANY_ATTACKED],
                 execute: (ctx: EffectContext) => {
-                    const attacker = ctx.data.attacker
+                    const attacker = ctx.data.attacker;
 
-                    if (attacker && attacker.ownerId !== ctx.data.playerId) {
+                    if (attacker && ctx.instances.getOwnerId(attacker) !== ctx.instances.getOwnerId(ctx.data.source)) {
                         const opponentTurn = ctx.actions.getOpponentState(ctx.data.playerId).turn;
                         if (opponentTurn % 2 == 0) {
                             ctx.actions.decreaseUnitHealth(attacker, 1);
@@ -284,8 +292,8 @@ const ArtifactList: ArtifactInstance[] = [
             {
                 trigger: [EFFECT_TRIGGERS.BOUGHT],
                 execute: (ctx: EffectContext) => {
-                    const playerBench = ctx.actions.getPlayerState(ctx.data.playerId).bench
-                    const playerUnits = ctx.actions.getPlayerUnits(ctx.data.playerId)
+                    const playerBench = ctx.actions.getPlayerState(ctx.data.playerId).bench;
+                    const playerUnits = ctx.actions.getPlayerUnits(ctx.data.playerId);
 
                     playerBench.map((unit) => {
                         if (unit && unit.id == "S_25" && unit.additionalData)
@@ -315,13 +323,16 @@ const ArtifactList: ArtifactInstance[] = [
             {
                 trigger: [EFFECT_TRIGGERS.ANY_DIED],
                 execute: (ctx: EffectContext) => {
-                    const source = ctx.data.source
-                    if (source.ownerId != ctx.data.playerId)
-                    {
-                        const instanceCopy = ctx.instances.createUnitInstance(source.id, ctx.data.playerId)
-                        instanceCopy.atk = 1
-                        instanceCopy.hp = 1
-                        ctx.actions.summonUnit(ctx.data.playerId, instanceCopy)
+                    const source = ctx.instances.typeInstance(ctx.data.source, InstanceType.UNIT);
+                    const referenced = ctx.data.referenced;
+
+                    if (referenced && ctx.instances.getOwnerId(source) !== ctx.instances.getOwnerId(referenced)) {
+                        const instanceCopy = ctx.instances.createUnitInstance(source.id, ctx.data.playerId);
+
+                        instanceCopy.atk = 1;
+                        instanceCopy.hp = 1;
+
+                        ctx.actions.summonUnit(ctx.data.playerId, instanceCopy);
                     }
                 }
             }
@@ -332,14 +343,16 @@ const ArtifactList: ArtifactInstance[] = [
         id: "A_14",
         name: "White Pen Of Hope",
         type: InstanceType.ARTIFACT,
-        effectDesc: "Whenever a unit is summoned, it gains +1 HP.",
+        effectDesc: "Whenever one of your units is summoned, it gains +1 HP.",
         effects: [
             {
                 trigger: [EFFECT_TRIGGERS.ANY_SUMMONED],
                 execute: (ctx: EffectContext) => {
                     const referenced = ctx.data.referenced;
-                    if (referenced && referenced.type === InstanceType.UNIT) {
-                        ctx.actions.increaseUnitHealth(referenced, 1, false);
+                    
+                    if (referenced && referenced.type === InstanceType.UNIT && 
+                        ctx.instances.getOwnerId(referenced) === ctx.instances.getOwnerId(ctx.data.source)) {
+                            ctx.actions.increaseUnitHealth(referenced, 1, false);
                     }
 
                 }
@@ -365,9 +378,11 @@ const ArtifactList: ArtifactInstance[] = [
                 trigger: [EFFECT_TRIGGERS.ANY_SPELL_PLAYED],
                 execute: (ctx: EffectContext) => {
                     const referenced = ctx.data.referenced;
-                    if (referenced && referenced.id === "S_666") {
-                        const playerState = ctx.actions.getPlayerState(ctx.data.playerId);
-                        ctx.actions.increasePlayerMoney(playerState, 2);
+                    
+                    if (referenced && referenced.id === "S_666" && 
+                        ctx.instances.getOwnerId(referenced) === ctx.instances.getOwnerId(ctx.data.source)) {
+                            const playerState = ctx.actions.getPlayerState(ctx.data.playerId);
+                            ctx.actions.increasePlayerMoney(playerState, 2);
                     }
                 }
             }
