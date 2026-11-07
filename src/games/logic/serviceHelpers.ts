@@ -4,7 +4,13 @@ import { GamePhase } from "../shared/games.types";
 
 
 export const calculateTurnStartMoney = (turn: number): number => {
-    return (turn * 2);
+    const money =  Math.floor(turn * 1.5);
+
+    if (money > 10) {
+        return 10;
+    }
+
+    return money;
 }
 
 export const translateBoardIndex = (index: number, isPlayer1: boolean): number => {

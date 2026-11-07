@@ -56,7 +56,7 @@ const ArtifactList: ArtifactInstance[] = [
                 }
             }
         ],
-        cost: 12,
+        cost: 7,
     },
     {
         id: "A_2",
@@ -75,7 +75,7 @@ const ArtifactList: ArtifactInstance[] = [
                 }
             }
         ],
-        cost: 13, 
+        cost: 9, 
     },
     {
         id: "A_3",
@@ -97,7 +97,7 @@ const ArtifactList: ArtifactInstance[] = [
                 }
             }
         ],
-        cost: 13, 
+        cost: 9, 
     },
     {
         id: "A_4",
@@ -143,7 +143,7 @@ const ArtifactList: ArtifactInstance[] = [
                 }
             }
         ],
-        cost: 12,     
+        cost: 7,     
     },
     {
         id: "A_6",
@@ -175,7 +175,7 @@ const ArtifactList: ArtifactInstance[] = [
         additionalData: {
             "disabled": false
         },
-        cost: 7,     
+        cost: 6,     
     },
     {
         id: "A_7",
@@ -190,7 +190,7 @@ const ArtifactList: ArtifactInstance[] = [
                 }
             }
         ],
-        cost: 6,     
+        cost: 5,     
     },
     {
         id: "A_8",
@@ -235,7 +235,7 @@ const ArtifactList: ArtifactInstance[] = [
                 }
             }
         ],
-        cost: 10,     
+        cost: 9,     
     },
     {
         id: "A_10",
@@ -336,7 +336,7 @@ const ArtifactList: ArtifactInstance[] = [
                 }
             }
         ],
-        cost: 5,     
+        cost: 10,     
     },
     {
         id: "A_14",
@@ -365,7 +365,7 @@ const ArtifactList: ArtifactInstance[] = [
         type: InstanceType.ARTIFACT,
         effectDesc: "+4 Mult* (Mult holds no meaning in this game.)",
         effects: [],
-        cost: 1,     
+        cost: 0,     
     },
     {
         id: "A_16",

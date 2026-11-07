@@ -53,7 +53,7 @@ const spellList: SpellInstance[] = [
                 }
             }
         ],
-        cost: 2,
+        cost: 1,
         isToken: false
     },
     {
@@ -271,7 +271,7 @@ const spellList: SpellInstance[] = [
                 }
             }
         ],
-        cost: 5,
+        cost: 6,
         isToken: false
     },
     {
@@ -354,7 +354,7 @@ const spellList: SpellInstance[] = [
                 }
             }
         ],
-        cost: 3,
+        cost: 2,
         isToken: false
     },
     {
@@ -557,7 +557,7 @@ const spellList: SpellInstance[] = [
         isToken: true
     },
     {
-        id: "S_25", // TODO: add pic
+        id: "S_25",
         name: "Miku Miku Beam!!!",
         type: InstanceType.SPELL,
         effectDesc: 'Deal 4 damage to all enemy units',

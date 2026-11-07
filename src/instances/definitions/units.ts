@@ -3,7 +3,6 @@ import { getRandomInt } from '../../games/logic/serviceHelpers';
 import { MAX_CARDS_PER_BOARD_ROW } from '../../games/shared/games.constants';
 import { InstanceType, InstanceZone, UnitInstance } from '../shared/instances.types';
 import { targetOption } from '../../games/shared/games.types';
-import { ref } from 'process';
 
 
 const unitList: UnitInstance[] = [
@@ -134,9 +133,9 @@ const unitList: UnitInstance[] = [
             dodge: 0,
             cooldown: 0
         },
-        cost: 6,
+        cost: 4,
         hp: 4,
-        atk: 1,
+        atk: 3,
     },
     {
        id: "U_6",
@@ -359,7 +358,7 @@ const unitList: UnitInstance[] = [
     },
     {
         id: "U_14",
-        name: "Golden Experience Requiem",
+        name: "Golden Experience Requiem", //! maybe change the effect
         type: InstanceType.UNIT,
         effectDesc: "Turn End: Silence & Kill the leftmost enemy monster, then summon it again.",
         effects: [
@@ -498,8 +497,8 @@ const unitList: UnitInstance[] = [
             dodge: 0,
             cooldown: 0
         },
-        cost: 7,
-        hp: 3,
+        cost: 6,
+        hp: 2,
         atk: 6,
     },
     {
@@ -530,9 +529,9 @@ const unitList: UnitInstance[] = [
             dodge: 0,
             cooldown: 0
         },
-        cost: 6,
-        hp: 5,
-        atk: 3,
+        cost: 5,
+        hp: 4,
+        atk: 4,
     },
     {
         id: "U_20",
@@ -606,9 +605,9 @@ const unitList: UnitInstance[] = [
             dodge: 0,
             cooldown: 0
         },
-        cost: 6,
-        hp: 5,
-        atk: 5,
+        cost: 5,
+        hp: 3,
+        atk: 3,
     },
     {
         id: "U_23",
@@ -673,8 +672,8 @@ const unitList: UnitInstance[] = [
             cooldown: 0
         },
         cost: 4,
-        hp: 6,
-        atk: 2,
+        hp: 5,
+        atk: 3,
     },
     {
         id: "U_25",
@@ -744,7 +743,7 @@ const unitList: UnitInstance[] = [
     },
     {
         id: "U_26",
-        name: "Hatsune Miku", // TODO: add pic
+        name: "Hatsune Miku",
         type: InstanceType.UNIT,
         effectDesc: "Turn start: Heal a random ally unit by 2 HP and add a counter if healed." +
                     "At 4 counters: Use a Miku Miku Beam!!!",
