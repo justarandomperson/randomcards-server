@@ -300,15 +300,17 @@ const ArtifactList: ArtifactInstance[] = [
         id: "A_13",
         name: "Leshy's Camera",
         type: InstanceType.ARTIFACT,
-        effectDesc: "Whenever a enemy unit is killed, summon a 1/1 copy.",
+        effectDesc: "Whenever an enemy unit is killed, summon a 1/1 copy.",
         effects: [
             {
                 trigger: [EFFECT_TRIGGERS.ANY_DIED],
                 execute: (ctx: EffectContext) => {
+                    const referenced = ctx.data.referenced
                     const source = ctx.data.source
-                    if (source.ownerId != ctx.data.playerId)
+
+                    if (referenced && ctx.instances.getOwnerId(referenced) != ctx.instances.getOwnerId(source))
                     {
-                        const instanceCopy = ctx.instances.createUnitInstance(source.id, ctx.data.playerId)
+                        const instanceCopy = ctx.instances.createUnitInstance(referenced.id, ctx.data.playerId)
                         instanceCopy.atk = 1
                         instanceCopy.hp = 1
                         ctx.actions.summonUnit(ctx.data.playerId, instanceCopy)
@@ -324,7 +326,7 @@ const ArtifactList: ArtifactInstance[] = [
         type: InstanceType.ARTIFACT,
         effectDesc: "Whenever a unit is summoned, it gains +1 HP.",
         effects: [
-            {
+          {
                 trigger: [EFFECT_TRIGGERS.ANY_SUMMONED],
                 execute: (ctx: EffectContext) => {
                     const referenced = ctx.data.referenced;

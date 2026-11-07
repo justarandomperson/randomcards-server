@@ -13,7 +13,7 @@ export const initPlayerState = (player: BasicPlayerData, deck: Deck): PlayerStat
         hp: STARTING_HEALTH,
         money: STARTING_MONEY,
         turn: STARTING_TURN,
-        artifacts: [artifactsMap.get("A_9")!],
+        artifacts: [artifactsMap.get("A_14")!],
         drawpile: shuffleSpells(deck.spells),
         hand: [],
         bench: deck.units,
