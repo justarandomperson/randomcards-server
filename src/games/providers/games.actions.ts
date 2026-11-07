@@ -348,6 +348,7 @@ export class GameActions {
         player.artifacts.push(artifact);
 
         artifact.location = { insideOf: InstanceZone.PLAYER, index: player.artifacts.length - 1 };
+        artifact.ownerId = player.socketId
 
         this.emitter.updateArtifactBoth(this.state.gameId, artifact, artifact.location, player.socketId);
 
@@ -389,6 +390,7 @@ export class GameActions {
         }
 
         if (card.hp <= 0) {
+            card.hasDiedThisTurn = true
             if (attacker) {
                 const attackerOwnerId = this.instances.getOwnerId(attacker);
                 this.runTriggerEffects(EFFECT_TRIGGERS.KILL, { playerId: attackerOwnerId, source: attacker, referenced: card});
@@ -459,6 +461,7 @@ export class GameActions {
 
             case Status.PARALYZED:
                 card.statuses.paralyzed = true;
+                card.wasParalyzedThisTurn = true;
                 break;
 
             case Status.SILENCED:
@@ -683,7 +686,7 @@ export class GameActions {
                 this.moveSpellFromHandToDrawpile(player, card);
             }
 
-            this.emitter.playedSpell(this.state.gameId, card);
+            this.emitter.playedSpell(this.state.gameId, card, this.instances.getOwnerId(card));
 
             this.runTriggerEffectsBoth(EFFECT_TRIGGERS.ANY_SPELL_PLAYED, { referenced: card });
         }
@@ -730,7 +733,7 @@ export class GameActions {
         const playerUnits = this.getPlayerUnits(this.state.playerTurnId);
         for (const unit of playerUnits) {
             this.removeUnitStatus(unit.unit, Status.HASTE);
-            this.removeUnitStatus(unit.unit, Status.PARALYZED); //! this uhhh doesnt work correctly fix later
+            if (!unit.unit.wasParalyzedThisTurn) this.removeUnitStatus(unit.unit, Status.PARALYZED);
         }
 
         this.incrementPlayerTurn(player);
@@ -743,11 +746,26 @@ export class GameActions {
         this.runTriggerEffects(EFFECT_TRIGGERS.TURN_END, { playerId });
     }
 
+    private resetUnitsWasParalyzedAndDiedThisTurn(player: PlayerState)
+    {
+        const benchUnits = player.bench;
+        const boardUnits = this.getPlayerUnits(player.socketId).map(slot => slot?.unit);
+
+        const allUnits = [...benchUnits, ...boardUnits];
+
+        allUnits.forEach(unit => {
+            if (unit) {
+                unit.hasDiedThisTurn = false;
+                unit.wasParalyzedThisTurn = false;
+            }
+        });
+    }
+
     private decrementBenchCooldown(player: PlayerState) {
         player.bench.map((unit) => {
             if (unit) {
                 if (unit.statuses.cooldown > 0) {
-                    this.removeUnitStatus(unit, Status.COOLDOWN);
+                    if (!unit.hasDiedThisTurn) this.removeUnitStatus(unit, Status.COOLDOWN);
                 }
             }
         })
@@ -767,6 +785,7 @@ export class GameActions {
         switch(this.state.gamePhase) {
             case GamePhase.PLAY: {
                 const player = this.getPlayerState(this.state.playerTurnId);
+                this.resetUnitsWasParalyzedAndDiedThisTurn(player)
                 this.runTriggerEffects(EFFECT_TRIGGERS.TURN_START,  { playerId: player.socketId });
                 this.startTurnPlay(player);
                 break;
@@ -777,6 +796,7 @@ export class GameActions {
                 this.emitter.updateShopBoth(this.state.gameId, this.state.shop);
                 break;
         }
+
 
         this.emitter.startTurn(this.state.playerTurnId);
     }
@@ -834,7 +854,7 @@ export class GameActions {
 
         if (data.source.type === InstanceType.SPELL){
             this.moveSpellFromHandToDrawpile(player, data.source);
-            this.emitter.playedSpell(this.state.gameId, data.source);
+            this.emitter.playedSpell(this.state.gameId, data.source, this.instances.getOwnerId(data.source));
         }
 
         this.effects.runEffect(effect, data);   

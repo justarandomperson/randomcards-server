@@ -34,6 +34,8 @@ export type UnitInstance = {
   summoned?: boolean
   location?: InstanceLocation
   assignedBenchSlot?: number,
+  hasDiedThisTurn?: boolean,
+  wasParalyzedThisTurn?: boolean
   additionalData?: Record<string, any>;
 };
 

@@ -112,7 +112,7 @@ export class EffectsService {
 
         const playerUnits = this.actions.getPlayerUnits(triggerData.playerId); 
         for (const unit of playerUnits) {
-            if (unit.unit.statuses.silenced) {
+            if (!unit.unit.statuses.silenced) {
                 needsTarget = this.iterateEffects(trigger, triggerData, unit.unit);
             }
         }

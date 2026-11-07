@@ -497,7 +497,7 @@ const spellList: SpellInstance[] = [
         id: "S_22",
         name: "Does he know?",
         type: InstanceType.SPELL,
-        effectDesc: 'Either generates a "He doesn\'t know!" for you, or "He knows!" for your opponent. ',
+        effectDesc: 'Either generates a "He doesn\'t know!" for you, or "He knows" for your opponent. ',
         effects: [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
@@ -539,7 +539,7 @@ const spellList: SpellInstance[] = [
     },
     {
         id: "S_24",
-        name: "He knows!",
+        name: "He knows",
         type: InstanceType.SPELL,
         effectDesc: 'Give 4 HP to an ally unit',
         effects: [
