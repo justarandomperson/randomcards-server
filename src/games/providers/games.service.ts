@@ -219,12 +219,18 @@ export class GamesService {
         const { attacker, target } = this.validateAttackUnit(game, player, dto);
         attacker.canAttack = false
 
-        game.actions.attackUnit(playerId, target, attacker.atk);
+        game.actions.attackUnit(playerId, target, attacker.atk, attacker);
         game.actions.attackUnit(game.actions.getOpponentState(playerId).socketId, attacker, target.atk);
     }
 
     private validateAttackUnit(game: Game, player: PlayerState, dto: AttackUnitDto): { attacker: UnitInstance, target: UnitInstance } {
         const attacker = this.instances.findInstance(dto.attackerId, game.state.board);
+        
+        if (game.state.playerTurnId !== player.socketId)
+        {
+            throw new WsException("Can't attack while not in turn")
+        }
+        
         if (attacker.ownerId != player.socketId) {
             throw new WsException("Invalid attacker");
         }

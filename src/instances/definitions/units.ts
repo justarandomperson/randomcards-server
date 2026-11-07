@@ -651,8 +651,11 @@ const unitList: UnitInstance[] = [
 
                         if (randomUnit) {
                             ctx.actions.attackUnit(ctx.data.playerId, randomUnit.unit, target.atk, target);
-                            // attack back
-                            ctx.actions.attackUnit(ctx.data.playerId, target, randomUnit.unit.atk, randomUnit.unit);
+                            if (randomUnit.unit.instanceId !== target.instanceId)
+                            {
+                                // attack back
+                                ctx.actions.attackUnit(ctx.data.playerId, target, randomUnit.unit.atk, randomUnit.unit);
+                            }
                         }
                     }
                 }
@@ -672,7 +675,7 @@ const unitList: UnitInstance[] = [
     },
        {
         id: "U_24",
-        name: "Sung jin-woo",
+        name: "Sung Jin-woo",
         type: InstanceType.UNIT,
         effectDesc: "Haste. gains +1 ATK whenever it attacks and kills",
         effects: [
@@ -705,37 +708,45 @@ const unitList: UnitInstance[] = [
              {
                 trigger: [EFFECT_TRIGGERS.TURN_START],
                 execute: (ctx: EffectContext) => {
-                    const unitsMap = ctx.instances.getUnits();
+                    const triggers = ctx.data.source.additionalData?.["triggers"] ?? 1
+                    for (let i = 0; i < triggers; i++)
+                    {
+                        const unitsMap = ctx.instances.getUnits();
 
-                    const effects = [...unitsMap.values()].flatMap(unit =>
-                        unit.effects.filter(effect =>
-                            effect.trigger.includes(EFFECT_TRIGGERS.TURN_START) &&
-                            !effect.hasTarget
-                        )
-                    );
+                        const effects = [...unitsMap.values()].flatMap(unit =>
+                            unit.effects.filter(effect =>
+                                effect.trigger.includes(EFFECT_TRIGGERS.TURN_START) &&
+                                !effect.hasTarget
+                            )
+                        );
 
-                    if (effects.length === 0) return;
+                        if (effects.length === 0) return;
 
-                    const randomEffect = effects[Math.floor(Math.random() * effects.length)];
-                    randomEffect.execute(ctx)
+                        const randomEffect = effects[Math.floor(Math.random() * effects.length)];
+                        randomEffect.execute(ctx)
+                    }
                 }
             },
             {
                 trigger: [EFFECT_TRIGGERS.TURN_END],
                 execute: (ctx: EffectContext) => {
-                    const unitsMap = ctx.instances.getUnits();
+                     const triggers = ctx.data.source.additionalData?.["triggers"] ?? 1
+                    for (let i = 0; i < triggers; i++)
+                    {
+                        const unitsMap = ctx.instances.getUnits();
 
-                    const effects = [...unitsMap.values()].flatMap(unit =>
-                        unit.effects.filter(effect =>
-                            effect.trigger.includes(EFFECT_TRIGGERS.TURN_END) &&
-                            !effect.hasTarget
-                        )
-                    );
+                        const effects = [...unitsMap.values()].flatMap(unit =>
+                            unit.effects.filter(effect =>
+                                effect.trigger.includes(EFFECT_TRIGGERS.TURN_END) &&
+                                !effect.hasTarget
+                            )
+                        );
 
-                    if (effects.length === 0) return;
+                        if (effects.length === 0) return;
 
-                    const randomEffect = effects[Math.floor(Math.random() * effects.length)];
-                    randomEffect.execute(ctx)
+                        const randomEffect = effects[Math.floor(Math.random() * effects.length)];
+                        randomEffect.execute(ctx)
+                    }
                 }
             },
         ],

@@ -136,7 +136,7 @@ export class GameActions {
     //otherwise, index needs to be adjusted to be on the opposite site of the board
     //therefore it doesn't matter who is player1 or player2
     private getClientBoardLocation(clientId: string, actionPlayerId: string, location: InstanceLocation): InstanceLocation {
-        if (location.insideOf === InstanceZone.NONE) return location
+        if (location.insideOf === InstanceZone.NONE || location.insideOf === InstanceZone.BENCH || location.insideOf === InstanceZone.HAND) return location
         if (location.insideOf !== InstanceZone.BOARD) {
             throw new WsException('cardLocation is not in board');
         }
@@ -216,8 +216,11 @@ export class GameActions {
         const clientCardLocation = this.getClientBoardLocation(playerId, playerId, cardLocation);
         this.emitter.updateCard(playerId, card, clientCardLocation);
 
-        const opponentCardLocation = this.getClientBoardLocation(playerId, this.getOpponentId(playerId), cardLocation);
-        this.emitter.updateCard(this.getOpponentId(playerId), card, opponentCardLocation);
+        if (cardLocation.insideOf !== InstanceZone.BENCH && cardLocation.insideOf !== InstanceZone.HAND)
+        {
+            const opponentCardLocation = this.getClientBoardLocation(playerId, this.getOpponentId(playerId), cardLocation);
+            this.emitter.updateCard(this.getOpponentId(playerId), card, opponentCardLocation);
+        }
     }
 
     endGame(playerId: string) {
@@ -263,7 +266,7 @@ export class GameActions {
         return card.location;
     }
 
-    removeUnitFromBoard(player: PlayerState, card: UnitInstance) {
+    removeUnitFromBoard(card: UnitInstance) {
         const location = this.instances.getLocation(card);
         if (location.insideOf !== InstanceZone.BOARD) {
             throw new WsException("card is not in play");
@@ -352,17 +355,46 @@ export class GameActions {
         unit.statuses = {...defaultUnit.statuses};
     }
 
-    decreaseUnitHealth(card: UnitInstance, amount: number): boolean {
+    decreaseUnitHealth(card: UnitInstance, amount: number, attacker?: UnitInstance): boolean {
         if (!card.ownerId) throw new WsException("Card does not have owner")
         card.hp -= amount;
 
         this.emitTwoDifferentUpdateCard(card);
 
-        if (card.hp <= 0) {
-            return true; // as in unit died
+        if (attacker)
+        {
+            if (!card.statuses.silenced) {
+                this.runTriggerEffects(EFFECT_TRIGGERS.DAMAGED, { playerId: card.ownerId, source: card, attacker });
+            }
+            
+            this.runTriggerEffects(EFFECT_TRIGGERS.ANY_DAMAGED, { playerId: card.ownerId, referenced: card });
         }
 
-        return false; // as in unit still on board
+
+        if (card.hp <= 0) {
+            if (attacker && attacker.ownerId)
+            {
+                this.runTriggerEffects(EFFECT_TRIGGERS.KILL, { playerId: attacker.ownerId, source: attacker ,referenced: card});
+            }
+            if (card.assignedBenchSlot) {
+                    this.moveUnitFromBoardToBench(card);
+
+                    this.resetUnitData(card);
+                    this.increaseUnitCooldown(card, +1);
+                }
+                else {
+                    this.removeUnitFromBoard(card);
+                } 
+
+                if (!card.statuses.silenced) {
+                        this.runTriggerEffects(EFFECT_TRIGGERS.DEATH, { playerId: card.ownerId! , source: card });
+                }
+
+                this.runTriggerEffects(EFFECT_TRIGGERS.ANY_DIED, { playerId: card.ownerId, referenced: card });
+                this.runTriggerEffects(EFFECT_TRIGGERS.ANY_DIED, { playerId: this.getOpponentId(card.ownerId), referenced: card });
+            }
+
+        return false; 
     }
 
     increaseUnitAttack(card: UnitInstance, amount: number): number {
@@ -590,8 +622,6 @@ export class GameActions {
     }
 
     attackUnit(playerId: string, card: UnitInstance, amount: number, attacker?: UnitInstance) {
-        const player = this.getPlayerState(playerId);
-
         if (attacker) {
             this.removeUnitStatus(attacker, Status.HASTE);
             attacker.canAttack = false;
@@ -611,32 +641,7 @@ export class GameActions {
             this.removeUnitStatus(card, Status.DODGE);
         }
         else {
-            const isUnitDead = this.decreaseUnitHealth(card, amount);
-            const cardOwnerId = this.instances.getOwnerId(card);
-
-            if (!card.statuses.silenced) {
-                this.runTriggerEffects(EFFECT_TRIGGERS.DAMAGED, { playerId: cardOwnerId, source: card, attacker });
-            }
-            
-            this.runTriggerEffects(EFFECT_TRIGGERS.ANY_DAMAGED, { playerId: cardOwnerId, referenced: card });
-
-            if (isUnitDead) {
-                if (card.assignedBenchSlot) {
-                    this.moveUnitFromBoardToBench(card);
-
-                    this.resetUnitData(card);
-                    this.increaseUnitCooldown(card, +1);
-                }
-                else {
-                    this.removeUnitFromBoard(player, card);
-                }
-
-                if (!card.statuses.silenced) {
-                    this.runTriggerEffects(EFFECT_TRIGGERS.DEATH, { playerId: cardOwnerId, source: card });
-                }
-
-                this.runTriggerEffects(EFFECT_TRIGGERS.ANY_DIED, { playerId: cardOwnerId, referenced: card });
-            }
+            this.decreaseUnitHealth(card, amount, attacker);
         }
     }
 

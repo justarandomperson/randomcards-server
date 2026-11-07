@@ -25,7 +25,7 @@ const spellList: SpellInstance[] = [
         effects: [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
-                 hasTarget: new Set([targetOption.ALLY]),
+                hasTarget: new Set([targetOption.ALLY]),
                 execute: (ctx: EffectContext) => {
                     if (ctx.data.targetUnit) {
                         ctx.actions.increaseUnitAttack(ctx.data.targetUnit, 2);
@@ -239,8 +239,8 @@ const spellList: SpellInstance[] = [
                 execute: (ctx: EffectContext) => {
                     for (let i = 0; i < 2; i++) {
                         const darkOrb = ctx.instances.createSpellInstance("S_10", ctx.data.playerId);
-                        ctx.actions.increaseCardCost(darkOrb, 1);
                         ctx.actions.addSpellToHand(ctx.actions.getPlayerState(ctx.data.playerId), darkOrb);
+                        ctx.actions.increaseCardCost(darkOrb, 1);
                     }
                 }
             }
@@ -479,9 +479,7 @@ const spellList: SpellInstance[] = [
                 hasTarget:  new Set([targetOption.ALLY]),
                 execute: (ctx: EffectContext) => {
                     if (ctx.data.targetUnit) {
-                        const source = ctx.instances.typeInstance(ctx.data.source, InstanceType.UNIT);
                         const cardLocation = ctx.instances.getLocationIndex(ctx.data.targetUnit, InstanceZone.BOARD);
-
                         const enemyUnit = ctx.actions.getUnitInfront(cardLocation)
                         if (enemyUnit) {
                             ctx.actions.addUnitStatus(enemyUnit, Status.PARALYZED);
