@@ -161,7 +161,7 @@ export class GameActions {
     }
 
     
-    RNGCheck(desiredValue, playerId: string)
+    RNGCheck(desiredValue: number, playerId: string)
     {
         const opponentBoard = this.getOpponentBoard(playerId)
         const opponentHaveNagito = opponentBoard.some((slot) => slot.unit && slot.unit.id === "U_28")
