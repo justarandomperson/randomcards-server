@@ -169,7 +169,7 @@ export class GameActions {
         if (opponentHaveNagito) return false
 
         const rnd = Math.random()
-        return rnd > desiredValue
+        return rnd < desiredValue
     }
 
     runTriggerEffects(trigger: EffectTrigger, triggerData: TriggerData): selectTargetFilter | undefined {
