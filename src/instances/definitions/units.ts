@@ -729,9 +729,9 @@ const unitList: UnitInstance[] = [
         additionalData: {
             "triggers": 1
         },
-        cost: 8,
-        hp: 7,
-        atk: 7, 
+        cost: 12,
+        hp: 9,
+        atk: 9, 
     },
     {
         id: "U_26",
@@ -820,6 +820,85 @@ const unitList: UnitInstance[] = [
         cost: 8,
         hp: 3,
         atk: 3,
+    },
+    {
+        id: "U_28",
+        name: "Nagito Komaeda",
+        type: InstanceType.UNIT,
+        effectDesc: "Your opponent loses all RNG checks",
+        effects: [],
+        statuses: {
+            haste: false,
+            taunt: false,
+            paralyzed: false,
+            silenced: false,
+            dodge: 0,
+            cooldown: 0
+        },
+        cost: 7,
+        hp: 7,
+        atk: 7,
+    },
+    {
+        id: "U_29",
+        name: "Cuphead",
+        type: InstanceType.UNIT,
+        effectDesc: "Dodge(1). Turn end: deal 1 damage to opponent in front",
+        effects: [
+            {
+                trigger: [EFFECT_TRIGGERS.TURN_END],
+                execute: (ctx: EffectContext) => {
+                    const boardIndex =  ctx.instances.getLocationIndex(ctx.data.source, InstanceZone.BOARD)
+                    const opposingUnit = ctx.actions.getUnitInfront(boardIndex)
+                    if (opposingUnit)
+                    {
+                        ctx.actions.decreaseUnitHealth(opposingUnit, 1)
+                    }
+                }
+            }
+        ],
+        statuses: {
+            haste: false,
+            taunt: false,
+            paralyzed: false,
+            silenced: false,
+            dodge: 1,
+            cooldown: 0
+        },
+        cost: 4,
+        hp: 3,
+        atk: 2,
+    },
+    {
+        id: "U_30",
+        name: "Heisenberg",
+        type: InstanceType.UNIT,
+        effectDesc: "Turn end: Shuffle 2 Blue Meth into your deck",
+        effects: [
+            {
+                trigger: [EFFECT_TRIGGERS.TURN_END],
+                execute: (ctx: EffectContext) => {
+                    const ownerId = ctx.instances.getOwnerId(ctx.data.source)
+                    const playerState = ctx.actions.getPlayerState(ownerId)
+                    for (let i = 0; i < 2; i++)
+                    {
+                        const blueMethInstance = ctx.instances.createSpellInstance("S_27", ownerId)
+                        ctx.actions.shuffleSpellToDrawpile(playerState, blueMethInstance)
+                    }
+                }
+            }
+        ],
+        statuses: {
+            haste: false,
+            taunt: false,
+            paralyzed: false,
+            silenced: false,
+            dodge: 1,
+            cooldown: 0
+        },
+        cost: 4,
+        hp: 7,
+        atk: 7,
     },
 ];
 

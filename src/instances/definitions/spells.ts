@@ -503,8 +503,9 @@ const spellList: SpellInstance[] = [
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
                 execute: (ctx: EffectContext) => {
                     const rnd = Math.random();
-                    const id = rnd > .5 ? "S_23" : "S_24";
-                    const ownerId = rnd > .5 ? ctx.data.playerId : ctx.actions.getOpponentId(ctx.data.playerId);
+                    const succeeded = ctx.actions.RNGCheck(0.5, ctx.data.playerId)
+                    const id = succeeded ? "S_23" : "S_24";
+                    const ownerId = succeeded ? ctx.data.playerId : ctx.actions.getOpponentId(ctx.data.playerId);
 
                     const spellInstance = ctx.instances.createSpellInstance(id, ownerId);
                     const ownerState = ctx.state.players.get(ownerId)
@@ -590,6 +591,24 @@ const spellList: SpellInstance[] = [
             }
         ],
         cost: 1,
+        isToken: true
+    },
+     {
+        id: "S_27",
+        name: "Blue Meth",
+        type: InstanceType.SPELL,
+        effectDesc: "Gain 3$",
+        effects: [
+            {
+                trigger: [EFFECT_TRIGGERS.SUMMONED],
+                execute: (ctx: EffectContext) => {
+                    const spellOwnerId = ctx.instances.getOwnerId(ctx.data.source)
+                    const playerState = ctx.actions.getPlayerState(spellOwnerId)
+                    ctx.actions.increasePlayerMoney(playerState, 3)
+                }
+            }
+        ],
+        cost: 0,
         isToken: true
     },
 ];

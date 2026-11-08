@@ -505,7 +505,7 @@ const ArtifactList: ArtifactInstance[] = [
         },
         cost: 5,     
     },
-        {
+    {
         id: "A_21",
         name: "Straightforward ball",
         type: InstanceType.ARTIFACT,
@@ -523,6 +523,66 @@ const ArtifactList: ArtifactInstance[] = [
             }
         ],
         cost: 9,     
+    },
+    {
+        id: "A_22",
+        name: "Tomfoolery",
+        type: InstanceType.ARTIFACT,
+        effectDesc: "Created units gain +1/+1",
+        effects: [
+            {
+                trigger: [EFFECT_TRIGGERS.ANY_SUMMONED],
+                execute: (ctx: EffectContext) => {
+                    const referenced = ctx.data.referenced
+                    if (referenced && referenced.type == InstanceType.UNIT && !referenced.assignedBenchSlot)
+                    {
+                        ctx.actions.increaseUnitAttack(referenced, 1)
+                        ctx.actions.increaseUnitHealth(referenced, 1, false)
+                    }
+                }
+            }
+        ],
+        cost: 10,     
+    },
+    {
+        id: "A_23",
+        name: "Ultimate Chicken Horse",
+        type: InstanceType.ARTIFACT,
+        effectDesc: "Once per turn, if your opponent didn't manage to attack you last turn but this turn you attacked them, gain $2",
+        effects: [
+            {
+                trigger: [EFFECT_TRIGGERS.TURN_START],
+                execute: (ctx: EffectContext) => {
+                    const additionalData = ctx.instances.getAdditionalData(ctx.data.source)
+                    additionalData["activated"] = false
+                }
+            },
+            {
+                trigger: [EFFECT_TRIGGERS.ATTACKED],
+                execute: (ctx: EffectContext) => {
+                    const additionalData = ctx.instances.getAdditionalData(ctx.data.source)
+                    const attacker = ctx.data.attacker
+                    const attacked = ctx.data.targetPlayerId
+                    const artifactOwnerId = ctx.instances.getOwnerId(ctx.data.source)
+
+                    const validAttacker = attacker && ctx.instances.getOwnerId(attacker) === artifactOwnerId
+                    const validAttacked = attacked && attacked !== artifactOwnerId
+                    
+                    if (!additionalData["activated"] && validAttacked && validAttacker)
+                    {
+                        additionalData["activated"] = true
+                        const playerState = ctx.actions.getPlayerState(artifactOwnerId)
+                        ctx.actions.increasePlayerMoney(playerState, 2)
+                    }
+
+                }
+            }
+        ],
+        additionalData:
+        {
+            activated: false
+        },
+        cost: 10,     
     },
 ];
 

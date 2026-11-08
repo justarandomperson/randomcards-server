@@ -160,6 +160,18 @@ export class GameActions {
         return location;
     }
 
+    
+    RNGCheck(desiredValue, playerId: string)
+    {
+        const opponentBoard = this.getOpponentBoard(playerId)
+        const opponentHaveNagito = opponentBoard.some((slot) => slot.unit && slot.unit.id === "U_28")
+
+        if (opponentHaveNagito) return false
+
+        const rnd = Math.random()
+        return rnd > desiredValue
+    }
+
     runTriggerEffects(trigger: EffectTrigger, triggerData: TriggerData): selectTargetFilter | undefined {
         const needsTarget = this.effects.runTriggerEffects(trigger, triggerData);
 
@@ -289,6 +301,7 @@ export class GameActions {
         this.emitTwoDifferentUpdateCard(card);
     }
 
+
     moveSpellFromHandToDrawpile(player: PlayerState, card: SpellInstance): InstanceLocation {   
         const location = this.instances.getLocation(card);     
         if (location.insideOf !== InstanceZone.HAND) {
@@ -307,6 +320,13 @@ export class GameActions {
         this.emitter.updateCard(player.socketId, card, { insideOf: InstanceZone.NONE });
 
         return card.location;
+    }
+
+    shuffleSpellToDrawpile(player: PlayerState, card: SpellInstance)
+    {
+        player.drawpile.push(card);
+        this.emitter.updateDrawpileCount(this.state.gameId, player.socketId, player.drawpile.length);
+        card.location = { insideOf: InstanceZone.NONE };
     }
 
     //spellCreated - relevant when extra space will be made by the spell that just is attempting to add the spell to hand.
@@ -425,7 +445,7 @@ export class GameActions {
         return card.atk;
     }
 
-    increaseUnitHealth(card: UnitInstance, amount: number, upToMax: boolean): number {
+    increaseUnitHealth(card: UnitInstance, amount: number, upToMax: boolean = false): number {
         card.hp += amount;
 
         if (upToMax) {
