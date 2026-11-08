@@ -584,6 +584,29 @@ const ArtifactList: ArtifactInstance[] = [
         },
         cost: 10,     
     },
+    {
+        id: "A_24",
+        name: "Russian Roulette",
+        type: InstanceType.ARTIFACT,
+        effectDesc: "Gain 15$, 1/6: Lose the game.",
+        effects: [
+            {
+                trigger: [EFFECT_TRIGGERS.BOUGHT],
+                execute: (ctx: EffectContext) => {
+                    const artifactOwnerId = ctx.instances.getOwnerId(ctx.data.source)
+                    const suceeded = ctx.actions.RNGCheck(5/6, artifactOwnerId)
+                    if (!suceeded) ctx.actions.endGame(ctx.actions.getOpponentId(artifactOwnerId))
+                    else 
+                    {
+                        const playerState = ctx.actions.getPlayerState(artifactOwnerId)
+                        ctx.actions.increasePlayerMoney(playerState, 15)
+                    }
+                }
+            },
+                
+        ],
+        cost: 0,     
+    },
 ];
 
 export const artifactsMap = new Map<string, ArtifactInstance>(

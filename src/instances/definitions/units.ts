@@ -893,12 +893,123 @@ const unitList: UnitInstance[] = [
             taunt: false,
             paralyzed: false,
             silenced: false,
-            dodge: 1,
+            dodge: 0,
             cooldown: 0
         },
-        cost: 4,
-        hp: 7,
-        atk: 7,
+        cost: 6,
+        hp: 5,
+        atk: 2,
+    },
+    {
+        id: "U_31",
+        name: "Gros Michel",
+        type: InstanceType.UNIT,
+        effectDesc: "Turn end: 1/6 chance to expire",
+        effects: [
+            {
+                trigger: [EFFECT_TRIGGERS.TURN_END],
+                execute: (ctx: EffectContext) => {
+                    const source = ctx.data.source as UnitInstance
+                    const artifactOwnerId = ctx.instances.getOwnerId(source)
+                    const suceeded = ctx.actions.RNGCheck(5/6, artifactOwnerId)
+                    if (!suceeded) ctx.actions.decreaseUnitHealth(source, source.hp)
+                }
+            },
+        ],
+         statuses: {
+            haste: false,
+            taunt: false,
+            paralyzed: false,
+            silenced: false,
+            dodge: 0,
+            cooldown: 0
+        },
+        cost: 2,    
+        hp: 2,
+        atk: 4,
+    },
+    {
+        id: "U_32",
+        name: "Mime",
+        type: InstanceType.UNIT,
+        effectDesc: "Turn end effects are retriggered",
+        effects: [
+            {
+                trigger: [EFFECT_TRIGGERS.TURN_END],
+                execute: (ctx: EffectContext) => {
+                    const playerUnits = ctx.actions.getPlayerUnits(ctx.data.playerId)
+
+                    playerUnits.map((slot) => {
+                        slot.unit.effects.map((effect) => {
+                            if (effect.trigger.includes(EFFECT_TRIGGERS.TURN_END))
+                            {
+                                const newContext = {
+                                    ...ctx,
+                                    source: slot.unit
+                                }
+                                effect.execute(newContext)
+                            }
+                        })
+                    })
+
+                }
+            },
+        ],
+         statuses: {
+            haste: false,
+            taunt: false,
+            paralyzed: false,
+            silenced: false,
+            dodge: 0,
+            cooldown: 0
+        },
+        cost: 6,    
+        hp: 4,
+        atk: 4,
+    },
+    {
+        id: "U_33",
+        name: "Purple Guy",
+        type: InstanceType.UNIT,
+        effectDesc: "Enemy units killed summon a 1/2 Taunt Animatronic Suit",
+        effects: [
+            {
+                trigger: [EFFECT_TRIGGERS.KILL],
+                execute: (ctx: EffectContext) => {
+                    const suitInstance = ctx.instances.createUnitInstance("U_34", ctx.data.playerId)
+                    ctx.actions.summonUnit(ctx.data.playerId,suitInstance)
+                }
+            },
+        ],
+         statuses: {
+            haste: false,
+            taunt: false,
+            paralyzed: false,
+            silenced: false,
+            dodge: 0,
+            cooldown: 0
+        },
+        cost: 6,    
+        hp: 6,
+        atk: 5,
+    },
+     {
+        id: "U_34",
+        name: "Animatronic Suit",
+        type: InstanceType.UNIT,
+        effectDesc: "Taunt.",
+        effects: [],
+         statuses: {
+            haste: false,
+            taunt: true,
+            paralyzed: false,
+            silenced: false,
+            dodge: 0,
+            cooldown: 0
+        },
+        cost: 0,    
+        hp: 2,
+        atk: 1,
     },
 ];
 
