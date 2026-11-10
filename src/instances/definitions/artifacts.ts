@@ -578,8 +578,7 @@ const ArtifactList: ArtifactInstance[] = [
                 }
             }
         ],
-        additionalData:
-        {
+        additionalData:{
             activated: false
         },
         cost: 10,     

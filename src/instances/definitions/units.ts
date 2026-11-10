@@ -1051,7 +1051,7 @@ const unitList: UnitInstance[] = [
     },
     {
         id: "U_35",
-        name: "The man who speaks in emojis 😳", // TODO: add pic (U do it lucas)
+        name: "The man who speaks in emojis 😳",
         type: InstanceType.UNIT,
         effectDesc: "🤜➡️💥2️⃣🧍↔️🧍2️⃣💥", // every time you attack deal 2 damage to adjacent units //? do u have a better way to explain this
         effects: [
