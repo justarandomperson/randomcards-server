@@ -586,14 +586,14 @@ const spellList: SpellInstance[] = [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
                 execute: (ctx: EffectContext) => {
-                    // TODO: maybe have a random spell effect happen
+                    // TODO: maybe have a random spell effect happen. i dont want to do rn but itd be cool
                 }
             }
         ],
         cost: 1,
-        isToken: true
+        isToken: false
     },
-     {
+    {
         id: "S_27",
         name: "Blue Meth",
         type: InstanceType.SPELL,
@@ -605,6 +605,41 @@ const spellList: SpellInstance[] = [
                     const spellOwnerId = ctx.instances.getOwnerId(ctx.data.source)
                     const playerState = ctx.actions.getPlayerState(spellOwnerId)
                     ctx.actions.increasePlayerMoney(playerState, 3)
+                }
+            }
+        ],
+        cost: 0,
+        isToken: true
+    },
+    {
+        id: "S_28",
+        name: "Random!Blaster",
+        type: InstanceType.SPELL,
+        effectDesc: "Deal random damage to a unit",
+        effects: [
+            {
+                trigger: [EFFECT_TRIGGERS.SUMMONED],
+                execute: (ctx: EffectContext) => {
+                    if (ctx.data.targetUnit) {
+                        const damageWeights = new Map<number, number>([
+                            [1, 3], [2, 6], [3, 11], [4, 20], [5, 20], [6, 15],
+                            [7, 10], [8, 6], [9, 5], [10, 3], [11, 1]
+                        ]);
+
+                        const totalWeight = [...damageWeights.values()].reduce((sum, w) => sum + w, 0);
+                        let roll = Math.random() * totalWeight;
+                        let damage = 0;
+
+                        for (const [val, weight] of damageWeights) {
+                            roll -= weight;
+                            if (roll < 0) {
+                                damage = val;
+                                break;
+                            }
+                        }
+
+                        ctx.actions.attackUnit(ctx.data.playerId, ctx.data.targetUnit, damage);
+                    }
                 }
             }
         ],

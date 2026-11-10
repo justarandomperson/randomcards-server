@@ -527,14 +527,52 @@ const unitList: UnitInstance[] = [
     },
     {
         id: "U_20",
-        name: "Random!Sans", // TODO: new effect!!
+        name: "Random!Sans",
         type: InstanceType.UNIT,
-        effectDesc: "",
+        effectDesc: "Dodge (Random). Randomly, add a Gaster Blaster to your hand. Chance to add a Random!Blaster.",
         effects: [
             {
-                trigger: [],
+                trigger: [EFFECT_TRIGGERS.SUMMONED],
                 execute: (ctx: EffectContext) => {
-                    
+                    const dodgeWeights = new Map<number, number>([
+                        [0, 12], [1, 22], [2, 27], [3, 16], [4, 12], [5, 7], [6, 4]
+                    ]);
+
+                    const totalWeight = [...dodgeWeights.values()].reduce((sum, w) => sum + w, 0);
+                    let roll = Math.random() * totalWeight;
+                    let dodge = 0;
+
+                    for (const [val, weight] of dodgeWeights) {
+                        roll -= weight;
+                        if (roll < 0) {
+                            dodge = val;
+                            break;
+                        }
+                    }
+
+                    const source = ctx.instances.typeInstance(ctx.data.source, InstanceType.UNIT);
+                    ctx.actions.addUnitStatus(source, Status.DODGE, dodge);
+                }
+            },
+            {
+                trigger: [
+                    EFFECT_TRIGGERS.ANY_DAMAGED, EFFECT_TRIGGERS.ANY_DIED, EFFECT_TRIGGERS.ANY_KILLED,
+                    EFFECT_TRIGGERS.ANY_SUMMONED, EFFECT_TRIGGERS.TURN_END, EFFECT_TRIGGERS.TURN_START
+                ],
+                execute: (ctx: EffectContext) => {
+                    const willTrigger = ctx.actions.RNGCheck(1.5034341, ctx.data.playerId);
+
+                    if (willTrigger) {
+                        const randomBlasterChance = ctx.actions.RNGCheck(1/4, ctx.data.playerId);
+
+                        if (randomBlasterChance) {
+                            // TODO: add this branch
+                        }
+                        else {
+                            const gasterBlaster = ctx.instances.createSpellInstance("S_666", ctx.data.playerId);
+                            ctx.actions.addSpellToHand(ctx.actions.getPlayerState(ctx.data.playerId), gasterBlaster); 
+                        }
+                    }
                 }
             }
         ],
@@ -546,7 +584,7 @@ const unitList: UnitInstance[] = [
             dodge: 0,
             cooldown: 0
         },
-        cost: 5,
+        cost: 3,
         hp: 1,
         atk: 1,
     },
@@ -993,7 +1031,7 @@ const unitList: UnitInstance[] = [
         hp: 6,
         atk: 5,
     },
-     {
+    {
         id: "U_34",
         name: "Animatronic Suit",
         type: InstanceType.UNIT,
@@ -1010,6 +1048,53 @@ const unitList: UnitInstance[] = [
         cost: 0,    
         hp: 2,
         atk: 1,
+    },
+    {
+        id: "U_35",
+        name: "The man who speaks in emojis 😳", // TODO: add pic (U do it lucas)
+        type: InstanceType.UNIT,
+        effectDesc: "🤜➡️💥2️⃣🧍↔️🧍2️⃣💥", // every time you attack deal 2 damage to adjacent units //? do u have a better way to explain this
+        effects: [
+            {
+                trigger: [EFFECT_TRIGGERS.ATTACKED],
+                execute: (ctx: EffectContext) => {
+                    if (ctx.data.attacked) {
+                        const attacked = ctx.instances.typeInstance(ctx.data.attacked, InstanceType.UNIT);
+                        const opponentUnits = ctx.actions.getOpponentUnits(ctx.data.playerId);
+
+                        const attackedUnit = opponentUnits.find((unit) => {
+                            ctx.instances.getInstanceId(unit.unit) === ctx.instances.getInstanceId(attacked);
+                        });
+
+                        if (attackedUnit) {
+                            const attackedIndex = attackedUnit.index;
+                            
+                            const unitToLeft = opponentUnits.find((unit) => unit.index === attackedIndex - 1);
+                            const unitToRight = opponentUnits.find((unit) => unit.index === attackedIndex + 1);
+
+                            if (unitToLeft) {
+                                ctx.actions.decreaseUnitHealth(unitToLeft.unit, 2);
+                            }
+
+                            if (unitToRight) {
+                                ctx.actions.decreaseUnitHealth(unitToRight.unit, 2);
+                            }
+                        }
+                    }
+                }
+            },   
+        ],
+         statuses: {
+            haste: false,
+            taunt: true,
+            paralyzed: false,
+            silenced: false,
+            dodge: 0,
+            cooldown: 0
+        },
+        cost: 5,    
+        hp: 5,
+        atk: 4  ,
     },
 ];
 

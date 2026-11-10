@@ -17,7 +17,7 @@ const ArtifactList: ArtifactInstance[] = [
                     EFFECT_TRIGGERS.ANY_SUMMONED, EFFECT_TRIGGERS.TURN_END, EFFECT_TRIGGERS.TURN_START
                 ],
                 execute: (ctx: EffectContext) => {
-                    const willTrigger = Math.random() > 0.859123;
+                    const willTrigger = ctx.actions.RNGCheck(1.5034341, ctx.data.playerId);
                     if (willTrigger) {
                         // rng damage
                         const damageWeights = new Map<number, number>([
