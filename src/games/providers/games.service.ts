@@ -45,7 +45,7 @@ export class GamesService {
                 [player2.socketId, player2State]
             ]),
             board: Array(MAX_CARD_IN_BOARD).fill(null),
-            shop: fillShop([null, null, null, null, null], possibleShopPool), 
+            shop: fillShop([null, null, null, null, null,null, null, null, null, null,null, null, null, null, null,null, null, null, null, null,null, null, null, null, null], possibleShopPool), 
             gamePhase: GamePhase.PLAY,
             playerTurnId: player2.socketId,
             possibleShopPool

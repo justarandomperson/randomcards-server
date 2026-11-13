@@ -420,12 +420,12 @@ export class GameActions {
                 this.runTriggerEffects(EFFECT_TRIGGERS.KILL, { playerId: attackerOwnerId, source: attacker, referenced: card});
             }
 
-            this.runTriggerEffectsBoth(EFFECT_TRIGGERS.ANY_KILLED, { referenced: card})
+            this.runTriggerEffectsBoth(EFFECT_TRIGGERS.ANY_KILLED, { referenced: card, attacker: attacker})
             if (card.assignedBenchSlot || card.assignedBenchSlot === 0) {
                 this.moveUnitFromBoardToBench(card);
 
                 this.resetUnitData(card);
-                this.addUnitStatus(card, Status.COOLDOWN, 3);
+                this.addUnitStatus(card, Status.COOLDOWN, 1);
             }
             else {
                 this.removeUnitFromBoard(card);
@@ -766,8 +766,10 @@ export class GameActions {
         if (this.state.gamePhase == GamePhase.SHOP) {
             this.resetArtifactsBought(player);
         }
-
-        this.runTriggerEffects(EFFECT_TRIGGERS.TURN_END, { playerId });
+        else 
+        {
+            this.runTriggerEffects(EFFECT_TRIGGERS.TURN_END, { playerId });
+        }
     }
 
     private resetUnitsWasParalyzedAndDiedThisTurn(player: PlayerState)

@@ -441,10 +441,10 @@ const unitList: UnitInstance[] = [
         id: "U_17",
         name: "Clash Royale Witch",
         type: InstanceType.UNIT,
-        effectDesc: "Turn Start: Summon a skeleton.",
+        effectDesc: "Turn End: Summon a skeleton.",
         effects: [
              {
-                trigger: [EFFECT_TRIGGERS.TURN_START],
+                trigger: [EFFECT_TRIGGERS.TURN_END],
                 execute: (ctx: EffectContext) => {
                     const skeleton = ctx.instances.createUnitInstance("U_16", ctx.data.playerId);
                     ctx.actions.summonUnit(ctx.data.playerId, skeleton);
@@ -978,7 +978,9 @@ const unitList: UnitInstance[] = [
                     const playerUnits = ctx.actions.getPlayerUnits(ctx.data.playerId)
 
                     playerUnits.map((slot) => {
-                        slot.unit.effects.map((effect) => {
+                        if (slot.unit.id != "U_32")
+                        {
+                            slot.unit.effects.map((effect) => {
                             if (effect.trigger.includes(EFFECT_TRIGGERS.TURN_END))
                             {
                                 const newContext = {
@@ -988,6 +990,7 @@ const unitList: UnitInstance[] = [
                                 effect.execute(newContext)
                             }
                         })
+                        }
                     })
 
                 }
@@ -1009,7 +1012,7 @@ const unitList: UnitInstance[] = [
         id: "U_33",
         name: "Purple Guy",
         type: InstanceType.UNIT,
-        effectDesc: "Enemy units killed summon a 1/2 Taunt Animatronic Suit",
+        effectDesc: "Enemy units killed summon a 1/2 Taunt Stuffed Animatronic Suit",
         effects: [
             {
                 trigger: [EFFECT_TRIGGERS.KILL],
@@ -1033,7 +1036,7 @@ const unitList: UnitInstance[] = [
     },
     {
         id: "U_34",
-        name: "Animatronic Suit",
+        name: "Stuffed Animatronic Suit",
         type: InstanceType.UNIT,
         effectDesc: "Taunt.",
         effects: [],

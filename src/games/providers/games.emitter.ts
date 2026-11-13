@@ -38,8 +38,6 @@ export class GamesEmitter {
             return false;
         }
 
-        const isPlayer1First = gameState.playerTurnId === player1Id;
-
         const player1Socket = this.playerIdToSocket(player1Id);
         const player2Socket = this.playerIdToSocket(player2Id);
 
