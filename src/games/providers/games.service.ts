@@ -220,27 +220,13 @@ export class GamesService {
         const player = game.actions.getPlayerState(playerId);
 
         const { attacker, target } = this.validateAttackUnit(game, player, dto);
-        attacker.canAttack = false
 
         game.actions.attackUnit(playerId, target, attacker.atk, attacker);
         game.actions.attackUnit(game.actions.getOpponentState(playerId).socketId, attacker, target.atk);
     }
 
     private validateAttackUnit(game: Game, player: PlayerState, dto: AttackUnitDto): { attacker: UnitInstance, target: UnitInstance } {
-        const attacker = this.instances.findInstance(dto.attackerId, game.state.board);
-        
-        if (game.state.playerTurnId !== player.socketId)
-        {
-            throw new WsException("Can't attack while not in turn")
-        }
-        
-        if (attacker.ownerId != player.socketId) {
-            throw new WsException("Invalid attacker");
-        }
-
-        if (attacker.statuses.paralyzed) {
-            throw new WsException("attacker is paralyzed");
-        }
+        const attacker = this.validateAttackAny(game, player, dto);  
 
         if (!attacker.canAttack && !attacker.statuses.haste) {
             throw new WsException("attacker cant attack");
@@ -267,12 +253,15 @@ export class GamesService {
         const attacker = this.validateAttackPlayer(game, player, dto);
         const target = (dto.isOpponent) ? this.getOpponentState(gameId, playerId) : player;
 
-        attacker.canAttack = false
         game.actions.attackPlayer(target.socketId, attacker.atk, attacker);
     }
 
     private validateAttackPlayer(game: Game, player: PlayerState, dto: AttackPlayerDto): UnitInstance {
         const attacker = this.validateAttackAny(game, player, dto);
+
+        if (!attacker.canAttack) {
+            throw new WsException("attacker cant attack");
+        }
 
         const opponentBoard = game.actions.getOpponentBoard(player.socketId);
         for (const slot of opponentBoard) {
@@ -292,18 +281,18 @@ export class GamesService {
     }
 
     private validateAttackAny(game: Game, player: PlayerState, dto: AttackUnitDto | AttackPlayerDto): UnitInstance {
-        
         const attacker = this.instances.findInstance(dto.attackerId, game.state.board);
+
+        if (game.state.playerTurnId !== player.socketId) {
+            throw new WsException("Can't attack while not in turn")
+        }
+
         if (attacker.ownerId != player.socketId) {
             throw new WsException("Invalid attacker");
         }
 
         if (attacker.statuses.paralyzed) {
             throw new WsException("attacker is paralyzed");
-        }
-
-        if (!attacker.canAttack && !attacker.statuses.haste) {
-            throw new WsException("attacker cant attack");
         }
 
         return attacker;

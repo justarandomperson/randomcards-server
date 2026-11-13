@@ -43,8 +43,8 @@ export class GamesEmitter {
         const player1Socket = this.playerIdToSocket(player1Id);
         const player2Socket = this.playerIdToSocket(player2Id);
 
-        this.matchStart(player1Socket, player1State, player2State, isPlayer1First);
-        this.matchStart(player2Socket, player2State, player1State, !isPlayer1First);
+        this.matchStart(player1Socket, player1State, player2State);
+        this.matchStart(player2Socket, player2State, player1State);
 
         this.allCardEvents(player1Socket, player1State, gameState.board);
         this.allCardEvents(player2Socket, player2State, gameState.board);
@@ -55,14 +55,13 @@ export class GamesEmitter {
         return true;
     }
 
-    private matchStart(client: Socket, playerState: PlayerState, opponentState: PlayerState, isFirstTurn: boolean) {
+    private matchStart(client: Socket, playerState: PlayerState, opponentState: PlayerState) {
         const playerData = playerStateToClient(playerState);
         const opponentData = playerStateToClient(opponentState);
 
         const payload: MatchStartPayload = {
             playerData: playerData,
             opponentData: opponentData,
-            isFirstTurn
         };
 
         client.emit(SOCKET_EVENT_NAMES.MATCH_START, payload);

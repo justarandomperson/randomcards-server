@@ -47,7 +47,6 @@ export type CurrentEffectData = {
 export type MatchStartPayload = {
   playerData: ClientPlayerData
   opponentData: ClientPlayerData
-  isFirstTurn: boolean
 };
 
 export type UpdateMoneyPayload = {

@@ -832,7 +832,7 @@ const unitList: UnitInstance[] = [
         id: "U_27",
         name: "Imitater",
         type: InstanceType.UNIT,
-        effectDesc: "Summon: Copy the effects of a random unit on bench or board.",
+        effectDesc: "Summon: Copy the effects of an ally unit on bench or board.",
         effects: [
              {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
@@ -1086,7 +1086,7 @@ const unitList: UnitInstance[] = [
         ],
          statuses: {
             haste: false,
-            taunt: true,
+            taunt: false,
             paralyzed: false,
             silenced: false,
             dodge: 0,
