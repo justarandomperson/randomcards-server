@@ -139,10 +139,10 @@ export class GamesEmitter {
         this.server.to(gameId).emit(SOCKET_EVENT_NAMES.UPDATE_ARTIFACT, payload);
     }
 
-    selectTarget(clientId: string, filter: selectTargetFilter) {
+    selectTarget(clientId: string, filter: selectTargetFilter, sourceId: string) {
         const client = this.playerIdToSocket(clientId);
 
-        client.emit(SOCKET_EVENT_NAMES.SELECT_TARGET, Array.from(filter));
+        client.emit(SOCKET_EVENT_NAMES.SELECT_TARGET, {filter: Array.from(filter), sourceId: sourceId});
     }
 
 
