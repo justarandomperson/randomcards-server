@@ -411,6 +411,8 @@ const spellList: SpellInstance[] = [
                         const randomUnit = opponentUnits[getRandomInt(0, opponentUnits.length - 1)];
                         if (randomUnit && randomUnit.unit) {
                             ctx.actions.attackUnit(ctx.data.playerId, randomUnit.unit, target.atk + 2, target);
+                            //little hack to update the client on the canAttack false of the unit
+                            ctx.actions.attackUnit(ctx.actions.getOpponentId(ctx.data.playerId), target, 0); 
                         }
                     }
                 }
@@ -423,17 +425,20 @@ const spellList: SpellInstance[] = [
         id: "S_19",
         name: "Hand Jump",
         type: InstanceType.SPELL,
-        effectDesc: "Activate an unit's summon ability again",
+        effectDesc: "Activate an ally unit's summon ability again",
         effects: [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
-                hasTarget:  new Set([targetOption.ALLY, targetOption.ENEMY]),
+                hasTarget:  new Set([targetOption.ALLY]),
                 execute: (ctx: EffectContext) => {
-                    const targetUnit = ctx.data.targetUnit
-                    if (targetUnit && targetUnit.ownerId) {
+                    const targetUnit = ctx.data.targetUnit as UnitInstance
+                    const targetUnitOwnerId = ctx.instances.getOwnerId(targetUnit)
+                    const sourceOwnerId = ctx.instances.getOwnerId(ctx.data.source)
+
+                    if (targetUnit && targetUnitOwnerId == sourceOwnerId) {
                         const triggerData =
                         {
-                            playerId: targetUnit.ownerId,
+                            playerId: targetUnitOwnerId,
                             source: targetUnit
                         }
                         ctx.actions.runTriggerEffects(EFFECT_TRIGGERS.SUMMONED, triggerData)

@@ -181,7 +181,13 @@ export class GameActions {
             {
                 return undefined
             }
-            this.emitter.selectTarget(triggerData.playerId, needsTarget);
+            //FIXME: will need to be changed a bit when more than 1 target effect can be activated at the same time, 
+            // which i don't care for rn
+            const source = this.getPlayerState(triggerData.playerId).currentEffects[0].data.source
+            const sourceInstanceId = source.instanceId
+            if (!sourceInstanceId) throw new WsException("Effect with target needs to have a source with instance id")
+
+            this.emitter.selectTarget(triggerData.playerId, needsTarget, sourceInstanceId);
             return needsTarget;
         }
 
@@ -401,13 +407,11 @@ export class GameActions {
         
         const cardOwnerId = this.instances.getOwnerId(card);
 
-        if (attacker) {
-            if (!card.statuses.silenced) {
+        if (!card.statuses.silenced) {
                 this.runTriggerEffects(EFFECT_TRIGGERS.DAMAGED, { playerId: cardOwnerId, source: card, attacker });
-            }
-            
-            this.runTriggerEffectsBoth(EFFECT_TRIGGERS.ANY_DAMAGED, { referenced: card })
         }
+
+        this.runTriggerEffectsBoth(EFFECT_TRIGGERS.ANY_DAMAGED, { referenced: card })
 
         if (card.hp <= 0) {
             card.hasDiedThisTurn = true

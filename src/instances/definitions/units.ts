@@ -881,7 +881,7 @@ const unitList: UnitInstance[] = [
         id: "U_29",
         name: "Cuphead",
         type: InstanceType.UNIT,
-        effectDesc: "Dodge(1). Turn end: deal 1 damage to opponent in front",
+        effectDesc: "Dodge(1). Turn end: deal 1 damage to enemy unit in front",
         effects: [
             {
                 trigger: [EFFECT_TRIGGERS.TURN_END],
