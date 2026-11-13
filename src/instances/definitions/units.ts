@@ -1062,25 +1062,18 @@ const unitList: UnitInstance[] = [
                 execute: (ctx: EffectContext) => {
                     if (ctx.data.attacked) {
                         const attacked = ctx.instances.typeInstance(ctx.data.attacked, InstanceType.UNIT);
+                        const attackedLocationIndex = ctx.instances.getLocationIndex(attacked);
                         const opponentUnits = ctx.actions.getOpponentUnits(ctx.data.playerId);
-
-                        const attackedUnit = opponentUnits.find((unit) => {
-                            ctx.instances.getInstanceId(unit.unit) === ctx.instances.getInstanceId(attacked);
-                        });
-
-                        if (attackedUnit) {
-                            const attackedIndex = attackedUnit.index;
                             
-                            const unitToLeft = opponentUnits.find((unit) => unit.index === attackedIndex - 1);
-                            const unitToRight = opponentUnits.find((unit) => unit.index === attackedIndex + 1);
+                        const unitToLeft = opponentUnits.find((unit) => unit.index === attackedLocationIndex - 1);
+                        const unitToRight = opponentUnits.find((unit) => unit.index === attackedLocationIndex + 1);
 
-                            if (unitToLeft) {
-                                ctx.actions.decreaseUnitHealth(unitToLeft.unit, 2);
-                            }
+                        if (unitToLeft) {
+                            ctx.actions.decreaseUnitHealth(unitToLeft.unit, 2);
+                        }
 
-                            if (unitToRight) {
-                                ctx.actions.decreaseUnitHealth(unitToRight.unit, 2);
-                            }
+                        if (unitToRight) {
+                            ctx.actions.decreaseUnitHealth(unitToRight.unit, 2);
                         }
                     }
                 }
