@@ -115,6 +115,11 @@ export class InstancesService {
         return unitsMap
     }
 
+
+    getSpells(): Map<string, SpellInstance>
+    {
+        return spellsMap
+    }
     
     // helpers
     private generateInstanceId(): string {

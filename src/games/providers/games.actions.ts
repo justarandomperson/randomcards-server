@@ -704,9 +704,7 @@ export class GameActions {
         const player = this.getPlayerState(playerId);
         const cardOwnerId = this.instances.getOwnerId(card);
 
-        if (card.inDeck) { 
-            this.moveSpellFromHandToDrawpile(player, card);
-        }
+        this.moveSpellFromHandToDrawpile(player, card);
 
         const needsTarget = this.runTriggerEffects(EFFECT_TRIGGERS.SUMMONED, { playerId: cardOwnerId, source: card });
         
