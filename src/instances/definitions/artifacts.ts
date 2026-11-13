@@ -17,12 +17,14 @@ const ArtifactList: ArtifactInstance[] = [
                     EFFECT_TRIGGERS.ANY_SUMMONED, EFFECT_TRIGGERS.TURN_END, EFFECT_TRIGGERS.TURN_START
                 ],
                 execute: (ctx: EffectContext) => {
-                    const willTrigger = ctx.actions.RNGCheck(1.5034341, ctx.data.playerId);
+                    const willTrigger = ctx.actions.RNGCheck(1/8, ctx.data.playerId);
+
                     if (willTrigger) {
                         // rng damage
                         const damageWeights = new Map<number, number>([
-                            [1, 22], [2, 27], [3, 16], [4, 12], [5, 7], [6, 6], [7, 5], [8, 4], [10, 1]
+                            [1, 50], [2, 25], [3, 12], [4, 6], [5, 3], [6, 2], [7, 1], [8, 1], [9, 0.5], [10, 0.5]
                         ]);
+
                         const totalWeight = [...damageWeights.values()].reduce((sum, w) => sum + w, 0);
                         let roll = Math.random() * totalWeight;
                         let damage = 1;
@@ -34,6 +36,8 @@ const ArtifactList: ArtifactInstance[] = [
                                 break;
                             }
                         }
+
+                        console.log("damage "+damage);
 
                         // rng target
                         const opponentUnits = ctx.actions.getOpponentUnits(ctx.data.playerId);
@@ -49,7 +53,7 @@ const ArtifactList: ArtifactInstance[] = [
                             else {
                                 const target = opponentUnits[randomNumber - 1];
                                 if (target) {
-                                    ctx.actions.attackUnit(ctx.data.playerId, target.unit, damage);
+                                    ctx.actions.decreaseUnitHealth(target.unit, damage);
                                 }
                             }
                         }
@@ -546,45 +550,6 @@ const ArtifactList: ArtifactInstance[] = [
     },
     {
         id: "A_23",
-        name: "Ultimate Chicken Horse",
-        type: InstanceType.ARTIFACT,
-        effectDesc: "Once per turn, if your opponent didn't manage to attack you last turn but this turn you attacked them, gain $2",
-        effects: [
-            {
-                trigger: [EFFECT_TRIGGERS.TURN_START],
-                execute: (ctx: EffectContext) => {
-                    const additionalData = ctx.instances.getAdditionalData(ctx.data.source)
-                    additionalData["activated"] = false
-                }
-            },
-            {
-                trigger: [EFFECT_TRIGGERS.ATTACKED],
-                execute: (ctx: EffectContext) => {
-                    const additionalData = ctx.instances.getAdditionalData(ctx.data.source)
-                    const attacker = ctx.data.attacker
-                    const attacked = ctx.data.targetPlayerId
-                    const artifactOwnerId = ctx.instances.getOwnerId(ctx.data.source)
-
-                    const validAttacker = attacker && ctx.instances.getOwnerId(attacker) === artifactOwnerId
-                    const validAttacked = attacked && attacked !== artifactOwnerId
-                    
-                    if (!additionalData["activated"] && validAttacked && validAttacker)
-                    {
-                        additionalData["activated"] = true
-                        const playerState = ctx.actions.getPlayerState(artifactOwnerId)
-                        ctx.actions.increasePlayerMoney(playerState, 2)
-                    }
-
-                }
-            }
-        ],
-        additionalData:{
-            activated: false
-        },
-        cost: 10,     
-    },
-    {
-        id: "A_24",
         name: "Russian Roulette",
         type: InstanceType.ARTIFACT,
         effectDesc: "Gain 15$, 1/6: Lose the game.",

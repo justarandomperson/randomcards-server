@@ -502,11 +502,9 @@ const unitList: UnitInstance[] = [
              {
                 trigger: [EFFECT_TRIGGERS.ANY_DIED],
                 execute: (ctx: EffectContext) => {
-                    console.log("its here");
                     const referenced = ctx.data.referenced;
 
                     if (referenced && ctx.instances.getOwnerId(referenced) === ctx.instances.getOwnerId(ctx.data.source)) {
-                                            console.log("its here inside!!");
                         const referencedTyped = ctx.instances.typeInstance(referenced, InstanceType.UNIT);
                         ctx.actions.removeUnitStatus(referencedTyped, Status.COOLDOWN);
                     }
@@ -535,7 +533,7 @@ const unitList: UnitInstance[] = [
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
                 execute: (ctx: EffectContext) => {
                     const dodgeWeights = new Map<number, number>([
-                        [0, 12], [1, 22], [2, 27], [3, 16], [4, 12], [5, 7], [6, 4]
+                        [0, 14], [1, 20], [2, 22], [3, 18], [4, 15], [5, 7], [6, 4]
                     ]);
 
                     const totalWeight = [...dodgeWeights.values()].reduce((sum, w) => sum + w, 0);
@@ -560,13 +558,14 @@ const unitList: UnitInstance[] = [
                     EFFECT_TRIGGERS.ANY_SUMMONED, EFFECT_TRIGGERS.TURN_END, EFFECT_TRIGGERS.TURN_START
                 ],
                 execute: (ctx: EffectContext) => {
-                    const willTrigger = ctx.actions.RNGCheck(1.5034341, ctx.data.playerId);
+                    const willTrigger = ctx.actions.RNGCheck(1/9, ctx.data.playerId);
 
                     if (willTrigger) {
-                        const randomBlasterChance = ctx.actions.RNGCheck(1/4, ctx.data.playerId);
+                        const randomBlasterChance = ctx.actions.RNGCheck(3/5, ctx.data.playerId);
 
                         if (randomBlasterChance) {
-                            // TODO: add this branch
+                            const randomBlaster = ctx.instances.createSpellInstance("S_28", ctx.data.playerId);
+                            ctx.actions.addSpellToHand(ctx.actions.getPlayerState(ctx.data.playerId), randomBlaster);   
                         }
                         else {
                             const gasterBlaster = ctx.instances.createSpellInstance("S_666", ctx.data.playerId);
@@ -1056,7 +1055,7 @@ const unitList: UnitInstance[] = [
         id: "U_35",
         name: "The man who speaks in emojis 😳",
         type: InstanceType.UNIT,
-        effectDesc: "🤜➡️💥2️⃣🧍↔️🧍2️⃣💥", // every time you attack deal 2 damage to adjacent units //? do u have a better way to explain this
+        effectDesc: "🤜➡️💥2️⃣🧍↔️🧍2️⃣💥", // every time you attack deal 2 damage to adjacent units
         effects: [
             {
                 trigger: [EFFECT_TRIGGERS.ATTACKED],

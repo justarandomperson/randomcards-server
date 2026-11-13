@@ -382,7 +382,7 @@ const spellList: SpellInstance[] = [
         effects: [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
-                hasTarget:  new Set([targetOption.ALLY, targetOption.ENEMY]),
+                hasTarget: new Set([targetOption.ALLY, targetOption.ENEMY]),
                 execute: (ctx: EffectContext) => {
                     if (ctx.data.targetUnit) {
                         ctx.actions.attackUnit(ctx.data.playerId, ctx.data.targetUnit, 8);
@@ -586,7 +586,7 @@ const spellList: SpellInstance[] = [
         id: "S_26",
         name: "Blank White Card",
         type: InstanceType.SPELL,
-        effectDesc: "",
+        effectDesc: "Play a random spell on a random target (hey this sounds similiar)?",
         effects: [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
@@ -624,12 +624,14 @@ const spellList: SpellInstance[] = [
         effects: [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
+                hasTarget: new Set([targetOption.ALLY, targetOption.ENEMY]),
                 execute: (ctx: EffectContext) => {
                     if (ctx.data.targetUnit) {
                         const damageWeights = new Map<number, number>([
                             [1, 3], [2, 6], [3, 11], [4, 20], [5, 20], [6, 15],
                             [7, 10], [8, 6], [9, 5], [10, 3], [11, 1]
                         ]);
+
 
                         const totalWeight = [...damageWeights.values()].reduce((sum, w) => sum + w, 0);
                         let roll = Math.random() * totalWeight;

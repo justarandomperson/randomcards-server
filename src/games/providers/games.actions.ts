@@ -181,7 +181,8 @@ export class GameActions {
             {
                 return undefined
             }
-            //FIXME: will need to be changed a bit when more than 1 target effect can be activated at the same time, 
+
+            //!FIXME: will need to be changed a bit when more than 1 target effect can be activated at the same time, 
             // which i don't care for rn
             const source = this.getPlayerState(triggerData.playerId).currentEffects[0].data.source
             const sourceInstanceId = source.instanceId
@@ -703,13 +704,13 @@ export class GameActions {
         const player = this.getPlayerState(playerId);
         const cardOwnerId = this.instances.getOwnerId(card);
 
+        if (card.inDeck) { 
+            this.moveSpellFromHandToDrawpile(player, card);
+        }
+
         const needsTarget = this.runTriggerEffects(EFFECT_TRIGGERS.SUMMONED, { playerId: cardOwnerId, source: card });
         
         if (!needsTarget){
-            if (card.inDeck) { 
-                this.moveSpellFromHandToDrawpile(player, card);
-            }
-
             this.emitter.playedSpell(this.state.gameId, card, this.instances.getOwnerId(card));
 
             this.runTriggerEffectsBoth(EFFECT_TRIGGERS.ANY_SPELL_PLAYED, { referenced: card });
@@ -878,11 +879,6 @@ export class GameActions {
             throw new WsException('got either but or none targets...');
         }
 
-        if (data.source.type === InstanceType.SPELL){
-            this.moveSpellFromHandToDrawpile(player, data.source);
-            this.emitter.playedSpell(this.state.gameId, data.source, this.instances.getOwnerId(data.source));
-        }
-
         this.effects.runEffect(effect, data);   
         const cardOwnerId = this.instances.getOwnerId(data.source);     
 
@@ -890,7 +886,9 @@ export class GameActions {
             this.runTriggerEffects(EFFECT_TRIGGERS.ANY_SUMMONED, { playerId: cardOwnerId, referenced: data.source });
         }
         else if (data.source.type === InstanceType.SPELL){
-           this.runTriggerEffectsBoth(EFFECT_TRIGGERS.ANY_SPELL_PLAYED, { referenced: data.source });
+            this.emitter.playedSpell(this.state.gameId, data.source, this.instances.getOwnerId(data.source));
+            
+            this.runTriggerEffectsBoth(EFFECT_TRIGGERS.ANY_SPELL_PLAYED, { referenced: data.source });
         }
     }
 }
