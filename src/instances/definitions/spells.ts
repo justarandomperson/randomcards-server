@@ -461,7 +461,7 @@ const spellList: SpellInstance[] = [
                 execute: (ctx: EffectContext) => {
                     const target = ctx.data.targetUnit;
                     if (target) {
-                        ctx.actions.decreaseUnitHealth(target, target.hp);
+                        ctx.actions.decreaseUnitHealth(target, target.hp, undefined, true);
 
                         const opponentUnits = ctx.actions.getOpponentUnits(ctx.data.playerId);
                         for (const unit of opponentUnits) {

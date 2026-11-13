@@ -185,10 +185,10 @@ export class GameActions {
             //!FIXME: will need to be changed a bit when more than 1 target effect can be activated at the same time, 
             // which i don't care for rn
             const source = this.getPlayerState(triggerData.playerId).currentEffects[0].data.source
-            const sourceInstanceId = source.instanceId
-            if (!sourceInstanceId) throw new WsException("Effect with target needs to have a source with instance id")
+            const sourceInstance = source
+            if (!source) throw new WsException("Effect with target needs to have a source")
 
-            this.emitter.selectTarget(triggerData.playerId, needsTarget, sourceInstanceId);
+            this.emitter.selectTarget(triggerData.playerId, needsTarget, sourceInstance);
             return needsTarget;
         }
 
@@ -397,9 +397,14 @@ export class GameActions {
         unit.statuses = {...defaultUnit.statuses};
     }
 
-    decreaseUnitHealth(card: UnitInstance, amount: number, attacker?: UnitInstance): boolean {
+    decreaseUnitHealth(card: UnitInstance, amount: number, attacker?: UnitInstance, ignoreDodge: boolean = false): boolean {
         if (!card.ownerId) {
             throw new WsException("Card does not have owner")
+        }
+
+        if (!ignoreDodge && card.statuses.dodge > 0) {
+            this.removeUnitStatus(card, Status.DODGE);
+            return false
         }
 
         card.hp -= amount;
@@ -692,12 +697,7 @@ export class GameActions {
             this.emitter.attacked(playerId);
         }
 
-        if (card.statuses.dodge > 0) {
-            this.removeUnitStatus(card, Status.DODGE);
-        }
-        else {
-            this.decreaseUnitHealth(card, amount, attacker);
-        }
+        this.decreaseUnitHealth(card, amount, attacker);
     }
 
     useSpell(playerId: string, card: SpellInstance) {

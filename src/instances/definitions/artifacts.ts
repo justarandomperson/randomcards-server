@@ -498,7 +498,7 @@ const ArtifactList: ArtifactInstance[] = [
                         if (additionalData["counter"] >= 4)
                         {
                             additionalData["counter"] = 0
-                            ctx.actions.decreaseUnitHealth(attacked, attacked.hp)
+                            ctx.actions.decreaseUnitHealth(attacked, attacked.hp, undefined, true)
                         }
                     }
                 }
