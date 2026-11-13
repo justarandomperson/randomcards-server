@@ -586,12 +586,17 @@ const spellList: SpellInstance[] = [
         id: "S_26",
         name: "Blank White Card",
         type: InstanceType.SPELL,
-        effectDesc: "",
+        effectDesc: "Add a random spell to your hand",
         effects: [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
                 execute: (ctx: EffectContext) => {
-                    // TODO: maybe have a random spell effect happen. i dont want to do rn but itd be cool
+                    const ownerId = ctx.instances.getOwnerId(ctx.data.source)
+                    const allSpells = Array.from(ctx.instances.getSpells().values())
+
+                    const randomSpell = allSpells[getRandomInt(0, allSpells.length)]
+                    const spellInstance = ctx.instances.createSpellInstance(randomSpell.id, ownerId)
+                    ctx.actions.addSpellToHand(ctx.actions.getPlayerState(ownerId), spellInstance, true)
                 }
             }
         ],

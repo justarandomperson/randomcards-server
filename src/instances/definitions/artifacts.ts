@@ -270,10 +270,9 @@ const ArtifactList: ArtifactInstance[] = [
                 trigger: [EFFECT_TRIGGERS.BOUGHT],
                 execute: (ctx: EffectContext) => {
                     const unitsMap = ctx.instances.getUnits()
-                    // const unitIds = [...unitsMap.values()].map(unit =>
-                    //     unit.id
-                    // );
-                    const unitIds = ["U_23"]
+                    const unitIds = [...unitsMap.values()].map(unit =>
+                        unit.id
+                    );
 
                     const randomUnitId = unitIds[Math.floor(Math.random() * unitIds.length)];
                     const randomUnitInstance = ctx.instances.createUnitInstance(randomUnitId, ctx.data.playerId)
@@ -451,6 +450,7 @@ const ArtifactList: ArtifactInstance[] = [
                    const source = ctx.data.source
 
                    const artifactOwnerId = ctx.instances.getOwnerId(source)
+                   console.log("artifactOwnerId:", artifactOwnerId, "refrenced:", referenced)
 
                    if (referenced && ctx.instances.getOwnerId(referenced) !== artifactOwnerId)
                    {
@@ -467,7 +467,7 @@ const ArtifactList: ArtifactInstance[] = [
     },
     {
         id: "A_20",
-        name: "Death note", 
+        name: "Death Note", 
         type: InstanceType.ARTIFACT,
         effectDesc: "Turn start: gain a counter. at 4 counters or above, whenever you attack a unit the counter is set to 0 and the attacked dies.",
         effects: [
@@ -488,11 +488,12 @@ const ArtifactList: ArtifactInstance[] = [
 
                     const validAttacked = attacked && ctx.instances.getOwnerId(attacked) !== artifactOwnerId
                     const validAttacker = attacker && ctx.instances.getOwnerId(attacker) === artifactOwnerId
+
                     if (validAttacked && validAttacker)
                     {
-                        if (additionalData["counters"] >= 4)
+                        if (additionalData["counter"] >= 4)
                         {
-                            additionalData["counters"] = 0
+                            additionalData["counter"] = 0
                             ctx.actions.decreaseUnitHealth(attacked, attacked.hp)
                         }
                     }
