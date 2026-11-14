@@ -66,7 +66,7 @@ const ArtifactList: ArtifactInstance[] = [
         id: "A_2",
         name: "Vampire Survivor",
         type: InstanceType.ARTIFACT,
-        effectDesc: "Every time one of your units die, heal 2 HP.",
+        effectDesc: "Every time one of your units die, heal 1 HP.",
         effects: [
             {
                 trigger: [EFFECT_TRIGGERS.ANY_DIED],
@@ -74,7 +74,7 @@ const ArtifactList: ArtifactInstance[] = [
                     const referenced = ctx.data.referenced;
 
                     if (referenced && ctx.instances.getOwnerId(referenced) === ctx.instances.getOwnerId(ctx.data.source)) {
-                        ctx.actions.increasePlayerHealth(ctx.actions.getPlayerState(ctx.data.playerId), 2);
+                        ctx.actions.increasePlayerHealth(ctx.actions.getPlayerState(ctx.data.playerId), 1);
                     }
                 }
             }

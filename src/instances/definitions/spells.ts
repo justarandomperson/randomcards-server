@@ -122,14 +122,14 @@ const spellList: SpellInstance[] = [
         id: "S_7",
         name: "Shiv",
         type: InstanceType.SPELL,
-        effectDesc: "Deal 3 Damage to a monster.",
+        effectDesc: "Deal 2 Damage to a monster.",
         effects: [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
                 hasTarget:  new Set([targetOption.ALLY, targetOption.ENEMY]),
                 execute: (ctx: EffectContext) => {
                     if (ctx.data.targetUnit) {
-                        ctx.actions.attackUnit(ctx.data.playerId, ctx.data.targetUnit, 3);
+                        ctx.actions.attackUnit(ctx.data.playerId, ctx.data.targetUnit, 2);
                     }
 
                     // Note: do silent's effect of giving any of your silents +1 ATK

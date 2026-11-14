@@ -467,7 +467,7 @@ const unitList: UnitInstance[] = [
         id: "U_18",
         name: "Dracula",
         type: InstanceType.UNIT,
-        effectDesc: "When any of your units die, Gain 2 HP.",
+        effectDesc: "When any of your units die, this gains 2 HP.",
         effects: [
              {
                 trigger: [EFFECT_TRIGGERS.ANY_DIED],
@@ -1011,7 +1011,7 @@ const unitList: UnitInstance[] = [
         id: "U_33",
         name: "Purple Guy",
         type: InstanceType.UNIT,
-        effectDesc: "Enemy units killed summon a 1/2 Taunt Stuffed Animatronic Suit",
+        effectDesc: "If this attacked and killed a unit, summon a 1/2 Taunt Stuffed Animatronic Suit",
         effects: [
             {
                 trigger: [EFFECT_TRIGGERS.KILL],
