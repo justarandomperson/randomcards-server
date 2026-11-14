@@ -37,7 +37,6 @@ const ArtifactList: ArtifactInstance[] = [
                             }
                         }
 
-                        console.log("damage "+damage);
 
                         // rng target
                         const opponentUnits = ctx.actions.getOpponentUnits(ctx.data.playerId);
@@ -454,7 +453,6 @@ const ArtifactList: ArtifactInstance[] = [
                    const source = ctx.data.source
 
                    const artifactOwnerId = ctx.instances.getOwnerId(source)
-                   console.log("artifactOwnerId:", artifactOwnerId, "refrenced:", referenced)
 
                    if (referenced && ctx.instances.getOwnerId(referenced) !== artifactOwnerId)
                    {

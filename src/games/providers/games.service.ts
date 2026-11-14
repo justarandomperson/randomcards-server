@@ -45,7 +45,7 @@ export class GamesService {
                 [player2.socketId, player2State]
             ]),
             board: Array(MAX_CARD_IN_BOARD).fill(null),
-            shop: fillShop([null, null, null, null, null,null, null, null, null, null,null, null, null, null, null,null, null, null, null, null,null, null, null, null, null], possibleShopPool), 
+            shop: fillShop([null, null, null, null, null], possibleShopPool), 
             gamePhase: GamePhase.PLAY,
             playerTurnId: player2.socketId,
             possibleShopPool
@@ -151,7 +151,7 @@ export class GamesService {
     playSpell(gameId: string, playerId: string, dto: PlaySpellDto) {
         const game = this.getGame(gameId);
         const player = game.actions.getPlayerState(playerId);
-
+        console.log("play spell data:", dto, player.hand)
         const card = this.validatePlaySpell(game, player, dto);
 
         game.actions.useSpell(player.socketId, card);

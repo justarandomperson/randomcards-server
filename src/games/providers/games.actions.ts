@@ -315,7 +315,8 @@ export class GameActions {
             throw new WsException("card is not in hand");
         }
 
-        player.hand.splice(location.index, 1);
+        const spellIndex = player.hand.findIndex((spell) => spell.instanceId === card.instanceId)
+        player.hand.splice(spellIndex, 1);
 
         if (card.inDeck) { // does not add card to drawpile if card wasnt originally in deck card
             player.drawpile.push(card);
@@ -726,8 +727,8 @@ export class GameActions {
         const player = this.getPlayerState(playerId);
 
         if (attacker) {
-            this.removeUnitStatus(attacker, Status.HASTE);
             attacker.canAttack = false;
+            this.removeUnitStatus(attacker, Status.HASTE);
 
             const attackerOwnerId = this.instances.getOwnerId(attacker);
 
