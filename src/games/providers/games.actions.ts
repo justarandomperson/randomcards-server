@@ -807,19 +807,17 @@ export class GameActions {
 
         this.setPlayerTurnId(this.getOpponentId(this.state.playerTurnId));
 
+        const player = this.getPlayerState(this.state.playerTurnId);
+
         // start of turn stuff
         switch(this.state.gamePhase) {
             case GamePhase.PLAY: {
-                const player = this.getPlayerState(this.state.playerTurnId);
-                this.resetUnitsWasParalyzedAndDiedThisTurn(player)
-                this.runTriggerEffects(EFFECT_TRIGGERS.TURN_START,  { playerId: player.socketId });
                 this.startTurnPlay(player);
                 break;
             }
 
             case GamePhase.SHOP:
-                this.refillShop();
-                this.emitter.updateShopBoth(this.state.gameId, this.state.shop);
+                this.startTurnShop(player);
                 break;
         }
 
@@ -846,6 +844,10 @@ export class GameActions {
     }
 
     private startTurnPlay(player: PlayerState) {
+        this.resetUnitsWasParalyzedAndDiedThisTurn(player);
+
+        this.runTriggerEffects(EFFECT_TRIGGERS.TURN_START,  { playerId: player.socketId });
+
         this.drawSpell(player.socketId);
 
         const newMoney = calculateTurnStartMoney(player.turn);
@@ -857,6 +859,15 @@ export class GameActions {
                 slot.unit.canAttack = true;
             }
         }
+    }
+
+    private startTurnShop(player: PlayerState) {
+        const newMoney = calculateTurnStartMoney(player.turn);
+        this.increasePlayerMoney(player, newMoney);
+
+        this.refillShop();
+
+        this.emitter.updateShopBoth(this.state.gameId, this.state.shop);
     }
 
     runCurrentEffect(player: PlayerState, targetUnit?: UnitInstance, targetPlayerId?: string) {
