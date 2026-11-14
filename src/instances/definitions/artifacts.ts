@@ -126,7 +126,7 @@ const ArtifactList: ArtifactInstance[] = [
                     "Lightning Orbs you play activate twice.",
         effects: [
             {
-                trigger: [EFFECT_TRIGGERS.SUMMONED],
+                trigger: [EFFECT_TRIGGERS.BOUGHT],
                 execute: (ctx: EffectContext) => {
                     for (let i = 0; i < 3; i++){
                         const lightningOrb = ctx.instances.createSpellInstance("S_8", ctx.data.playerId);

@@ -151,7 +151,6 @@ export class GamesService {
     playSpell(gameId: string, playerId: string, dto: PlaySpellDto) {
         const game = this.getGame(gameId);
         const player = game.actions.getPlayerState(playerId);
-        console.log("play spell data:", dto, player.hand)
         const card = this.validatePlaySpell(game, player, dto);
 
         game.actions.useSpell(player.socketId, card);
@@ -233,15 +232,19 @@ export class GamesService {
         }
 
         const opponentBoard = game.actions.getOpponentBoard(player.socketId);
-        for (const slot of opponentBoard) {
+        const target = this.instances.findInstance(dto.targetId, game.state.board);
+
+        if (!target.statuses.taunt)
+        {
+            for (const slot of opponentBoard) {
             const unit = slot.unit;
 
             if (unit && unit.statuses.taunt && this.instances.getInstanceId(unit) !== dto.targetId) {
                 throw new WsException("another enemy unit has taunt"); 
             }
+            }
         }
 
-        const target = this.instances.findInstance(dto.targetId, game.state.board);
         
         return { attacker, target }
     }

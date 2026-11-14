@@ -4,7 +4,7 @@ import { GamePhase } from "../shared/games.types";
 
 
 export const calculateTurnStartMoney = (turn: number): number => {
-    const money =  Math.floor(turn * 1.5);
+    const money =  Math.floor(turn * 2);
 
     if (money > 10) {
         return 10;

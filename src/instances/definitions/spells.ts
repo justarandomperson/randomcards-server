@@ -326,7 +326,7 @@ const spellList: SpellInstance[] = [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
                 execute: (ctx: EffectContext) => {
-                    ctx.actions.decreasePlayerHealth(ctx.actions.getPlayerState(ctx.data.playerId), 6);
+                    ctx.actions.decreasePlayerHealth(ctx.actions.getPlayerState(ctx.data.playerId), 4);
                     ctx.actions.increasePlayerMoney(ctx.actions.getPlayerState(ctx.data.playerId), 6);
 
                     ctx.actions.drawSpell(ctx.data.playerId);

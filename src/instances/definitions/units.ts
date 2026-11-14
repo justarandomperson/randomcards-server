@@ -210,7 +210,7 @@ const unitList: UnitInstance[] = [
         cost: 5,
         hp: 5,
         atk: 3,
-    },
+    }, 
     {
         id: "U_9",
         name: "The Ironclad",
