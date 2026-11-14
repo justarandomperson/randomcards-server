@@ -563,6 +563,12 @@ export class GameActions {
         }
     }
 
+    setUnitStatus(card: UnitInstance, statuses: { haste: boolean, taunt: boolean, paralyzed: boolean,
+        silenced: boolean, dodge: number, cooldown: number}) 
+    {
+        card.statuses = statuses;
+    }
+
     changeUnitEffect(card: UnitInstance, effects: Effect[], effectDesc: string) {
         card.effects = effects;
         card.effectDesc = `Copied: ${effectDesc}`;

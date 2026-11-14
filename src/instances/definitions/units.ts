@@ -21,7 +21,7 @@ const unitList: UnitInstance[] = [
             cooldown: 0
 
         },
-        cost: 2,
+        cost: 1,
         hp: 1,
         atk: 2,
     },
@@ -39,7 +39,7 @@ const unitList: UnitInstance[] = [
             dodge: 0,
             cooldown: 0
         },
-        cost: 2, 
+        cost: 1, 
         hp: 2,
         atk: 1,
     },
@@ -390,7 +390,7 @@ const unitList: UnitInstance[] = [
         id: "U_15",
         name: "Bluestorm",
         type: InstanceType.UNIT,
-        effectDesc: "Summon: copy the effect of the monster infront of this.",
+        effectDesc: "Summon: copy the effect and base statuses of the monster infront of this.",
         effects: [
              {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
@@ -403,6 +403,9 @@ const unitList: UnitInstance[] = [
 
                     if (monsterInfront) {
                         ctx.actions.changeUnitEffect(source, monsterInfront.effects, monsterInfront.effectDesc);
+
+                        const defaultTarget = ctx.instances.getDefaultUnitById(monsterInfront.id);
+                        ctx.actions.setUnitStatus(source, defaultTarget.statuses);
                     }
                 }
             },
@@ -831,7 +834,7 @@ const unitList: UnitInstance[] = [
         id: "U_27",
         name: "Imitater",
         type: InstanceType.UNIT,
-        effectDesc: "Summon: Copy the effects of an ally unit on bench or board.",
+        effectDesc: "Summon: Copy the effects and base statuses of an ally unit on bench or board.",
         effects: [
              {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
@@ -842,6 +845,9 @@ const unitList: UnitInstance[] = [
 
                         const source = ctx.instances.typeInstance(ctx.data.source, InstanceType.UNIT);
                         ctx.actions.changeUnitEffect(source, target.effects, target.effectDesc);
+
+                        const defaultTarget = ctx.instances.getDefaultUnitById(target.id);
+                        ctx.actions.setUnitStatus(source, defaultTarget.statuses);
                     }
                 }
             },
@@ -1047,7 +1053,7 @@ const unitList: UnitInstance[] = [
             dodge: 0,
             cooldown: 0
         },
-        cost: 0,    
+        cost: 2,    
         hp: 2,
         atk: 1,
     },
