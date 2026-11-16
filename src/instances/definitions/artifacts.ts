@@ -60,7 +60,7 @@ const ArtifactList: ArtifactInstance[] = [
                 }
             }
         ],
-        cost: 7,
+        cost: 5,
     },
     {
         id: "A_2",
@@ -101,7 +101,7 @@ const ArtifactList: ArtifactInstance[] = [
                 }
             }
         ],
-        cost: 9, 
+        cost: 8, 
     },
     {
         id: "A_4",
@@ -116,7 +116,7 @@ const ArtifactList: ArtifactInstance[] = [
                 }
             }
         ],
-        cost: 500,     
+        cost: 300,     
     },
     {
         id: "A_5",
@@ -179,7 +179,7 @@ const ArtifactList: ArtifactInstance[] = [
         additionalData: {
             "disabled": false
         },
-        cost: 6,     
+        cost: 5,     
     },
     {
         id: "A_7",
@@ -210,7 +210,7 @@ const ArtifactList: ArtifactInstance[] = [
                 }
             }
         ],
-        cost: 10,     
+        cost: 9,     
     },
     {
         id: "A_9",
@@ -239,7 +239,7 @@ const ArtifactList: ArtifactInstance[] = [
                 }
             }
         ],
-        cost: 9,     
+        cost: 8,     
     },
     {
         id: "A_10",
@@ -314,7 +314,7 @@ const ArtifactList: ArtifactInstance[] = [
                 }
             }
         ],
-        cost: 5,     
+        cost: 4,     
     },
     {
         id: "A_13",
@@ -338,7 +338,7 @@ const ArtifactList: ArtifactInstance[] = [
                 }
             }
         ],
-        cost: 10,     
+        cost: 9,     
     },
     {
         id: "A_14",
@@ -373,7 +373,7 @@ const ArtifactList: ArtifactInstance[] = [
         id: "A_16",
         name: "Very Very Interesting",
         type: InstanceType.ARTIFACT,
-        effectDesc: "Gaster blasters cost -2 (will give you $2 upon playing it, fuck you )",
+        effectDesc: "Gaster blasters cost -2 (will give you $2 upon playing it, fuck you)",
         effects: [
             {
                 trigger: [EFFECT_TRIGGERS.ANY_SPELL_PLAYED],
@@ -416,7 +416,7 @@ const ArtifactList: ArtifactInstance[] = [
         additionalData: {
             "cards": 1000
         },
-        cost: 10,     
+        cost: 7,     
     },
     {
         id: "A_18",
@@ -438,7 +438,7 @@ const ArtifactList: ArtifactInstance[] = [
                 }
             }
         ],
-        cost: 5,     
+        cost: 9,     
     },
     {
         id: "A_19",
@@ -465,13 +465,14 @@ const ArtifactList: ArtifactInstance[] = [
                 }
             }
         ],
-        cost: 5,     
+        cost: 8,     
     },
     {
         id: "A_20",
         name: "Death Note", 
         type: InstanceType.ARTIFACT,
-        effectDesc: "Turn start: gain a counter. at 4 counters or above, whenever you attack a unit the counter is set to 0 and the attacked dies.",
+        effectDesc: "Turn start: gain a counter. at 4 counters or above, " +
+                    "whenever you attack a unit the counter is set to 0 and the attacked dies.",
         effects: [
             {
                 trigger: [EFFECT_TRIGGERS.TURN_START],
@@ -525,7 +526,7 @@ const ArtifactList: ArtifactInstance[] = [
                 }
             }
         ],
-        cost: 9,     
+        cost: 8,     
     },
     {
         id: "A_22",
@@ -545,7 +546,7 @@ const ArtifactList: ArtifactInstance[] = [
                 }
             }
         ],
-        cost: 10,     
+        cost: 9,     
     },
     {
         id: "A_23",
