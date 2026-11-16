@@ -11,7 +11,7 @@ const spellList: SpellInstance[] = [
         name: "cat (non corporeal)",
         type: InstanceType.SPELL,
         effectDesc: "though I may bear the semblance of canine form, I possess no corporeal body whatsoever. " +
-                    "Pray, doth it befit thee to name such a being a cat?" +
+                    "Pray, doth it befit thee to name such a being a cat? " +
                     "Farewell, and may the hours yet before you be wondrous and fair!",
         effects: [],
         cost: 0,
@@ -72,7 +72,7 @@ const spellList: SpellInstance[] = [
                 }
             }
         ],
-        cost: 2,
+        cost: 1,
         isToken: false
     },
     {
@@ -321,13 +321,13 @@ const spellList: SpellInstance[] = [
         id: "S_15",
         name: "Offering",
         type: InstanceType.SPELL,
-        effectDesc: "Lose 4 HP, Gain 3$ and draw 2 cards.",
+        effectDesc: "Lose 4 HP, Gain 4$ and draw 2 cards.",
         effects: [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
                 execute: (ctx: EffectContext) => {
                     ctx.actions.decreasePlayerHealth(ctx.actions.getPlayerState(ctx.data.playerId), 4);
-                    ctx.actions.increasePlayerMoney(ctx.actions.getPlayerState(ctx.data.playerId), 6);
+                    ctx.actions.increasePlayerMoney(ctx.actions.getPlayerState(ctx.data.playerId), 4);
 
                     ctx.actions.drawSpell(ctx.data.playerId);
                     ctx.actions.drawSpell(ctx.data.playerId);
@@ -397,7 +397,7 @@ const spellList: SpellInstance[] = [
         id: "S_18",
         name: "Jarona",
         type: InstanceType.SPELL,
-        effectDesc: "Ally unit attacks a random enemy with +2 ATK, doesn't take damage",
+        effectDesc: "Ally unit attacks a random enemy, doesn't take damage",
         effects: [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
@@ -407,18 +407,19 @@ const spellList: SpellInstance[] = [
 
                     if (target) {
                         const opponentUnits = ctx.actions.getOpponentUnits(ctx.data.playerId)
-
                         const randomUnit = opponentUnits[getRandomInt(0, opponentUnits.length - 1)];
+
                         if (randomUnit && randomUnit.unit) {
-                            ctx.actions.attackUnit(ctx.data.playerId, randomUnit.unit, target.atk + 2, target);
-                            //little hack to update the client on the canAttack false of the unit
+                            ctx.actions.attackUnit(ctx.data.playerId, randomUnit.unit, target.atk, target);
+
+                            //little hack to update the client on the canAttack false of the unit //? u can just add a function to set that
                             ctx.actions.attackUnit(ctx.actions.getOpponentId(ctx.data.playerId), target, 0); 
                         }
                     }
                 }
             }
         ],
-        cost: 5,
+        cost: 4,
         isToken: false
     },
     {
@@ -495,7 +496,7 @@ const spellList: SpellInstance[] = [
                 }
             }
         ],
-        cost: 4,
+        cost: 5,
         isToken: false
     },
     {
@@ -528,14 +529,14 @@ const spellList: SpellInstance[] = [
         id: "S_23",
         name: "He doesn't know!",
         type: InstanceType.SPELL,
-        effectDesc: 'Deal 4 damage to an enemy unit',
+        effectDesc: 'Deal 3 damage to an enemy unit',
         effects: [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
                 hasTarget: new Set([targetOption.ENEMY]),
                 execute: (ctx: EffectContext) => {
                     if (ctx.data.targetUnit) {
-                        ctx.actions.decreaseUnitHealth(ctx.data.targetUnit, 4);
+                        ctx.actions.decreaseUnitHealth(ctx.data.targetUnit, 3);
                     }
                 }
             }
@@ -547,14 +548,14 @@ const spellList: SpellInstance[] = [
         id: "S_24",
         name: "He knows",
         type: InstanceType.SPELL,
-        effectDesc: 'Give 4 HP to an ally unit',
+        effectDesc: 'Give 3 HP to an ally unit',
         effects: [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
                 hasTarget: new Set([targetOption.ALLY]),
                 execute: (ctx: EffectContext) => {
                     if (ctx.data.targetUnit) {
-                        ctx.actions.increaseUnitHealth(ctx.data.targetUnit, 4, false);
+                        ctx.actions.increaseUnitHealth(ctx.data.targetUnit, 3, false);
                     }
                 }
             }
@@ -586,7 +587,7 @@ const spellList: SpellInstance[] = [
         id: "S_26",
         name: "Blank White Card",
         type: InstanceType.SPELL,
-        effectDesc: "Add a random spell to your hand",
+        effectDesc: "Add a random spell to your hand", // TODO: maybe change effect
         effects: [
             {
                 trigger: [EFFECT_TRIGGERS.SUMMONED],
@@ -655,7 +656,7 @@ const spellList: SpellInstance[] = [
                 }
             }
         ],
-        cost: 0,
+        cost: 2,
         isToken: true
     },
 ];

@@ -65,7 +65,7 @@ const unitList: UnitInstance[] = [
             dodge: 3,
             cooldown: 0
         },
-        cost: 6,
+        cost: 5,
         hp: 1,
         atk: 1,
     },
@@ -470,7 +470,7 @@ const unitList: UnitInstance[] = [
         id: "U_18",
         name: "Dracula",
         type: InstanceType.UNIT,
-        effectDesc: "When any of your units die, this gains 2 HP.",
+        effectDesc: "Dodge (1). When any of your units die, this gains 2 HP.",
         effects: [
              {
                 trigger: [EFFECT_TRIGGERS.ANY_DIED],
@@ -489,11 +489,11 @@ const unitList: UnitInstance[] = [
             taunt: false,
             paralyzed: false,
             silenced: false,
-            dodge: 0,
+            dodge: 1,
             cooldown: 0
         },
         cost: 6,
-        hp: 2,
+        hp: 3,
         atk: 6,
     },
     {
@@ -613,7 +613,7 @@ const unitList: UnitInstance[] = [
             cooldown: 0
         },
         cost: 4,
-        hp: 3,
+        hp: 4,
         atk: 4,
     },
     {
@@ -638,7 +638,7 @@ const unitList: UnitInstance[] = [
             cooldown: 0
         },
         cost: 5,
-        hp: 3,
+        hp: 4,
         atk: 3,
     },
     {
@@ -878,7 +878,7 @@ const unitList: UnitInstance[] = [
             dodge: 0,
             cooldown: 0
         },
-        cost: 7,
+        cost: 8,
         hp: 7,
         atk: 7,
     },
@@ -886,7 +886,7 @@ const unitList: UnitInstance[] = [
         id: "U_29",
         name: "Cuphead",
         type: InstanceType.UNIT,
-        effectDesc: "Dodge(1). Turn end: deal 1 damage to enemy unit in front",
+        effectDesc: "Dodge (1). Turn end: deal 1 damage to enemy unit in front",
         effects: [
             {
                 trigger: [EFFECT_TRIGGERS.TURN_END],
@@ -1036,7 +1036,7 @@ const unitList: UnitInstance[] = [
             cooldown: 0
         },
         cost: 6,    
-        hp: 6,
+        hp: 5,
         atk: 5,
     },
     {
@@ -1095,7 +1095,7 @@ const unitList: UnitInstance[] = [
         },
         cost: 5,    
         hp: 5,
-        atk: 4  ,
+        atk: 4,
     },
 ];
 
